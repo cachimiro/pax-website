@@ -1,26 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --green-900: #0A5C42;
+  --green-700: #0C6B4E;
+  --green-600: #0E7A59;
+  --green-500: #109464;
+  --green-100: #E6F5F0;
+  --green-50: #F0FAF6;
+
+  --orange-600: #D47A25;
+  --orange-500: #E8872B;
+  --orange-400: #F09A3E;
+  --orange-100: #FEF3E6;
+  --orange-50: #FFF8F0;
+
+  --warm-white: #FAF9F7;
+  --warm-50: #F5F4F2;
+  --warm-100: #EDECE9;
+  --warm-200: #D8D6D2;
+  --warm-300: #B8B5AF;
+  --warm-500: #7A776F;
+  --warm-700: #4A4843;
+  --warm-800: #2D2B28;
+  --warm-900: #1A1917;
+
+  --background: var(--warm-white);
+  --foreground: var(--warm-900);
+  --muted: var(--warm-500);
+  --border: var(--warm-100);
+  --card: #FFFFFF;
+
+  --font-heading: 'Montserrat', sans-serif;
+  --font-body: 'Raleway', sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-card: var(--card);
+
+  --color-green-900: var(--green-900);
+  --color-green-700: var(--green-700);
+  --color-green-600: var(--green-600);
+  --color-green-500: var(--green-500);
+  --color-green-100: var(--green-100);
+  --color-green-50: var(--green-50);
+
+  --color-orange-600: var(--orange-600);
+  --color-orange-500: var(--orange-500);
+  --color-orange-400: var(--orange-400);
+  --color-orange-100: var(--orange-100);
+  --color-orange-50: var(--orange-50);
+
+  --color-warm-white: var(--warm-white);
+  --color-warm-50: var(--warm-50);
+  --color-warm-100: var(--warm-100);
+  --color-warm-200: var(--warm-200);
+  --color-warm-300: var(--warm-300);
+  --color-warm-500: var(--warm-500);
+  --color-warm-700: var(--warm-700);
+  --color-warm-800: var(--warm-800);
+  --color-warm-900: var(--warm-900);
+
+  --font-heading: 'Montserrat', sans-serif;
+  --font-body: 'Raleway', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.section-padding {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+
+@media (min-width: 768px) {
+  .section-padding {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--green-500);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--warm-50);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--warm-300);
+  border-radius: 3px;
 }
