@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Check, ArrowRight } from 'lucide-react';
+import { Check, ArrowRight, Info } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 
 interface PackageCardProps {
@@ -16,6 +16,7 @@ interface PackageCardProps {
   popular?: boolean;
   finishLevel: string;
   ctaText?: string;
+  onLearnMore?: (id: string) => void;
 }
 
 export default function PackageCard({
@@ -30,6 +31,7 @@ export default function PackageCard({
   popular = false,
   finishLevel,
   ctaText = 'Book Consultation',
+  onLearnMore,
 }: PackageCardProps) {
   return (
     <div
@@ -78,7 +80,7 @@ export default function PackageCard({
       </div>
 
       {/* Features */}
-      <ul className="space-y-2.5 mb-8 flex-1">
+      <ul className="space-y-2.5 mb-6 flex-1">
         {features.map((feature) => (
           <li key={feature} className="flex items-start gap-2.5 text-sm text-warm-700">
             <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
@@ -91,13 +93,24 @@ export default function PackageCard({
         ))}
       </ul>
 
+      {/* Learn more link */}
+      {onLearnMore && (
+        <button
+          onClick={() => onLearnMore(id)}
+          className="flex items-center gap-1.5 text-xs font-medium text-warm-500 hover:text-[#0C6B4E] transition-colors mb-4 font-[family-name:var(--font-heading)]"
+        >
+          <Info className="w-3.5 h-3.5" />
+          Learn more about {name}
+        </button>
+      )}
+
       {/* CTA */}
       <Link
         href={`/book?package=${id}`}
-        className={`group block w-full text-center py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 font-[family-name:var(--font-heading)] ${
+        className={`group block w-full text-center py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 font-[family-name:var(--font-heading)] ${
           popular
-            ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30'
-            : 'bg-green-700 text-white hover:bg-green-900'
+            ? 'bg-[#E8872B] text-white hover:bg-[#d47a24] shadow-lg shadow-orange-200/50'
+            : 'bg-[#0C6B4E] text-white hover:bg-[#0A5C42]'
         }`}
         onClick={() => trackEvent('package_click', { package: id })}
       >

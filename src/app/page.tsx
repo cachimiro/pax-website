@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Video, Ruler, Palette, Wrench, ArrowRight, Clock, MapPin, Shield, CheckCircle, Star } from 'lucide-react';
-import PackageCarousel from '@/components/PackageCarousel';
+import PackagesSection from '@/components/PackagesSection';
 
 import TestimonialCard from '@/components/TestimonialCard';
 import SectionHeading from '@/components/SectionHeading';
@@ -311,24 +311,7 @@ export default function Home() {
       </section>
 
       {/* ===== PACKAGES ===== */}
-      <section className="section-padding bg-warm-50 grain-overlay">
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ScrollReveal>
-            <SectionHeading
-              label="Choose Your Package"
-              title="Three packages. One clear next step."
-              description="Every package includes IKEA Pax frames, professional installation, and a free design consultation. Pick the finish level that suits you."
-            />
-          </ScrollReveal>
-          <PackageCarousel packages={packages} />
-          <ScrollReveal delay={0.3}>
-            <p className="text-center text-sm text-warm-500 mt-8">
-              Prices are indicative starting points. Your exact quote is confirmed after a free consultation.{' '}
-              <strong className="text-warm-700">The consultation refines — it doesn&apos;t surprise.</strong>
-            </p>
-          </ScrollReveal>
-        </div>
-      </section>
+      <PackagesSection packages={packages} />
 
       {/* ===== OBJECTION HANDLING ===== */}
       <ObjectionHandler />

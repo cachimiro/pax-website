@@ -41,7 +41,8 @@ export default function Header() {
               alt="PaxBespoke Custom Wardrobes"
               width={180}
               height={48}
-              className="h-10 md:h-12 w-auto"
+              className="h-10 md:h-12"
+              style={{ width: 'auto' }}
               priority
             />
           </Link>

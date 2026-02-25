@@ -19,9 +19,10 @@ interface PackageData {
 
 interface PackageCarouselProps {
   packages: PackageData[];
+  onLearnMore?: (id: string) => void;
 }
 
-export default function PackageCarousel({ packages }: PackageCarouselProps) {
+export default function PackageCarousel({ packages, onLearnMore }: PackageCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(1); // Start on PaxBespoke (most popular)
 
@@ -62,7 +63,7 @@ export default function PackageCarousel({ packages }: PackageCarouselProps) {
       >
         {packages.map((pkg) => (
           <div key={pkg.id} className="snap-center flex-shrink-0 w-[85vw] max-w-[340px]">
-            <PackageCard {...pkg} />
+            <PackageCard {...pkg} onLearnMore={onLearnMore} />
           </div>
         ))}
       </div>
@@ -89,7 +90,7 @@ export default function PackageCarousel({ packages }: PackageCarouselProps) {
       {/* Desktop: grid */}
       <div className="hidden md:grid md:grid-cols-3 gap-6 lg:gap-8">
         {packages.map((pkg) => (
-          <PackageCard key={pkg.id} {...pkg} />
+          <PackageCard key={pkg.id} {...pkg} onLearnMore={onLearnMore} />
         ))}
       </div>
     </div>

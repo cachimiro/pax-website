@@ -40,7 +40,8 @@ export default function Footer() {
               alt="PaxBespoke"
               width={160}
               height={42}
-              className="h-10 w-auto brightness-0 invert mb-4"
+              className="h-10 brightness-0 invert mb-4"
+              style={{ width: 'auto' }}
             />
             <p className="text-warm-300 text-sm leading-relaxed max-w-sm mb-6">
               IKEA Pax wardrobe specialists. Custom finishes, expert installation,
