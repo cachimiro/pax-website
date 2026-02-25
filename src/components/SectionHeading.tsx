@@ -11,7 +11,8 @@ export default function SectionHeading({ label, title, description, align = 'cen
   return (
     <div className={`max-w-2xl mb-12 ${alignClass}`}>
       {label && (
-        <span className="inline-block text-xs font-semibold tracking-widest uppercase text-orange-500 mb-3 font-[family-name:var(--font-heading)]">
+        <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-orange-500 mb-3 font-[family-name:var(--font-heading)]">
+          <span className="w-6 h-px bg-orange-400" />
           {label}
         </span>
       )}

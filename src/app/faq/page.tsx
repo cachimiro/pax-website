@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import SectionHeading from '@/components/SectionHeading';
 import FAQItem from '@/components/FAQItem';
 import CTABanner from '@/components/CTABanner';
+import { FAQSchema } from '@/components/StructuredData';
 
 export const metadata: Metadata = {
   title: 'FAQ',
@@ -102,8 +103,12 @@ const faqSections = [
 ];
 
 export default function FAQPage() {
+  // Flatten all FAQs for schema
+  const allFaqs = faqSections.flatMap((s) => s.faqs);
+
   return (
     <>
+      <FAQSchema faqs={allFaqs} />
       <section className="section-padding bg-warm-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeading

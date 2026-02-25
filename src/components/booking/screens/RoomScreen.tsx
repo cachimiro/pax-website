@@ -101,8 +101,11 @@ export default function RoomScreen({ value, onChange, onNext }: RoomScreenProps)
       <h2 className="text-2xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
         What are you looking for?
       </h2>
-      <p className="text-sm text-warm-500 mb-6">
+      <p className="text-sm text-warm-500 mb-1">
         This helps us prepare the right examples for your call.
+      </p>
+      <p className="text-xs text-warm-400 mb-6 font-[family-name:var(--font-heading)]">
+        Why we ask: Different rooms need different configurations. This lets us tailor our advice.
       </p>
 
       <div className="space-y-3">
@@ -157,7 +160,7 @@ export default function RoomScreen({ value, onChange, onNext }: RoomScreenProps)
           animate={{ opacity: 1, y: 0 }}
           onClick={onNext}
           whileTap={{ scale: 0.98 }}
-          className="w-full mt-6 px-6 py-4 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors text-base font-[family-name:var(--font-heading)] flex items-center justify-center gap-2"
+          className="w-full mt-6 px-6 py-4 bg-orange-500 text-white font-semibold rounded-2xl hover:bg-orange-600 transition-colors text-base font-[family-name:var(--font-heading)] flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
         >
           Continue
           <ArrowRight className="w-4 h-4" />

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import MobileCTABar from "@/components/MobileCTABar";
+import { LocalBusinessSchema } from "@/components/StructuredData";
 
 export const metadata: Metadata = {
   title: {
@@ -9,7 +11,7 @@ export const metadata: Metadata = {
     template: "%s | PaxBespoke",
   },
   description:
-    "IKEA Pax wardrobe specialists based in Warrington. Affordable custom finishes, expert installation in 1-2 days. Serving the North West within 50 miles. Free video design consultation.",
+    "IKEA Pax wardrobe specialists based in Warrington. Custom bespoke doors and finishes on IKEA Pax frames. Expert installation in 1-2 days. Serving the North West within 50 miles. Free video design consultation.",
   keywords: [
     "IKEA Pax wardrobes",
     "custom wardrobes",
@@ -19,7 +21,18 @@ export const metadata: Metadata = {
     "bespoke wardrobes North West",
     "IKEA Pax custom doors",
     "wardrobe installation",
+    "fitted wardrobes Liverpool",
+    "IKEA Pax specialist",
   ],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  manifest: "/manifest.json",
   openGraph: {
     type: "website",
     locale: "en_GB",
@@ -27,8 +40,14 @@ export const metadata: Metadata = {
     siteName: "PaxBespoke",
     title: "PaxBespoke | Custom IKEA Pax Wardrobes | North West",
     description:
-      "Affordable custom wardrobes using IKEA Pax. Expert installation in 1-2 days. Based in Warrington, serving the North West.",
+      "IKEA Pax frames with bespoke doors and finishes. Expert installation in 1-2 days. Based in Warrington, serving the North West.",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "PaxBespoke | Custom IKEA Pax Wardrobes",
+    description: "IKEA Pax frames with bespoke doors and finishes. From £800 fitted. North West England.",
+  },
+  metadataBase: new URL("https://paxbespoke.uk"),
 };
 
 export default function RootLayout({
@@ -39,9 +58,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
+        <LocalBusinessSchema />
         <Header />
         <main className="pt-16 md:pt-20">{children}</main>
         <Footer />
+        <MobileCTABar />
       </body>
     </html>
   );

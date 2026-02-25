@@ -2,28 +2,35 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Clock, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Users, Zap, MessageCircle, Phone, CalendarCheck } from 'lucide-react';
 
 interface CalendarScreenProps {
   onNext: (date: string, time: string) => void;
 }
 
 // Generate next 14 days of available dates (skip Sundays)
-function getAvailableDates(): Array<{ date: Date; label: string; dayName: string; dayNum: number; monthShort: string }> {
-  const dates: Array<{ date: Date; label: string; dayName: string; dayNum: number; monthShort: string }> = [];
+function getAvailableDates(): Array<{ date: Date; label: string; dayName: string; dayNum: number; monthShort: string; isNextAvailable?: boolean }> {
+  const dates: Array<{ date: Date; label: string; dayName: string; dayNum: number; monthShort: string; isNextAvailable?: boolean }> = [];
   const now = new Date();
   let d = new Date(now);
   d.setDate(d.getDate() + 1); // Start from tomorrow
 
+  let foundFirst = false;
   while (dates.length < 14) {
     if (d.getDay() !== 0) { // Skip Sundays
-      dates.push({
+      const entry = {
         date: new Date(d),
         label: d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
         dayName: d.toLocaleDateString('en-GB', { weekday: 'short' }),
         dayNum: d.getDate(),
         monthShort: d.toLocaleDateString('en-GB', { month: 'short' }),
-      });
+        isNextAvailable: false,
+      };
+      if (!foundFirst) {
+        entry.isNextAvailable = true;
+        foundFirst = true;
+      }
+      dates.push(entry);
     }
     d.setDate(d.getDate() + 1);
   }
@@ -62,6 +69,19 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
 
   const isSlotAvailable = (dateLabel: string, time: string) => !takenSlots.has(`${dateLabel}-${time}`);
 
+  // Count available slots for selected date
+  const availableSlotCount = useMemo(() => {
+    if (!selectedDate) return 0;
+    let count = 0;
+    timeSlots.forEach((group) => {
+      group.slots.forEach((slot) => {
+        if (isSlotAvailable(selectedDate, slot)) count++;
+      });
+    });
+    return count;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, takenSlots]);
+
   const handleConfirm = () => {
     if (selectedDate && selectedTime) {
       onNext(selectedDate, selectedTime);
@@ -73,8 +93,11 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
       <h2 className="text-2xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
         Pick a time for your call
       </h2>
-      <p className="text-sm text-warm-500 mb-6">
+      <p className="text-sm text-warm-500 mb-1">
         Video consultations last 20–30 minutes. Choose a day and time that works for you.
+      </p>
+      <p className="text-xs text-warm-400 mb-6 italic">
+        We ask so we can prepare for your consultation and have everything ready.
       </p>
 
       {/* Date picker */}
@@ -105,13 +128,20 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
               key={d.label}
               whileTap={{ scale: 0.92 }}
               onClick={() => { setSelectedDate(d.label); setSelectedTime(null); }}
-              className={`flex flex-col items-center py-2.5 px-1 rounded-xl transition-all text-center ${
+              className={`relative flex flex-col items-center py-2.5 px-1 rounded-2xl transition-all text-center ${
                 selectedDate === d.label
-                  ? 'bg-green-700 text-white shadow-sm'
-                  : 'bg-white border border-warm-100 hover:border-green-600 text-warm-700'
+                  ? 'bg-[#E8872B] text-white shadow-md'
+                  : 'bg-white border border-warm-100 hover:border-[#E8872B] text-warm-700'
               }`}
             >
-              <span className={`text-[10px] font-medium uppercase ${selectedDate === d.label ? 'text-green-200' : 'text-warm-400'}`}>
+              {/* Next available badge */}
+              {d.isNextAvailable && selectedDate !== d.label && (
+                <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#0C6B4E] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-0.5">
+                  <Zap className="w-2 h-2" />
+                  Next
+                </span>
+              )}
+              <span className={`text-[10px] font-medium uppercase ${selectedDate === d.label ? 'text-orange-100' : 'text-warm-400'}`}>
                 {d.dayName}
               </span>
               <span className="text-lg font-bold font-[family-name:var(--font-heading)]">{d.dayNum}</span>
@@ -119,6 +149,20 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
           ))}
         </div>
       </div>
+
+      {/* Slot availability hint */}
+      {selectedDate && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center gap-2 mb-4"
+        >
+          <CalendarCheck className="w-3.5 h-3.5 text-[#0C6B4E]" />
+          <span className="text-xs text-warm-500">
+            {availableSlotCount} slots available · Popular times fill up fast
+          </span>
+        </motion.div>
+      )}
 
       {/* Time slots */}
       {selectedDate && (
@@ -142,11 +186,11 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
                       whileTap={available ? { scale: 0.92 } : {}}
                       onClick={() => available && setSelectedTime(slot)}
                       disabled={!available}
-                      className={`py-2.5 rounded-lg text-sm font-medium transition-all font-[family-name:var(--font-heading)] ${
+                      className={`py-2.5 rounded-2xl text-sm font-medium transition-all font-[family-name:var(--font-heading)] ${
                         isSelected
-                          ? 'bg-green-700 text-white shadow-sm'
+                          ? 'bg-[#E8872B] text-white shadow-md'
                           : available
-                          ? 'bg-white border border-warm-100 text-warm-700 hover:border-green-600'
+                          ? 'bg-white border border-warm-100 text-warm-700 hover:border-[#E8872B]'
                           : 'bg-warm-50 text-warm-300 cursor-not-allowed line-through'
                       }`}
                     >
@@ -177,25 +221,65 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
           animate={{ opacity: 1, y: 0 }}
         >
           {/* Selected summary */}
-          <div className="mt-5 bg-green-50 rounded-xl p-4 flex items-center gap-3">
-            <Clock className="w-5 h-5 text-green-700 flex-shrink-0" />
+          <div className="mt-5 bg-green-50 rounded-2xl p-4 flex items-center gap-3">
+            <Clock className="w-5 h-5 text-[#0C6B4E] flex-shrink-0" />
             <div>
               <p className="text-sm font-semibold text-green-900 font-[family-name:var(--font-heading)]">
                 {selectedDate} at {selectedTime}
               </p>
-              <p className="text-xs text-green-700">20–30 minute video consultation</p>
+              <p className="text-xs text-[#0C6B4E]">20–30 minute video consultation</p>
             </div>
           </div>
 
           <motion.button
             onClick={handleConfirm}
             whileTap={{ scale: 0.98 }}
-            className="w-full mt-4 px-6 py-4 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors text-base font-[family-name:var(--font-heading)] flex items-center justify-center gap-2"
+            className="w-full mt-4 px-6 py-4 bg-[#E8872B] text-white font-semibold rounded-2xl hover:bg-[#d47a24] transition-colors text-base font-[family-name:var(--font-heading)] flex items-center justify-center gap-2 shadow-lg shadow-orange-200/50"
           >
             Confirm Booking
           </motion.button>
         </motion.div>
       )}
+
+      {/* Can't find a time? fallback */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="mt-8 border border-warm-100 rounded-2xl p-5 bg-warm-50/50"
+      >
+        <p className="text-sm font-semibold text-warm-800 mb-3 font-[family-name:var(--font-heading)]">
+          Can&apos;t find a time that works?
+        </p>
+        <div className="space-y-2.5">
+          <a
+            href="https://wa.me/447000000000?text=Hi%2C%20I%27d%20like%20to%20book%20a%20consultation%20but%20can%27t%20find%20a%20suitable%20time."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 p-3 bg-white rounded-xl border border-warm-100 hover:border-[#0C6B4E] transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
+              <MessageCircle className="w-4 h-4 text-[#0C6B4E]" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-warm-800">Message us on WhatsApp</p>
+              <p className="text-xs text-warm-400">Usually reply within a few hours</p>
+            </div>
+          </a>
+          <a
+            href="tel:+447000000000"
+            className="flex items-center gap-3 p-3 bg-white rounded-xl border border-warm-100 hover:border-[#0C6B4E] transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 group-hover:bg-green-100 transition-colors">
+              <Phone className="w-4 h-4 text-[#0C6B4E]" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-warm-800">Request a callback</p>
+              <p className="text-xs text-warm-400">We&apos;ll call you to arrange a time</p>
+            </div>
+          </a>
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -41,8 +41,11 @@ export default function PostcodeScreen({ onNext }: PostcodeScreenProps) {
       <h2 className="text-2xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
         Where&apos;s your project?
       </h2>
-      <p className="text-sm text-warm-500 mb-8">
-        We install within 60 miles of Warrington. Let&apos;s check we can reach you.
+      <p className="text-sm text-warm-500 mb-1">
+        We install within 50 miles of Warrington. Let&apos;s check we can reach you.
+      </p>
+      <p className="text-xs text-warm-400 mb-8 font-[family-name:var(--font-heading)]">
+        Why we ask: We serve homes within 50 miles of Warrington. This confirms we can reach you.
       </p>
 
       <div className="space-y-4">
@@ -51,7 +54,7 @@ export default function PostcodeScreen({ onNext }: PostcodeScreenProps) {
             type="text"
             value={input}
             onChange={(e) => { setInput(e.target.value.toUpperCase()); setResult(null); }}
-            className="flex-1 px-4 py-3.5 rounded-xl border-2 border-warm-100 bg-white text-warm-900 text-base font-medium tracking-wider uppercase focus:border-green-700 focus:outline-none transition-colors"
+            className="flex-1 px-4 py-3.5 rounded-2xl border-2 border-warm-100 bg-white text-warm-900 text-base font-medium tracking-wider uppercase focus:border-[#0C6B4E] focus:outline-none transition-colors"
             placeholder="e.g. WA1 1AA"
             maxLength={8}
             onKeyDown={(e) => { if (e.key === 'Enter' && input.length >= 5) handleCheck(); }}
@@ -60,7 +63,7 @@ export default function PostcodeScreen({ onNext }: PostcodeScreenProps) {
             onClick={handleCheck}
             disabled={checking || input.length < 5}
             whileTap={{ scale: 0.95 }}
-            className="px-6 py-3.5 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors text-sm font-[family-name:var(--font-heading)] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-6 py-3.5 bg-orange-500 text-white font-semibold rounded-2xl hover:bg-orange-600 transition-colors text-sm font-[family-name:var(--font-heading)] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-orange-500/20"
           >
             {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Check'}
           </motion.button>
@@ -150,7 +153,7 @@ export default function PostcodeScreen({ onNext }: PostcodeScreenProps) {
           animate={{ opacity: 1, y: 0 }}
           onClick={handleContinue}
           whileTap={{ scale: 0.98 }}
-          className="w-full mt-6 px-6 py-4 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors text-base font-[family-name:var(--font-heading)] flex items-center justify-center gap-2"
+          className="w-full mt-6 px-6 py-4 bg-orange-500 text-white font-semibold rounded-2xl hover:bg-orange-600 transition-colors text-base font-[family-name:var(--font-heading)] flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
         >
           Continue
           <ArrowRight className="w-4 h-4" />

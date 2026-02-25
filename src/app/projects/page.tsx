@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import SectionHeading from '@/components/SectionHeading';
 import CTABanner from '@/components/CTABanner';
@@ -18,6 +19,7 @@ const projects = [
     roomType: 'Bedroom',
     description: 'Floor-to-ceiling wardrobes with custom sage green doors and brass handles. Transformed a dated alcove into a seamless storage wall.',
     finishes: ['Sage green matt doors', 'Brass T-bar handles', 'Soft-close drawers'],
+    image: '/images/stock/project-1.jpg',
   },
   {
     id: 'tunbridge-walkin',
@@ -27,6 +29,7 @@ const projects = [
     roomType: 'Dressing Room',
     description: 'Full room fit-out with integrated LED lighting, mirrored panels, and custom island unit. Premium oak-effect interiors throughout.',
     finishes: ['White gloss doors', 'Integrated LED strips', 'Mirrored end panels', 'Oak interior'],
+    image: '/images/stock/project-2.jpg',
   },
   {
     id: 'croydon-kids',
@@ -36,6 +39,7 @@ const projects = [
     roomType: 'Bedroom',
     description: 'Smart, functional storage for a growing family. Standard IKEA doors with professional fitting — clean, tidy, and done in half a day.',
     finishes: ['White standard doors', 'Wire baskets', 'Adjustable shelving'],
+    image: '/images/stock/project-3.jpg',
   },
   {
     id: 'richmond-guest',
@@ -45,6 +49,7 @@ const projects = [
     roomType: 'Bedroom',
     description: 'Compact but elegant. Custom navy doors with chrome handles turned a small guest room into a boutique-hotel feel.',
     finishes: ['Navy matt doors', 'Chrome knob handles', 'Interior lighting'],
+    image: '/images/stock/project-4.jpg',
   },
   {
     id: 'sevenoaks-master',
@@ -54,6 +59,7 @@ const projects = [
     roomType: 'Bedroom',
     description: 'Matching his-and-hers wardrobes flanking the bed. Integrated lighting, pull-out trouser rails, and jewellery drawers.',
     finishes: ['Cashmere matt doors', 'Brushed gold handles', 'Pull-out rails', 'Jewellery inserts'],
+    image: '/images/stock/project-5.jpg',
   },
   {
     id: 'bromley-hallway',
@@ -63,6 +69,7 @@ const projects = [
     roomType: 'Hallway',
     description: 'Maximised an awkward hallway space with slim Pax units. Coats, shoes, and bags — all hidden behind clean white doors.',
     finishes: ['White standard doors', 'Shoe rack inserts', 'Hooks and rails'],
+    image: '/images/stock/project-6.jpg',
   },
 ];
 
@@ -114,11 +121,14 @@ export default function ProjectsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (
               <article key={project.id} id={project.id} className="group">
-                {/* Before/After image placeholder */}
-                <div className="aspect-[4/3] bg-warm-100 rounded-2xl overflow-hidden relative mb-4">
-                  <div className="absolute inset-0 flex items-center justify-center text-warm-300 text-sm">
-                    Before / After Photo
-                  </div>
+                <div className="aspect-[4/3] rounded-2xl overflow-hidden relative mb-4">
+                  <Image
+                    src={project.image}
+                    alt={`${project.title} — ${project.packageUsed} package installation in ${project.location}`}
+                    width={600}
+                    height={450}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                   <div className="absolute top-3 left-3 flex gap-2">
                     <span className="text-xs font-medium bg-white/90 backdrop-blur-sm text-warm-700 px-2.5 py-1 rounded-full font-[family-name:var(--font-heading)]">
                       {project.roomType}

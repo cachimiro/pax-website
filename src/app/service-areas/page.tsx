@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { MapPin, ArrowRight, CheckCircle } from 'lucide-react';
 import SectionHeading from '@/components/SectionHeading';
 import CTABanner from '@/components/CTABanner';
-import ImagePlaceholder from '@/components/ImagePlaceholder';
 
 export const metadata: Metadata = {
   title: 'Service Areas',
@@ -182,10 +182,22 @@ export default function ServiceAreasPage() {
 
           {/* Installation image strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-16">
-            <ImagePlaceholder label="Wardrobe doors being fitted" variant="fitting" aspect="portrait" />
-            <ImagePlaceholder label="Custom trim installation" variant="detail" aspect="portrait" />
-            <ImagePlaceholder label="Interior layout assembly" variant="wardrobe" aspect="portrait" />
-            <ImagePlaceholder label="Finished wardrobe" variant="room" aspect="portrait" />
+            {[
+              { src: '/images/stock/service-1.jpg', alt: 'Wardrobe doors being fitted' },
+              { src: '/images/stock/service-2.jpg', alt: 'Custom trim installation' },
+              { src: '/images/stock/service-3.jpg', alt: 'Interior layout assembly' },
+              { src: '/images/stock/service-4.jpg', alt: 'Finished wardrobe in bedroom' },
+            ].map((img) => (
+              <div key={img.src} className="aspect-[3/4] rounded-2xl overflow-hidden">
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  width={400}
+                  height={533}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
           </div>
 
           <h3 className="text-xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">

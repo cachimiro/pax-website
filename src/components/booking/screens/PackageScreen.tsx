@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, HelpCircle } from 'lucide-react';
 import SelectionCard from '../SelectionCard';
 import MiniTestimonial from '../MiniTestimonial';
 
@@ -9,140 +9,152 @@ interface PackageScreenProps {
   value: string;
   onChange: (v: string) => void;
   onNext: () => void;
-  postcodeLocation: string;
+  postcodeLocation?: string;
 }
 
 const packages = [
   {
     id: 'budget',
     name: 'Budget',
+    tagline: 'Smart & Simple',
     price: 'From £800',
-    bestFor: 'Smart storage on a budget',
-    features: ['IKEA Pax frames', 'Standard doors', 'Professional install'],
-    icon: (
-      <div className="w-10 h-10 rounded-xl bg-warm-100 flex items-center justify-center text-warm-500 font-bold text-sm font-[family-name:var(--font-heading)]">£</div>
-    ),
+    features: ['IKEA Pax frames', 'Standard doors', 'Professional installation'],
+    bestFor: 'Functional storage without overspending',
   },
   {
     id: 'paxbespoke',
     name: 'PaxBespoke',
+    tagline: 'Best Value',
     price: 'From £1,500',
-    bestFor: 'Custom look, not the custom price',
-    features: ['Custom bespoke doors', 'Colour-matched trims', 'Premium interior'],
-    badge: 'Most Popular',
-    icon: (
-      <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm font-[family-name:var(--font-heading)]">££</div>
-    ),
+    features: ['IKEA Pax frames', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior'],
+    bestFor: 'Custom look without the custom price',
+    popular: true,
   },
   {
     id: 'select',
     name: 'Select',
+    tagline: 'Full Bespoke',
     price: 'From £2,500',
-    bestFor: 'Fully bespoke, designer finish',
-    features: ['Premium doors & panels', 'Integrated lighting', 'Full project management'],
-    icon: (
-      <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm font-[family-name:var(--font-heading)]">£££</div>
-    ),
-  },
-  {
-    id: 'unsure',
-    name: 'Not sure yet',
-    price: "We'll help you choose",
-    bestFor: "That's what the consultation is for",
-    features: [],
-    icon: (
-      <div className="w-10 h-10 rounded-xl bg-warm-50 flex items-center justify-center text-warm-400 font-bold text-sm">?</div>
-    ),
+    features: ['IKEA Pax frames', 'Premium bespoke doors', 'Integrated lighting', 'Full custom interior'],
+    bestFor: 'Designer-level finish, end to end',
   },
 ];
 
 export default function PackageScreen({ value, onChange, onNext, postcodeLocation }: PackageScreenProps) {
   return (
-    <div className="max-w-lg mx-auto">
-      <h2 className="text-2xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
-        What finish level suits you?
-      </h2>
-      <p className="text-sm text-warm-500 mb-6">
-        Every package uses IKEA Pax frames. The difference is in the finish. Tap to select.
-      </p>
+    <div>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <h2 className="text-2xl md:text-3xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
+          Which package interests you?
+        </h2>
+        <p className="text-warm-500 mb-1">
+          {postcodeLocation
+            ? `Great — we cover ${postcodeLocation}. Now, which finish level suits you?`
+            : 'Pick the finish level that suits your space and budget.'}
+        </p>
+        <p className="text-xs text-warm-400 mb-6 font-[family-name:var(--font-heading)]">
+          Why we ask: Knowing your preference helps us prepare relevant examples and pricing for your call.
+        </p>
+      </motion.div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 mb-4">
         {packages.map((pkg, i) => (
           <motion.div
             key={pkg.id}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}
+            transition={{ delay: 0.15 + i * 0.05 }}
           >
             <SelectionCard
               selected={value === pkg.id}
               onClick={() => onChange(pkg.id)}
-              badge={pkg.badge}
             >
-              <div className="flex gap-4 pr-8">
-                <div className="flex-shrink-0 mt-0.5">{pkg.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <p className="text-[15px] font-semibold text-warm-900 font-[family-name:var(--font-heading)]">{pkg.name}</p>
-                    <span className="text-sm font-bold text-green-700 font-[family-name:var(--font-heading)]">{pkg.price}</span>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-bold text-warm-900 font-[family-name:var(--font-heading)]">
+                      {pkg.name}
+                    </p>
+                    {pkg.popular && (
+                      <span className="text-[10px] font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full font-[family-name:var(--font-heading)]">
+                        Most Popular
+                      </span>
+                    )}
+                    <span className="text-[10px] font-semibold text-warm-400 uppercase tracking-wider font-[family-name:var(--font-heading)]">
+                      {pkg.tagline}
+                    </span>
                   </div>
-                  <p className="text-sm text-warm-500 mt-0.5">{pkg.bestFor}</p>
-                  {pkg.features.length > 0 && (
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-                      {pkg.features.map((f) => (
-                        <span key={f} className="flex items-center gap-1 text-xs text-warm-500">
-                          <Check className="w-3 h-3 text-green-600" />
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <p className="text-xs text-warm-500 mb-2">{pkg.bestFor}</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1">
+                    {pkg.features.map((f) => (
+                      <span key={f} className="flex items-center gap-1 text-xs text-warm-600">
+                        <Check className="w-3 h-3 text-green-500" />
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-lg font-bold text-warm-900 font-[family-name:var(--font-heading)]">
+                    {pkg.price}
+                  </p>
+                  <p className="text-[10px] text-warm-400">fitted</p>
                 </div>
               </div>
             </SelectionCard>
           </motion.div>
         ))}
+
+        {/* Not sure option */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+        >
+          <SelectionCard
+            selected={value === 'unsure'}
+            onClick={() => onChange('unsure')}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                value === 'unsure' ? 'bg-orange-50' : 'bg-warm-50'
+              }`}>
+                <HelpCircle className={`w-5 h-5 ${
+                  value === 'unsure' ? 'text-orange-500' : 'text-warm-400'
+                }`} />
+              </div>
+              <div>
+                <p className="font-semibold text-warm-900 text-sm font-[family-name:var(--font-heading)]">
+                  Not sure yet — help me decide
+                </p>
+                <p className="text-xs text-warm-500">
+                  We&apos;ll recommend the right package on the call based on your space and budget.
+                </p>
+              </div>
+            </div>
+          </SelectionCard>
+        </motion.div>
       </div>
 
-      {/* Contextual social proof after package selection */}
-      {value === 'paxbespoke' && (
-        <MiniTestimonial
-          quote="Custom doors on IKEA frames — you genuinely can't tell the difference from a £5k wardrobe."
-          name="James T."
-          location={postcodeLocation || 'Didsbury, Manchester'}
-        />
-      )}
-      {value === 'select' && (
-        <MiniTestimonial
-          quote="The integrated lighting and designer handles made it feel like a boutique dressing room."
-          name="Priya K."
-          location="Wilmslow, Cheshire"
-        />
-      )}
-      {value === 'budget' && (
-        <MiniTestimonial
-          quote="Looks great, fits perfectly, and was installed in a morning. Exactly what we needed."
-          name="Tom R."
-          location="Wigan"
-        />
-      )}
+      <MiniTestimonial
+        quote="I wasn't sure which package to pick. They recommended PaxBespoke and it was perfect."
+        name="Sarah M."
+        location="Altrincham"
+      />
 
-      <p className="text-xs text-warm-400 mt-4 text-center">
-        Prices are starting points. Your consultation confirms the exact quote — no surprises.
-      </p>
-
-      {value && (
-        <motion.button
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={onNext}
-          whileTap={{ scale: 0.98 }}
-          className="w-full mt-5 px-6 py-4 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors text-base font-[family-name:var(--font-heading)] flex items-center justify-center gap-2"
-        >
-          Continue
-          <ArrowRight className="w-4 h-4" />
-        </motion.button>
-      )}
+      <motion.button
+        onClick={onNext}
+        disabled={!value}
+        whileTap={{ scale: 0.98 }}
+        className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#E8872B] text-white font-semibold rounded-2xl hover:bg-[#d47a24] transition-all disabled:opacity-40 disabled:cursor-not-allowed font-[family-name:var(--font-heading)] shadow-lg shadow-orange-200/50"
+      >
+        Continue
+        <ArrowRight className="w-4 h-4" />
+      </motion.button>
     </div>
   );
 }

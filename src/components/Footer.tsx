@@ -28,6 +28,9 @@ const footerLinks = {
 export default function Footer() {
   return (
     <footer className="bg-warm-900 text-warm-300">
+      {/* Top accent line */}
+      <div className="h-1 bg-gradient-to-r from-green-700 via-orange-500 to-green-700" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand column */}
@@ -43,17 +46,23 @@ export default function Footer() {
               IKEA Pax wardrobe specialists. Custom finishes, expert installation,
               delivered in 1–2 days. Serving homes within 50 miles of Warrington, UK.
             </p>
-            <div className="space-y-2 text-sm">
-              <a href="tel:+447000000000" className="flex items-center gap-2 hover:text-white transition-colors">
-                <Phone className="w-4 h-4 text-green-500" />
+            <div className="space-y-2.5 text-sm">
+              <a href="tel:+447000000000" className="flex items-center gap-2.5 hover:text-white transition-colors group">
+                <div className="w-8 h-8 rounded-lg bg-warm-800 group-hover:bg-green-700 flex items-center justify-center transition-colors">
+                  <Phone className="w-3.5 h-3.5 text-green-500 group-hover:text-white" />
+                </div>
                 07000 000 000
               </a>
-              <a href="mailto:hello@paxbespoke.uk" className="flex items-center gap-2 hover:text-white transition-colors">
-                <Mail className="w-4 h-4 text-green-500" />
+              <a href="mailto:hello@paxbespoke.uk" className="flex items-center gap-2.5 hover:text-white transition-colors group">
+                <div className="w-8 h-8 rounded-lg bg-warm-800 group-hover:bg-green-700 flex items-center justify-center transition-colors">
+                  <Mail className="w-3.5 h-3.5 text-green-500 group-hover:text-white" />
+                </div>
                 hello@paxbespoke.uk
               </a>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-green-500" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-warm-800 flex items-center justify-center">
+                  <MapPin className="w-3.5 h-3.5 text-green-500" />
+                </div>
                 Warrington &amp; North West (50-mile radius)
               </div>
             </div>
@@ -62,7 +71,7 @@ export default function Footer() {
                 href="https://instagram.com/paxbespoke"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 flex items-center justify-center rounded-lg bg-warm-800 hover:bg-green-700 transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-lg bg-warm-800 hover:bg-orange-500 transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram className="w-4 h-4" />
@@ -71,7 +80,7 @@ export default function Footer() {
                 href="https://facebook.com/paxbespoke"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 flex items-center justify-center rounded-lg bg-warm-800 hover:bg-green-700 transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-lg bg-warm-800 hover:bg-orange-500 transition-colors"
                 aria-label="Facebook"
               >
                 <Facebook className="w-4 h-4" />
@@ -82,7 +91,7 @@ export default function Footer() {
           {/* Link columns */}
           <div>
             <h4 className="text-white font-semibold text-sm mb-4 font-[family-name:var(--font-heading)]">Services</h4>
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {footerLinks.services.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm hover:text-white transition-colors">
@@ -95,7 +104,7 @@ export default function Footer() {
 
           <div>
             <h4 className="text-white font-semibold text-sm mb-4 font-[family-name:var(--font-heading)]">Company</h4>
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm hover:text-white transition-colors">
@@ -108,7 +117,7 @@ export default function Footer() {
 
           <div>
             <h4 className="text-white font-semibold text-sm mb-4 font-[family-name:var(--font-heading)]">Support</h4>
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm hover:text-white transition-colors">

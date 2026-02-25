@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Check, X, ArrowRight } from 'lucide-react';
 import PackageCard from '@/components/PackageCard';
 import SectionHeading from '@/components/SectionHeading';
+import { ServiceSchema } from '@/components/StructuredData';
 import TestimonialCard from '@/components/TestimonialCard';
 import CTABanner from '@/components/CTABanner';
 
@@ -99,9 +101,16 @@ const packageDetails = [
   },
 ];
 
+const packageImages = {
+  budget: ['/images/stock/project-3.jpg', '/images/stock/project-6.jpg', '/images/stock/wardrobe-1.jpg'],
+  paxbespoke: ['/images/stock/project-1.jpg', '/images/stock/project-4.jpg', '/images/stock/wardrobe-2.jpg'],
+  select: ['/images/stock/project-2.jpg', '/images/stock/project-5.jpg', '/images/stock/wardrobe-3.jpg'],
+};
+
 export default function PackagesPage() {
   return (
     <>
+      <ServiceSchema />
       {/* Hero */}
       <section className="section-padding bg-warm-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -203,16 +212,22 @@ export default function PackagesPage() {
                 </Link>
               </div>
               <div>
-                {/* Project images placeholder — replace with real photos for this package */}
+                {/* Project images */}
                 <div className="grid grid-cols-2 gap-3">
-                  {[1, 2, 3].map((i) => (
+                  {(packageImages[pkg.id as keyof typeof packageImages] || packageImages.budget).map((img, i) => (
                     <div
                       key={i}
-                      className={`bg-warm-100 rounded-xl flex items-center justify-center text-warm-300 text-xs ${
-                        i === 1 ? 'col-span-2 aspect-[16/9]' : 'aspect-square'
+                      className={`rounded-xl overflow-hidden ${
+                        i === 0 ? 'col-span-2 aspect-[16/9]' : 'aspect-square'
                       }`}
                     >
-                      {pkg.name} Project Photo {i}
+                      <Image
+                        src={img}
+                        alt={`${pkg.name} package example ${i + 1}`}
+                        width={i === 0 ? 800 : 400}
+                        height={i === 0 ? 450 : 400}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   ))}
                 </div>

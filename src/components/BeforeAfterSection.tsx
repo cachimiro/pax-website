@@ -1,0 +1,118 @@
+import Link from 'next/link';
+import Image from 'next/image';
+import { ArrowRight } from 'lucide-react';
+import ScrollReveal from './ScrollReveal';
+import SectionHeading from './SectionHeading';
+
+const projects = [
+  {
+    id: 'project-1',
+    title: 'Master Bedroom Suite',
+    location: 'Hale, Cheshire',
+    packageUsed: 'PaxBespoke',
+    before: '/images/stock/before-1.jpg',
+    after: '/images/stock/after-1.jpg',
+  },
+  {
+    id: 'project-2',
+    title: 'Walk-in Dressing Room',
+    location: 'Wilmslow, Cheshire',
+    packageUsed: 'Select',
+    before: '/images/stock/before-2.jpg',
+    after: '/images/stock/after-2.jpg',
+  },
+  {
+    id: 'project-3',
+    title: 'Kids Room Storage',
+    location: 'Stockport, Manchester',
+    packageUsed: 'Budget',
+    before: '/images/stock/before-3.jpg',
+    after: '/images/stock/after-3.jpg',
+  },
+];
+
+export default function BeforeAfterSection() {
+  return (
+    <section className="section-padding bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal>
+          <div className="flex items-end justify-between mb-12">
+            <SectionHeading
+              label="Real Transformations"
+              title="See the difference"
+              align="left"
+            />
+            <Link
+              href="/projects"
+              className="hidden md:inline-flex items-center text-sm font-semibold text-green-700 hover:text-green-900 transition-colors font-[family-name:var(--font-heading)]"
+            >
+              View all projects
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
+          </div>
+        </ScrollReveal>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {projects.map((project, i) => (
+            <ScrollReveal key={project.id} delay={i * 0.1}>
+              <Link href={`/projects#${project.id}`} className="group block">
+                <div className="space-y-3">
+                  {/* Before / After pair */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative rounded-xl overflow-hidden">
+                      <Image
+                        src={project.before}
+                        alt={`${project.title} — before installation`}
+                        width={400}
+                        height={400}
+                        className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute bottom-2 left-2 text-[10px] font-semibold uppercase tracking-wider bg-warm-900/70 text-white px-2 py-0.5 rounded-md font-[family-name:var(--font-heading)]">
+                        Before
+                      </span>
+                    </div>
+                    <div className="relative rounded-xl overflow-hidden">
+                      <Image
+                        src={project.after}
+                        alt={`${project.title} — after installation`}
+                        width={400}
+                        height={400}
+                        className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute bottom-2 left-2 text-[10px] font-semibold uppercase tracking-wider bg-green-700/80 text-white px-2 py-0.5 rounded-md font-[family-name:var(--font-heading)]">
+                        After
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold text-warm-900 group-hover:text-green-700 transition-colors font-[family-name:var(--font-heading)]">
+                        {project.title}
+                      </h3>
+                      <p className="text-xs text-warm-500">{project.location}</p>
+                    </div>
+                    <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full font-[family-name:var(--font-heading)]">
+                      {project.packageUsed}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            </ScrollReveal>
+          ))}
+        </div>
+
+        <div className="mt-8 text-center md:hidden">
+          <Link
+            href="/projects"
+            className="inline-flex items-center text-sm font-semibold text-green-700 hover:text-green-900 transition-colors font-[family-name:var(--font-heading)]"
+          >
+            View all projects
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}

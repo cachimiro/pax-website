@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Award, Users, Zap, Heart } from 'lucide-react';
 import SectionHeading from '@/components/SectionHeading';
 import TestimonialCard from '@/components/TestimonialCard';
@@ -72,9 +73,14 @@ export default function AboutPage() {
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
-            {/* Team/workshop photo placeholder */}
-            <div className="bg-warm-100 rounded-2xl aspect-[4/3] flex items-center justify-center">
-              <span className="text-warm-300 text-sm">Team / Workshop Photo</span>
+            <div className="rounded-2xl overflow-hidden aspect-[4/3]">
+              <Image
+                src="/images/stock/team-workshop.jpg"
+                alt="PaxBespoke workshop — wardrobe assembly and custom finishing"
+                width={800}
+                height={600}
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>

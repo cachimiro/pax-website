@@ -39,8 +39,11 @@ export default function SpaceScreen({ onNext }: SpaceScreenProps) {
       <h2 className="text-2xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
         Tell us about your space
       </h2>
-      <p className="text-sm text-warm-500 mb-6">
+      <p className="text-sm text-warm-500 mb-1">
         Whatever you have is perfect. Pick what works for you — nothing is required.
+      </p>
+      <p className="text-xs text-warm-400 mb-6 font-[family-name:var(--font-heading)]">
+        Why we ask: Photos or rough sizes help us give you a more accurate price range on the call. A phone photo like you&apos;d send a friend is perfect.
       </p>
 
       {/* Three option tabs */}
@@ -78,7 +81,7 @@ export default function SpaceScreen({ onNext }: SpaceScreenProps) {
           className="space-y-4"
         >
           <label className="block w-full cursor-pointer">
-            <div className="border-2 border-dashed border-warm-200 rounded-xl p-8 text-center hover:border-green-600 hover:bg-green-50/30 transition-colors">
+            <div className="border-2 border-dashed border-warm-200 rounded-2xl p-8 text-center hover:border-[#0C6B4E] hover:bg-green-50/30 transition-colors">
               <Upload className="w-6 h-6 text-warm-400 mx-auto mb-2" />
               <p className="text-sm font-medium text-warm-700 font-[family-name:var(--font-heading)]">
                 Tap to upload photos
@@ -147,7 +150,7 @@ export default function SpaceScreen({ onNext }: SpaceScreenProps) {
             value={measurements}
             onChange={(e) => setMeasurements(e.target.value)}
             rows={3}
-            className="w-full px-4 py-3 rounded-xl border-2 border-warm-100 bg-white text-warm-900 text-sm resize-none focus:border-green-700 focus:outline-none transition-colors"
+            className="w-full px-4 py-3 rounded-2xl border-2 border-warm-100 bg-white text-warm-900 text-sm resize-none focus:border-[#0C6B4E] focus:outline-none transition-colors"
             placeholder="e.g. Wall is about 250cm wide, 240cm high, 60cm deep"
           />
         </motion.div>
@@ -178,7 +181,7 @@ export default function SpaceScreen({ onNext }: SpaceScreenProps) {
       <motion.button
         onClick={handleContinue}
         whileTap={{ scale: 0.98 }}
-        className="w-full mt-6 px-6 py-4 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-900 transition-colors text-base font-[family-name:var(--font-heading)] flex items-center justify-center gap-2"
+        className="w-full mt-6 px-6 py-4 bg-orange-500 text-white font-semibold rounded-2xl hover:bg-orange-600 transition-colors text-base font-[family-name:var(--font-heading)] flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
       >
         Continue
         <ArrowRight className="w-4 h-4" />
