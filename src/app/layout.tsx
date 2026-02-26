@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import MobileCTABar from "@/components/MobileCTABar";
-import { LocalBusinessSchema } from "@/components/StructuredData";
 
 export const metadata: Metadata = {
   title: {
@@ -58,11 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <LocalBusinessSchema />
-        <Header />
-        <main className="pt-16 md:pt-20">{children}</main>
-        <Footer />
-        <MobileCTABar />
+        {children}
       </body>
     </html>
   );

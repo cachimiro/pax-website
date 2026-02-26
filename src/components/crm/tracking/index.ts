@@ -1,0 +1,6 @@
+export { default as OverviewTab } from './OverviewTab'
+export { default as FunnelTab } from './FunnelTab'
+export { default as SourcesTab } from './SourcesTab'
+export { default as PagesTab } from './PagesTab'
+export { default as SpeedTab } from './SpeedTab'
+export { default as DropoffTab } from './DropoffTab'

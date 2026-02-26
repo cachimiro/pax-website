@@ -180,6 +180,72 @@ h1, h2, h3, h4, h5, h6 {
   pointer-events: none;
 }
 
+/* CRM shimmer loading effect */
+.shimmer {
+  background: linear-gradient(90deg, var(--warm-100) 25%, var(--warm-50) 50%, var(--warm-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* CRM page entrance */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-page-enter {
+  animation: pageEnter 0.3s ease-out forwards;
+}
+
+/* Scale-in for modals */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+/* Stagger children */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 200ms; }
+
+/* Checkbox tick animation */
+@keyframes checkTick {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.animate-check {
+  animation: checkTick 0.25s ease-out forwards;
+}
+
+/* Success flash */
+@keyframes successFlash {
+  0% { box-shadow: 0 0 0 0 rgba(16, 148, 100, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 148, 100, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 148, 100, 0); }
+}
+.animate-success-flash {
+  animation: successFlash 0.6s ease-out;
+}
+
+/* Notification auto-dismiss bar */
+@keyframes shrinkBar {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+.animate-shrink-bar {
+  animation: shrinkBar 8s linear forwards;
+}
+
 input:focus, select:focus, textarea:focus {
   outline: 2px solid var(--green-500);
   outline-offset: 2px;
@@ -195,3 +261,4 @@ input:focus, select:focus, textarea:focus {
   background: var(--warm-300);
   border-radius: 3px;
 }
+

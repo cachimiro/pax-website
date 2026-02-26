@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
+import { getTrackingData } from '@/components/TrackingScript';
 
 import StepBar from '@/components/booking/StepBar';
 import ScreenTransition from '@/components/booking/ScreenTransition';
@@ -209,7 +210,7 @@ function BookingFlowInner() {
 
           {step === 8 && (
             <CalendarScreen
-              onNext={(date, time) => {
+              onNext={async (date, time) => {
                 updateField('date', date);
                 updateField('time', time);
                 trackEvent('consult_submit', {
@@ -222,6 +223,35 @@ function BookingFlowInner() {
                   hasPhotos: formData.photos.length > 0,
                   hasMeasurements: formData.measurements.length > 0,
                 });
+
+                // Submit to CRM with tracking attribution
+                try {
+                  const tracking = getTrackingData();
+                  await fetch('/api/booking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      name: formData.name,
+                      email: formData.email,
+                      phone: formData.phone,
+                      postcode: formData.postcode,
+                      postcodeLocation: formData.postcodeLocation,
+                      room: formData.room,
+                      style: formData.style,
+                      packageChoice: formData.packageChoice,
+                      budgetRange: formData.budgetRange,
+                      timeline: formData.timeline,
+                      measurements: formData.measurements,
+                      whatsappOptIn: formData.whatsappOptIn,
+                      date,
+                      time,
+                      ...tracking,
+                    }),
+                  });
+                } catch {
+                  // Don't block the user flow if CRM submission fails
+                }
+
                 goTo(9);
               }}
             />
