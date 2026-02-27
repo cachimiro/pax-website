@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { Instagram, Facebook, Phone, Mail, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { Instagram, Facebook, Phone, Mail, MapPin, ChevronDown } from 'lucide-react';
 
 const footerLinks = {
   services: [
@@ -25,14 +28,40 @@ const footerLinks = {
   ],
 };
 
+function FooterAccordion({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="border-b border-warm-800 md:border-0">
+      {/* Mobile: accordion toggle */}
+      <button
+        className="md:hidden w-full flex items-center justify-between py-4 text-left"
+        onClick={() => setOpen(!open)}
+      >
+        <h4 className="text-white font-semibold text-sm font-[family-name:var(--font-heading)]">{title}</h4>
+        <ChevronDown className={`w-4 h-4 text-warm-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {/* Mobile: collapsible content */}
+      <div className={`md:hidden overflow-hidden transition-all duration-200 ${open ? 'max-h-60 pb-4' : 'max-h-0'}`}>
+        {children}
+      </div>
+      {/* Desktop: always visible */}
+      <div className="hidden md:block">
+        <h4 className="text-white font-semibold text-sm mb-4 font-[family-name:var(--font-heading)]">{title}</h4>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function Footer() {
   return (
-    <footer className="bg-warm-900 text-warm-300">
+    <footer className="bg-warm-900 text-warm-300 pb-20 lg:pb-0">
       {/* Top accent line */}
       <div className="h-1 bg-gradient-to-r from-green-700 via-orange-500 to-green-700" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 md:gap-10">
           {/* Brand column */}
           <div className="lg:col-span-2">
             <Image
@@ -72,26 +101,25 @@ export default function Footer() {
                 href="https://instagram.com/paxbespoke"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 flex items-center justify-center rounded-lg bg-warm-800 hover:bg-orange-500 transition-colors"
+                className="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-warm-800 hover:bg-orange-500 transition-colors"
                 aria-label="Instagram"
               >
-                <Instagram className="w-4 h-4" />
+                <Instagram className="w-5 h-5 sm:w-4 sm:h-4" />
               </a>
               <a
                 href="https://facebook.com/paxbespoke"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 flex items-center justify-center rounded-lg bg-warm-800 hover:bg-orange-500 transition-colors"
+                className="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-warm-800 hover:bg-orange-500 transition-colors"
                 aria-label="Facebook"
               >
-                <Facebook className="w-4 h-4" />
+                <Facebook className="w-5 h-5 sm:w-4 sm:h-4" />
               </a>
             </div>
           </div>
 
-          {/* Link columns */}
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-4 font-[family-name:var(--font-heading)]">Services</h4>
+          {/* Link columns — accordion on mobile, static on desktop */}
+          <FooterAccordion title="Services">
             <ul className="space-y-2.5">
               {footerLinks.services.map((link) => (
                 <li key={link.href}>
@@ -101,10 +129,9 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </FooterAccordion>
 
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-4 font-[family-name:var(--font-heading)]">Company</h4>
+          <FooterAccordion title="Company">
             <ul className="space-y-2.5">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
@@ -114,10 +141,9 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </FooterAccordion>
 
-          <div>
-            <h4 className="text-white font-semibold text-sm mb-4 font-[family-name:var(--font-heading)]">Support</h4>
+          <FooterAccordion title="Support">
             <ul className="space-y-2.5">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
@@ -127,10 +153,10 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </FooterAccordion>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-warm-800 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-warm-500">
+        <div className="mt-10 md:mt-12 pt-8 border-t border-warm-800 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-warm-500">
           <p>&copy; {new Date().getFullYear()} PaxBespoke. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>

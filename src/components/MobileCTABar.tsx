@@ -23,7 +23,7 @@ export default function MobileCTABar() {
         visible ? 'translate-y-0' : 'translate-y-full'
       }`}
     >
-      <div className="bg-white/95 backdrop-blur-md border-t border-warm-100 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+      <div className="bg-white/95 backdrop-blur-md border-t border-warm-100 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="flex items-center gap-3">
           <Link
             href="/book"

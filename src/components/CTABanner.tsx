@@ -21,23 +21,28 @@ export default function CTABanner({
       <div className="absolute top-0 right-0 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-green-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
 
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 text-center">
         <ScrollReveal>
           <h2 className="text-2xl md:text-4xl font-bold text-white mb-4 font-[family-name:var(--font-heading)]">
             {title}
           </h2>
-          <p className="text-white text-lg mb-8 max-w-xl mx-auto">
+          <p className="text-white text-base sm:text-lg mb-8 max-w-xl mx-auto">
             {description}
           </p>
           <Link
             href={buttonHref}
-            className="inline-flex items-center px-8 py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all duration-200 text-base font-[family-name:var(--font-heading)] shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 group"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all duration-200 text-base font-[family-name:var(--font-heading)] shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-[0.97] group"
           >
             {buttonText}
             <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5" />
           </Link>
           <p className="text-xs text-white mt-4 font-[family-name:var(--font-heading)]">
-            15–45 min video call · No exact measurements needed · Get a clear price range
+            <span className="hidden sm:inline">15–45 min video call · No exact measurements needed · Get a clear price range</span>
+            <span className="sm:hidden flex flex-col items-center gap-0.5">
+              <span>15–45 min video call</span>
+              <span>No exact measurements needed</span>
+              <span>Get a clear price range</span>
+            </span>
           </p>
         </ScrollReveal>
       </div>

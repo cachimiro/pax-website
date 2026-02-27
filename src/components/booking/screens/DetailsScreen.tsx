@@ -61,7 +61,7 @@ export default function DetailsScreen({ name, email, phone, whatsappOptIn, onCha
               value={name}
               onChange={(e) => { onChange('name', e.target.value); setErrors(prev => ({ ...prev, name: '' })); }}
               placeholder="First and last name"
-              className={`w-full pl-10 pr-4 py-3.5 rounded-2xl border text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
+              className={`w-full pl-10 pr-4 py-3.5 rounded-2xl border text-base sm:text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
                 errors.name ? 'border-red-300' : 'border-warm-200'
               }`}
               autoComplete="name"
@@ -87,7 +87,7 @@ export default function DetailsScreen({ name, email, phone, whatsappOptIn, onCha
               value={email}
               onChange={(e) => { onChange('email', e.target.value); setErrors(prev => ({ ...prev, email: '' })); }}
               placeholder="your@email.com"
-              className={`w-full pl-10 pr-4 py-3.5 rounded-2xl border text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
+              className={`w-full pl-10 pr-4 py-3.5 rounded-2xl border text-base sm:text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
                 errors.email ? 'border-red-300' : 'border-warm-200'
               }`}
               autoComplete="email"
@@ -113,7 +113,7 @@ export default function DetailsScreen({ name, email, phone, whatsappOptIn, onCha
               value={phone}
               onChange={(e) => { onChange('phone', e.target.value); setErrors(prev => ({ ...prev, phone: '' })); }}
               placeholder="07xxx xxx xxx"
-              className={`w-full pl-10 pr-4 py-3.5 rounded-2xl border text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
+              className={`w-full pl-10 pr-4 py-3.5 rounded-2xl border text-base sm:text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
                 errors.phone ? 'border-red-300' : 'border-warm-200'
               }`}
               autoComplete="tel"

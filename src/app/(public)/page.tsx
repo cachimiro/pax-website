@@ -137,7 +137,7 @@ export default function Home() {
         <HeroMobileBackground />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[calc(100vh-5rem)] py-16 md:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[85vh] lg:min-h-[calc(100vh-5rem)] py-12 md:py-20">
             {/* Left: Copy */}
             <div className="text-white">
               <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-orange-400 mb-6 font-[family-name:var(--font-heading)]">
@@ -145,7 +145,7 @@ export default function Home() {
                 IKEA Pax Specialists
               </span>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-[family-name:var(--font-heading)] leading-[1.08]">
+              <h1 className="text-[26px] sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-[family-name:var(--font-heading)] leading-[1.08]">
                 IKEA Pax system.
                 <br />
                 <span className="font-[family-name:var(--font-accent)] italic text-orange-400">Bespoke</span> finish.
@@ -153,14 +153,14 @@ export default function Home() {
                 Fitted in days.
               </h1>
 
-              <p className="text-base sm:text-lg text-green-100/80 mb-8 max-w-lg leading-relaxed">
+              <p className="text-sm sm:text-base md:text-lg text-green-100/80 mb-8 max-w-lg leading-relaxed">
                 Three packages for every budget. From simple built-in storage to fully
                 bespoke wardrobes with custom doors, trims, and finishes — we have a
                 solution that fits your space and your price point.
               </p>
 
               {/* Inline trust badges */}
-              <div className="flex flex-wrap gap-x-5 gap-y-2 mb-8">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-y-1.5 sm:gap-x-5 sm:gap-y-2 mb-8">
                 {[
                   { icon: MapPin, text: 'UK-wide installation' },
                   { icon: Clock, text: 'Fitted in just 1–2 days on site' },
@@ -177,14 +177,14 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   href="/book"
-                  className="inline-flex items-center justify-center px-8 py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all duration-200 text-base font-[family-name:var(--font-heading)] shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-[0.98]"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all duration-200 text-base font-[family-name:var(--font-heading)] shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-[0.97]"
                 >
                   Book Free Design Consultation
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
                 <Link
                   href="#packages"
-                  className="inline-flex items-center justify-center px-8 py-4 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-200 text-base font-[family-name:var(--font-heading)] active:scale-[0.98]"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-200 text-base font-[family-name:var(--font-heading)] active:scale-[0.97]"
                 >
                   Choose Your Package
                 </Link>
@@ -206,12 +206,12 @@ export default function Home() {
 
       {/* ===== TRUST STATS ===== */}
       <section className="bg-white border-b border-warm-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-8">
             {trustStats.map((stat) => (
-              <div key={stat.label} className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center flex-shrink-0">
-                  <stat.icon className="w-5 h-5 text-green-700" />
+              <div key={stat.label} className="flex items-center gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center flex-shrink-0">
+                  <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 text-green-700" />
                 </div>
                 <div>
                   <AnimatedCounter value={stat.value} />
@@ -273,11 +273,11 @@ export default function Home() {
 
                   {/* Content */}
                   <div className="pb-2 flex-1">
-                    <div className="flex items-start justify-between gap-4 mb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-4 mb-2">
                       <h3 className="text-lg font-bold text-warm-900 font-[family-name:var(--font-heading)]">
                         {step.title}
                       </h3>
-                      <span className="text-xs font-medium text-warm-500 bg-warm-50 px-2.5 py-1 rounded-full whitespace-nowrap font-[family-name:var(--font-heading)] flex-shrink-0">
+                      <span className="text-xs font-medium text-warm-500 bg-warm-50 px-2.5 py-1 rounded-full whitespace-nowrap font-[family-name:var(--font-heading)] flex-shrink-0 self-start">
                         {step.duration}
                       </span>
                     </div>

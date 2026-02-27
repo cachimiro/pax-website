@@ -57,10 +57,10 @@ export default function ObjectionHandler() {
               <span className="w-6 h-px bg-orange-400" />
               Common Questions
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-3">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-3">
               Questions we hear every week
             </h2>
-            <p className="text-lg text-warm-500 max-w-xl mx-auto">
+            <p className="text-base sm:text-lg text-warm-500 max-w-xl mx-auto">
               Honest answers to the things people wonder before getting in touch.
             </p>
           </div>
@@ -69,7 +69,7 @@ export default function ObjectionHandler() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto">
           {objections.map((obj, i) => (
             <ScrollReveal key={obj.question} delay={i * 0.08}>
-              <div className="bg-white rounded-2xl border border-warm-100 p-6 hover:border-warm-200 hover:shadow-lg hover:shadow-warm-700/5 transition-all duration-300 h-full flex flex-col">
+              <div className="bg-white rounded-2xl border border-warm-100 p-5 sm:p-6 hover:border-warm-200 hover:shadow-lg hover:shadow-warm-700/5 transition-all duration-300 h-full flex flex-col">
                 <div className="flex items-start gap-3 mb-3">
                   <MessageCircleQuestion className="w-5 h-5 text-[#f28c43] flex-shrink-0 mt-0.5" />
                   <h3 className="text-base font-bold text-warm-900 font-[family-name:var(--font-heading)] leading-snug">

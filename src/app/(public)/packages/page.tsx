@@ -165,19 +165,19 @@ export default function PackagesPage() {
             label="Compare"
             title="What&apos;s included at a glance"
           />
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full text-sm min-w-[480px]">
               <thead>
                 <tr className="border-b-2 border-warm-200">
-                  <th className="text-left py-4 pr-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">Feature</th>
-                  <th className="text-center py-4 px-4 font-semibold text-[#f28c43] font-[family-name:var(--font-heading)]">Budget</th>
-                  <th className="text-center py-4 px-4 font-semibold font-[family-name:var(--font-heading)]">
+                  <th className="text-left py-4 pr-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)] sticky left-0 bg-white z-10 min-w-[140px] sm:min-w-0 sm:static">Feature</th>
+                  <th className="text-center py-4 px-3 sm:px-4 font-semibold text-[#f28c43] font-[family-name:var(--font-heading)]">Budget</th>
+                  <th className="text-center py-4 px-3 sm:px-4 font-semibold font-[family-name:var(--font-heading)]">
                     <span className="bg-gradient-to-r from-[#f28c43] to-[#2d5c37] bg-clip-text text-transparent">PaxBespoke</span>
                   </th>
-                  <th className="text-center py-4 pl-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">
+                  <th className="text-center py-4 pl-3 sm:pl-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">
                     <span className="inline-flex items-center gap-1">
                       <span className="text-[#2d5c37]">Select</span>
-                      <span className="text-[10px] font-semibold bg-[#2d5c37] text-white px-1.5 py-0.5 rounded-full">Recommended</span>
+                      <span className="text-[10px] font-semibold bg-[#2d5c37] text-white px-1.5 py-0.5 rounded-full hidden sm:inline">Recommended</span>
                     </span>
                   </th>
                 </tr>
@@ -185,23 +185,23 @@ export default function PackagesPage() {
               <tbody>
                 {comparisonFeatures.map((row) => (
                   <tr key={row.feature} className="border-b border-warm-100">
-                    <td className="py-3 pr-4 text-warm-700">{row.feature}</td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-3 pr-4 text-warm-700 text-xs sm:text-sm sticky left-0 bg-white z-10 sm:static">{row.feature}</td>
+                    <td className="py-3 px-3 sm:px-4 text-center">
                       {row.budget ? <Check className="w-4 h-4 text-[#f28c43] mx-auto" /> : <X className="w-4 h-4 text-warm-300 mx-auto" />}
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-3 px-3 sm:px-4 text-center">
                       {row.paxbespoke ? <Check className="w-4 h-4 text-[#2d5c37] mx-auto" /> : <X className="w-4 h-4 text-warm-300 mx-auto" />}
                     </td>
-                    <td className="py-3 pl-4 text-center bg-[#2d5c37]/5">
+                    <td className="py-3 pl-3 sm:pl-4 text-center bg-[#2d5c37]/5">
                       {row.select ? <Check className="w-4 h-4 text-[#2d5c37] mx-auto" /> : <X className="w-4 h-4 text-warm-300 mx-auto" />}
                     </td>
                   </tr>
                 ))}
                 <tr className="border-t-2 border-warm-200">
-                  <td className="py-4 pr-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">Starting from</td>
-                  <td className="py-4 px-4 text-center font-bold text-[#f28c43] font-[family-name:var(--font-heading)]">£800</td>
-                  <td className="py-4 px-4 text-center font-bold font-[family-name:var(--font-heading)]"><span className="bg-gradient-to-r from-[#f28c43] to-[#2d5c37] bg-clip-text text-transparent">£1,500</span></td>
-                  <td className="py-4 pl-4 text-center font-bold text-[#2d5c37] bg-[#2d5c37]/5 font-[family-name:var(--font-heading)]">£2,500</td>
+                  <td className="py-4 pr-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)] sticky left-0 bg-white z-10 sm:static">Starting from</td>
+                  <td className="py-4 px-3 sm:px-4 text-center font-bold text-[#f28c43] font-[family-name:var(--font-heading)]">£800</td>
+                  <td className="py-4 px-3 sm:px-4 text-center font-bold font-[family-name:var(--font-heading)]"><span className="bg-gradient-to-r from-[#f28c43] to-[#2d5c37] bg-clip-text text-transparent">£1,500</span></td>
+                  <td className="py-4 pl-3 sm:pl-4 text-center font-bold text-[#2d5c37] bg-[#2d5c37]/5 font-[family-name:var(--font-heading)]">£2,500</td>
                 </tr>
               </tbody>
             </table>

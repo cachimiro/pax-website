@@ -24,7 +24,7 @@ export default function StepBar({ current, total, labels }: StepBarProps) {
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 bg-warm-100 rounded-full overflow-hidden">
+      <div className="h-2 sm:h-1.5 bg-warm-100 rounded-full overflow-hidden">
         <motion.div
           className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"
           initial={false}

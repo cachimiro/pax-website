@@ -42,10 +42,10 @@ export default function WhatMakesUsDifferent() {
               <span className="w-6 h-px bg-orange-400" />
               Why PaxBespoke
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-3">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-3">
               We create a finished product, not a flat-pack
             </h2>
-            <p className="text-lg text-warm-500 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-warm-500 max-w-2xl mx-auto">
               Stop comparing with IKEA. What we deliver is a fitted wardrobe — designed, built, and installed to look like it&apos;s always been there.
             </p>
           </div>
@@ -55,10 +55,10 @@ export default function WhatMakesUsDifferent() {
           {points.map((point, i) => (
             <ScrollReveal key={point.title} delay={i * 0.1}>
               <div className="bg-warm-50 rounded-2xl p-6 md:p-8 h-full border border-warm-100">
-                <div className="w-11 h-11 rounded-xl bg-white border border-warm-100 flex items-center justify-center mb-4 shadow-sm">
+                <div className="w-11 h-11 rounded-xl bg-white border border-warm-100 flex items-center justify-center mb-5 shadow-sm">
                   <point.icon className="w-5 h-5 text-warm-700" />
                 </div>
-                <h3 className="text-lg font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
+                <h3 className="text-lg font-bold text-warm-900 mb-3 font-[family-name:var(--font-heading)]">
                   {point.title}
                 </h3>
                 <p className="text-sm text-warm-600 leading-relaxed mb-3">

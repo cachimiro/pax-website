@@ -308,10 +308,10 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative z-10 bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[90vh] sm:max-h-[92vh] flex flex-col shadow-2xl"
+            className="relative z-10 bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-2xl h-[100dvh] sm:h-auto sm:max-h-[92vh] flex flex-col shadow-2xl"
           >
             {/* ── Package switcher tabs ── */}
-            <div className="flex border-b border-warm-100 px-6 pt-4 pb-0 gap-1 flex-shrink-0">
+            <div className="flex border-b border-warm-100 px-4 sm:px-6 pt-4 pb-0 gap-0.5 sm:gap-1 flex-shrink-0">
               {PACKAGE_ORDER.map((id) => {
                 const p = packageDetails[id];
                 const isActive = pkg.id === id;
@@ -319,7 +319,7 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
                   <button
                     key={id}
                     onClick={() => handleSwitch(id)}
-                    className={`relative px-4 py-3 text-sm font-semibold font-[family-name:var(--font-heading)] transition-colors rounded-t-xl ${
+                    className={`relative px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold font-[family-name:var(--font-heading)] transition-colors rounded-t-xl ${
                       isActive
                         ? `${getTabClass(id, true)} border-b-2`
                         : `${getTabClass(id, false)} border-b-2 border-transparent`
@@ -351,7 +351,7 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
               style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
             >
               {/* Header */}
-              <div className="px-6 sm:px-8 pt-6 pb-4">
+              <div className="px-4 sm:px-8 pt-6 pb-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <span className={`text-xs font-semibold uppercase tracking-wider font-[family-name:var(--font-heading)]`} style={{ color: pkg.color }}>
@@ -372,7 +372,7 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
               </div>
 
               {/* Content tabs */}
-              <div className="px-6 sm:px-8 border-b border-warm-100 overflow-x-auto">
+              <div className="px-4 sm:px-8 border-b border-warm-100 overflow-x-auto">
                 <div className="flex gap-0 min-w-max">
                   {([
                     { key: 'overview' as ContentTab, label: 'Overview' },
@@ -397,7 +397,7 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
               </div>
 
               {/* Tab content */}
-              <div className="px-6 sm:px-8 py-6">
+              <div className="px-4 sm:px-8 py-6">
                 <AnimatePresence mode="wait">
                   {activeTab === 'overview' && (
                     <motion.div
@@ -780,11 +780,11 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
             </div>
 
             {/* ── Sticky bottom bar ── */}
-            <div className="flex-shrink-0 border-t border-warm-100 px-6 sm:px-8 py-4 bg-white rounded-b-3xl">
+            <div className="flex-shrink-0 border-t border-warm-100 px-4 sm:px-8 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white sm:rounded-b-3xl">
               {/* CTA */}
               <Link
                 href={`/book?package=${pkg.id}`}
-                className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 text-white font-semibold rounded-2xl transition-all font-[family-name:var(--font-heading)] text-sm ${getCtaClass(pkg.id)}`}
+                className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 text-white font-semibold rounded-2xl transition-all font-[family-name:var(--font-heading)] text-sm active:scale-[0.97] ${getCtaClass(pkg.id)}`}
               >
                 Book Free Consultation
                 <ArrowRight className="w-4 h-4" />

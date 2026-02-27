@@ -146,7 +146,7 @@ export default function PackageCard({
             trackEvent('package_click', { package: id });
             onLearnMore(id);
           }}
-          className={`group w-full text-center py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 font-[family-name:var(--font-heading)] ${colors.cta}`}
+          className={`group w-full text-center py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 font-[family-name:var(--font-heading)] active:scale-[0.97] ${colors.cta}`}
         >
           <span className="inline-flex items-center">
             {ctaText}
@@ -156,7 +156,7 @@ export default function PackageCard({
       ) : (
         <Link
           href={`/book?package=${id}`}
-          className={`group block w-full text-center py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 font-[family-name:var(--font-heading)] ${colors.cta}`}
+          className={`group block w-full text-center py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 font-[family-name:var(--font-heading)] active:scale-[0.97] ${colors.cta}`}
           onClick={() => trackEvent('package_click', { package: id })}
         >
           <span className="inline-flex items-center">

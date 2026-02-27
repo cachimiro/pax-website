@@ -106,14 +106,14 @@ function BookingFlowInner() {
     <div className="min-h-[calc(100vh-5rem)] bg-warm-white">
       {/* Top bar with step progress + back */}
       {(showProgress || showBack) && (
-        <div className="sticky top-16 md:top-20 z-40 bg-warm-white/95 backdrop-blur-sm border-b border-warm-100">
+        <div className="sticky top-[60px] md:top-20 z-40 bg-warm-white/95 backdrop-blur-sm border-b border-warm-100">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between mb-2">
               {showBack ? (
                 <motion.button
                   onClick={goBack}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-1.5 text-sm text-warm-500 hover:text-warm-700 transition-colors font-[family-name:var(--font-heading)] font-medium"
+                  className="flex items-center gap-1.5 text-sm text-warm-500 hover:text-warm-700 transition-colors font-[family-name:var(--font-heading)] font-medium min-w-[44px] min-h-[44px]"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back

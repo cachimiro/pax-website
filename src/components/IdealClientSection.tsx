@@ -61,16 +61,16 @@ export default function IdealClientSection() {
               <span className="w-6 h-px bg-orange-400" />
               A Package for Every Home
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-3">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-3">
               Whatever you need, we&apos;ve got you covered
             </h2>
-            <p className="text-lg text-warm-500 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-warm-500 max-w-2xl mx-auto">
               Three packages, three price points — each designed for a different type of project. There&apos;s no wrong choice.
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 max-w-5xl mx-auto">
           {packageFit.map((pkg, i) => (
             <ScrollReveal key={pkg.name} delay={i * 0.1}>
               <div className={`relative bg-white rounded-2xl border p-6 h-full flex flex-col ${pkg.borderClass}`}>

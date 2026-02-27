@@ -237,7 +237,7 @@ export function HeroMobileBackground() {
           />
         </div>
       ))}
-      <div className="absolute inset-0 bg-gradient-to-b from-green-900/85 via-green-900/75 to-green-900/90" />
+      <div className="absolute inset-0 bg-gradient-to-b from-green-900/90 via-green-900/80 to-green-900/92" />
     </div>
   );
 }

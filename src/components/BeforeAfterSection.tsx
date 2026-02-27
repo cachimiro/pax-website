@@ -65,9 +65,9 @@ export default function BeforeAfterSection() {
                         alt={`${project.title} — before installation`}
                         width={400}
                         height={400}
-                        className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full aspect-[4/5] sm:aspect-square object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <span className="absolute bottom-2 left-2 text-[10px] font-semibold uppercase tracking-wider bg-warm-900/70 text-white px-2 py-0.5 rounded-md font-[family-name:var(--font-heading)]">
+                      <span className="absolute bottom-2 left-2 text-[11px] sm:text-[10px] font-semibold uppercase tracking-wider bg-warm-900/70 text-white px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-md font-[family-name:var(--font-heading)]">
                         Before
                       </span>
                     </div>
@@ -77,9 +77,9 @@ export default function BeforeAfterSection() {
                         alt={`${project.title} — after installation`}
                         width={400}
                         height={400}
-                        className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full aspect-[4/5] sm:aspect-square object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <span className="absolute bottom-2 left-2 text-[10px] font-semibold uppercase tracking-wider bg-green-700/80 text-white px-2 py-0.5 rounded-md font-[family-name:var(--font-heading)]">
+                      <span className="absolute bottom-2 left-2 text-[11px] sm:text-[10px] font-semibold uppercase tracking-wider bg-green-700/80 text-white px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-md font-[family-name:var(--font-heading)]">
                         After
                       </span>
                     </div>

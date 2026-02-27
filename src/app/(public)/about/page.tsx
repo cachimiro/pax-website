@@ -52,7 +52,7 @@ export default function AboutPage() {
               <span className="inline-block text-xs font-semibold tracking-widest uppercase text-orange-500 mb-4 font-[family-name:var(--font-heading)]">
                 About PaxBespoke
               </span>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-warm-900 mb-6 font-[family-name:var(--font-heading)] leading-[1.1]">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-warm-900 mb-6 font-[family-name:var(--font-heading)] leading-[1.1]">
                 The smarter way to get custom wardrobes
               </h1>
               <p className="text-lg text-warm-500 leading-relaxed mb-6">

@@ -45,7 +45,7 @@ export default function HomeCoverageSection() {
               <span className="w-6 h-px bg-orange-400" />
               Where We Work
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)]">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)]">
               Expanding across the UK
             </h2>
           </div>
@@ -61,7 +61,7 @@ export default function HomeCoverageSection() {
 
           {/* Postcode checker */}
           <ScrollReveal delay={0.15}>
-            <div className="bg-warm-50 rounded-3xl p-8 md:p-10 border border-warm-100">
+            <div className="bg-warm-50 rounded-3xl p-5 sm:p-6 md:p-10 border border-warm-100">
               <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center mb-5">
                 <MapPin className="w-5 h-5 text-green-700" />
               </div>
@@ -89,7 +89,7 @@ export default function HomeCoverageSection() {
                 <button
                   onClick={handleCheck}
                   disabled={status === 'loading'}
-                  className="px-6 py-3.5 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-800 transition-all duration-200 text-sm font-[family-name:var(--font-heading)] disabled:opacity-50 shadow-sm"
+                  className="w-full sm:w-auto px-6 py-3.5 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-800 transition-all duration-200 text-sm font-[family-name:var(--font-heading)] disabled:opacity-50 shadow-sm active:scale-[0.97]"
                 >
                   {status === 'loading' ? (
                     <Loader2 className="w-4 h-4 animate-spin mx-auto" />

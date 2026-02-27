@@ -45,10 +45,10 @@ export default async function ServiceAreasPage() {
                 <span className="w-6 h-px bg-orange-400" />
                 Coverage Area
               </span>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-warm-900 mb-6 font-[family-name:var(--font-heading)] leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-warm-900 mb-6 font-[family-name:var(--font-heading)] leading-tight">
                 Custom Wardrobes Across the UK
               </h1>
-              <p className="text-lg text-warm-500 leading-relaxed mb-8">
+              <p className="text-base sm:text-lg text-warm-500 leading-relaxed mb-8">
                 PaxBespoke delivers custom IKEA Pax wardrobes to homes across the UK.
                 We&apos;re growing fast — check the map to see if we cover your area,
                 or find out when we&apos;re coming to you.

@@ -20,7 +20,7 @@ export default function PublicLayout({
       <TrackingScript />
       <LocalBusinessSchema />
       <Header />
-      <main className="pt-16 md:pt-20">{children}</main>
+      <main className="pt-[60px] md:pt-20">{children}</main>
       <Footer />
       <MobileCTABar />
     </PackageModalProvider>

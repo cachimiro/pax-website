@@ -273,7 +273,7 @@ export default function SpaceScreen({ packageChoice, onNext }: SpaceScreenProps)
               value={plannerLink}
               onChange={(e) => setPlannerLink(e.target.value)}
               placeholder="Paste your IKEA Planner link here"
-              className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-warm-200 text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-warm-200 text-base sm:text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
             />
           </div>
           <p className="text-[11px] text-warm-400 mt-1">
