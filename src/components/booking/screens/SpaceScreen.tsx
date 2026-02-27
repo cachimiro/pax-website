@@ -2,19 +2,48 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Ruler, MessageCircle, ArrowRight, Upload, X } from 'lucide-react';
+import { Camera, Ruler, MessageCircle, ArrowRight, Upload, X, Link2, Home, Mountain, Building2, Columns3, ArrowUpFromLine, DoorOpen, LayoutGrid } from 'lucide-react';
 import MiniTestimonial from '../MiniTestimonial';
 
 interface SpaceScreenProps {
-  onNext: (data: { photos: File[]; measurements: string; shareOnCall: boolean }) => void;
+  packageChoice: string;
+  onNext: (data: {
+    photos: File[];
+    measurements: string;
+    shareOnCall: boolean;
+    plannerLink?: string;
+    homeVisit?: boolean;
+    doorFinishType?: string;
+    doorModel?: string;
+    spaceConstraints?: string[];
+  }) => void;
 }
 
 type Mode = 'photos' | 'measurements' | 'call' | null;
 
-export default function SpaceScreen({ onNext }: SpaceScreenProps) {
-  const [mode, setMode] = useState<Mode>('call'); // Default to lowest friction
+const spaceConstraintOptions = [
+  { id: 'sloped-ceiling', label: 'Sloped / angled ceiling (loft)', icon: Mountain },
+  { id: 'tall-ceiling', label: 'Tall ceiling', icon: ArrowUpFromLine },
+  { id: 'chimney-breast', label: 'Chimney breast', icon: Building2 },
+  { id: 'bulkhead', label: 'Bulkhead (stairs)', icon: LayoutGrid },
+  { id: 'alcoves', label: 'Alcoves', icon: Columns3 },
+  { id: 'limited-door-space', label: 'Limited space for doors', icon: DoorOpen },
+  { id: 'none', label: 'None of the above — straightforward space', icon: Home },
+];
+
+export default function SpaceScreen({ packageChoice, onNext }: SpaceScreenProps) {
+  const [mode, setMode] = useState<Mode>('call');
   const [photos, setPhotos] = useState<File[]>([]);
   const [measurements, setMeasurements] = useState('');
+  const [plannerLink, setPlannerLink] = useState('');
+  const [homeVisit, setHomeVisit] = useState(false);
+  const [doorFinishType, setDoorFinishType] = useState('');
+  const [doorModel, setDoorModel] = useState('');
+  const [spaceConstraints, setSpaceConstraints] = useState<string[]>([]);
+
+  const isBudget = packageChoice === 'budget';
+  const isSelect = packageChoice === 'select';
+  const isStandardOrSelect = packageChoice === 'paxbespoke' || packageChoice === 'select';
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -26,11 +55,27 @@ export default function SpaceScreen({ onNext }: SpaceScreenProps) {
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const toggleConstraint = (id: string) => {
+    if (id === 'none') {
+      setSpaceConstraints(['none']);
+      return;
+    }
+    setSpaceConstraints((prev) => {
+      const filtered = prev.filter((c) => c !== 'none');
+      return filtered.includes(id) ? filtered.filter((c) => c !== id) : [...filtered, id];
+    });
+  };
+
   const handleContinue = () => {
     onNext({
       photos,
       measurements,
       shareOnCall: mode === 'call',
+      plannerLink: isBudget ? plannerLink : undefined,
+      homeVisit: isStandardOrSelect ? homeVisit : undefined,
+      doorFinishType: isSelect ? doorFinishType : undefined,
+      doorModel: isSelect ? doorModel : undefined,
+      spaceConstraints,
     });
   };
 
@@ -125,18 +170,14 @@ export default function SpaceScreen({ onNext }: SpaceScreenProps) {
           animate={{ opacity: 1, height: 'auto' }}
           className="space-y-4"
         >
-          {/* Visual measuring guide */}
           <div className="bg-warm-50 rounded-xl p-5">
             <div className="flex items-center gap-4 mb-3">
               <svg viewBox="0 0 80 60" className="w-20 h-15 text-warm-400" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <rect x="10" y="5" width="60" height="50" rx="2" />
-                {/* Width arrow */}
                 <line x1="10" y1="58" x2="70" y2="58" strokeDasharray="3 2" />
                 <text x="40" y="58" textAnchor="middle" fill="currentColor" fontSize="6" className="font-semibold">Width</text>
-                {/* Height arrow */}
                 <line x1="75" y1="5" x2="75" y2="55" strokeDasharray="3 2" />
                 <text x="78" y="32" fill="currentColor" fontSize="6" className="font-semibold" transform="rotate(90, 78, 32)">Height</text>
-                {/* Depth arrow */}
                 <line x1="10" y1="2" x2="25" y2="2" strokeDasharray="3 2" />
                 <text x="17" y="1" textAnchor="middle" fill="currentColor" fontSize="5">Depth</text>
               </svg>
@@ -169,6 +210,166 @@ export default function SpaceScreen({ onNext }: SpaceScreenProps) {
           <p className="text-sm text-green-700 mt-1">
             We&apos;ll walk you through everything on the video call. Just have your phone handy to show us the space.
           </p>
+        </motion.div>
+      )}
+
+      {/* ── Space constraints (all packages) ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mt-6"
+      >
+        <h3 className="text-base font-semibold text-warm-800 mb-1 font-[family-name:var(--font-heading)]">
+          Does your space have any of these?
+        </h3>
+        <p className="text-xs text-warm-400 mb-3">
+          Why we ask: Different room constraints need different configurations. This lets us tailor our advice.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {spaceConstraintOptions.map((opt) => {
+            const isSelected = spaceConstraints.includes(opt.id);
+            return (
+              <motion.button
+                key={opt.id}
+                onClick={() => toggleConstraint(opt.id)}
+                whileTap={{ scale: 0.97 }}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                  isSelected
+                    ? 'border-green-700 bg-green-50/60'
+                    : 'border-warm-100 bg-white hover:border-warm-200'
+                }`}
+              >
+                <opt.icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-green-700' : 'text-warm-400'}`} />
+                <span className={`text-xs font-medium font-[family-name:var(--font-heading)] ${
+                  isSelected ? 'text-green-700' : 'text-warm-600'
+                }`}>
+                  {opt.label}
+                </span>
+              </motion.button>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* ── Budget: IKEA Planner link ── */}
+      {isBudget && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mt-6"
+        >
+          <h3 className="text-base font-semibold text-warm-800 mb-1 font-[family-name:var(--font-heading)]">
+            IKEA Planner design link
+          </h3>
+          <p className="text-xs text-warm-400 mb-3">
+            Budget requires an IKEA Planner design created by you. We&apos;ll review it together on the call and adjust if needed.
+          </p>
+          <div className="relative">
+            <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
+            <input
+              type="url"
+              value={plannerLink}
+              onChange={(e) => setPlannerLink(e.target.value)}
+              placeholder="Paste your IKEA Planner link here"
+              className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-warm-200 text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+            />
+          </div>
+          <p className="text-[11px] text-warm-400 mt-1">
+            Don&apos;t have one yet? You can create one at{' '}
+            <a href="https://www.ikea.com/addon-app/storageone/pax/" target="_blank" rel="noopener noreferrer" className="text-orange-500 underline">
+              IKEA PAX Planner
+            </a>
+            {' '}and paste the link here, or share it on the call.
+          </p>
+        </motion.div>
+      )}
+
+      {/* ── Standard/Select: Home Visit request ── */}
+      {isStandardOrSelect && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mt-6"
+        >
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="relative mt-0.5">
+              <input
+                type="checkbox"
+                checked={homeVisit}
+                onChange={(e) => setHomeVisit(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-5 h-5 rounded-lg border-2 border-warm-300 bg-white peer-checked:bg-green-700 peer-checked:border-green-700 transition-all flex items-center justify-center">
+                {homeVisit && (
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+            </div>
+            <div>
+              <span className="flex items-center gap-1.5 text-sm text-warm-700 font-medium">
+                <Home className="w-4 h-4 text-green-600" />
+                Request a Home Visit before the online meeting
+              </span>
+              <span className="text-xs text-warm-400 block mt-0.5">
+                We may also recommend one for difficult spaces. If selected, we use your budget range to confirm eligibility.
+              </span>
+            </div>
+          </label>
+        </motion.div>
+      )}
+
+      {/* ── Select: Door finish type ── */}
+      {isSelect && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-6"
+        >
+          <h3 className="text-base font-semibold text-warm-800 mb-1 font-[family-name:var(--font-heading)]">
+            Preferred door finish
+          </h3>
+          <p className="text-xs text-warm-400 mb-3">
+            Select offers spray-painted or vinyl doors. Choose your preference so we know the exact style before the call.
+          </p>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {[
+              { id: 'spray-painted', label: 'Spray-painted doors' },
+              { id: 'vinyl', label: 'Vinyl doors' },
+            ].map((opt) => (
+              <motion.button
+                key={opt.id}
+                onClick={() => setDoorFinishType(opt.id)}
+                whileTap={{ scale: 0.97 }}
+                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                  doorFinishType === opt.id
+                    ? 'border-green-700 bg-green-50/60'
+                    : 'border-warm-100 bg-white hover:border-warm-200'
+                }`}
+              >
+                <span className={`text-sm font-semibold font-[family-name:var(--font-heading)] ${
+                  doorFinishType === opt.id ? 'text-green-700' : 'text-warm-600'
+                }`}>
+                  {opt.label}
+                </span>
+              </motion.button>
+            ))}
+          </div>
+          <label className="block text-sm font-medium text-warm-700 mb-1.5 font-[family-name:var(--font-heading)]">
+            Door model or style reference <span className="text-warm-400 font-normal">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={doorModel}
+            onChange={(e) => setDoorModel(e.target.value)}
+            placeholder="e.g. shaker style, a Door Visualiser link, or describe what you like"
+            className="w-full px-4 py-3 rounded-2xl border border-warm-200 text-sm text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all bg-white"
+          />
         </motion.div>
       )}
 

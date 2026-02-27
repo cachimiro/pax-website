@@ -83,7 +83,7 @@ export default function ConfirmationScreen({ data }: ConfirmationScreenProps) {
           </div>
           <div className="flex items-center gap-3 text-sm">
             <Clock className="w-4 h-4 text-[#0C6B4E] flex-shrink-0" />
-            <span className="text-warm-700">{data.time} · 20–30 minutes</span>
+            <span className="text-warm-700">{data.time} · {data.packageChoice === 'budget' ? '15–20 minutes' : '30–45 minutes'}</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <MapPin className="w-4 h-4 text-[#0C6B4E] flex-shrink-0" />
@@ -133,9 +133,9 @@ export default function ConfirmationScreen({ data }: ConfirmationScreenProps) {
           </h3>
           <div className="space-y-2.5">
             {[
-              { icon: Package, text: 'Supply & professional installation' },
               { icon: Wrench, text: 'Assembly, securing to wall, and filler panels fitted' },
-              { icon: ClipboardList, text: 'Standard IKEA doors and finishes — quick, no-fuss result' },
+              { icon: ClipboardList, text: 'Standard IKEA PAX doors and finishes — quick, no-fuss result' },
+              { icon: Package, text: 'You order the IKEA items — we handle the fitting' },
             ].map((item) => (
               <div key={item.text} className="flex items-start gap-2.5 text-sm text-[#c06a20]">
                 <item.icon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 opacity-70" />
@@ -160,7 +160,7 @@ export default function ConfirmationScreen({ data }: ConfirmationScreenProps) {
           <div className="space-y-2.5">
             {[
               { icon: Package, text: 'Full supply & installation — materials included' },
-              { icon: ClipboardList, text: 'Design consultation and bespoke hinged doors' },
+              { icon: ClipboardList, text: 'Design consultation and doors within IKEA/PAX range' },
               { icon: Wrench, text: 'Custom trims, flush fillers, skirting finish' },
               { icon: Trash2, text: 'Rubbish removal and old wardrobe removal included' },
             ].map((item) => (
@@ -186,10 +186,10 @@ export default function ConfirmationScreen({ data }: ConfirmationScreenProps) {
           </h3>
           <div className="space-y-2.5">
             {[
-              { icon: Package, text: 'Everything in PaxBespoke, plus full bespoke integration' },
-              { icon: Wrench, text: 'Sliding door systems, floor-to-ceiling builds' },
-              { icon: ClipboardList, text: 'Advanced carpentry and wall integration' },
-              { icon: Trash2, text: 'No restrictions within the Pax system' },
+              { icon: Package, text: 'Everything in PaxBespoke, plus bespoke doors (spray-painted or vinyl)' },
+              { icon: Wrench, text: 'Full wall integration, sliding door systems, floor-to-ceiling builds' },
+              { icon: ClipboardList, text: 'Broader choice of door styles, colours, and premium finishes' },
+              { icon: Trash2, text: 'Little to no restrictions within the PAX system' },
             ].map((item) => (
               <div key={item.text} className="flex items-start gap-2.5 text-sm text-[#0C6B4E]">
                 <item.icon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 opacity-70" />
@@ -200,6 +200,18 @@ export default function ConfirmationScreen({ data }: ConfirmationScreenProps) {
           <p className="text-xs text-[#0C6B4E]/60 mt-3 italic">Our highest capability package — no compromises.</p>
         </motion.div>
       )}
+
+      {/* Deposit note */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.52 }}
+        className="bg-warm-50 border border-warm-100 rounded-2xl px-5 py-3 text-left mb-6"
+      >
+        <p className="text-xs text-warm-600">
+          <span className="font-semibold">Payment:</span> To secure a fitting slot, a 50% deposit is required. The balance is due on completion.
+        </p>
+      </motion.div>
 
       {/* What we'll cover on your call */}
       <motion.div

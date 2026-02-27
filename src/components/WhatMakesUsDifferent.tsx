@@ -12,23 +12,23 @@ const points = [
   {
     icon: Ruler,
     title: 'Filler panels tailored to your space',
-    description: 'Every room is different. Our filler panels are cut to fit — they can be 5cm, wider, or narrower depending on your walls. On Select, fillers sit flush for a seamless finish. On Budget, standard fillers keep costs down.',
-    note: 'Flush fillers on Select · Standard fillers on Budget',
+    description: 'Every room is different. Our filler panels are cut to fit — they can be 5cm, wider, or narrower depending on your walls. On PaxBespoke and Select, fillers sit flush with the doors for a seamless finish. On Budget, filler panels are flush with the frame (not the doors) and colour-matched to the frame.',
+    note: 'Flush fillers on PaxBespoke & Select · Standard fillers on Budget',
     noteClass: 'text-warm-500',
   },
   {
     icon: Palette,
     title: 'Custom doors and trim colours',
-    description: 'Choose your door style, colour, and handle. Shaker fronts, matt finishes, bold colours — whatever suits your room. Trims are colour-matched so everything looks intentional, not added on.',
-    note: 'Select & PaxBespoke only',
+    description: 'PaxBespoke: choose from options within the IKEA/PAX ecosystem. Select: broader choice of door styles, colours, and premium finishes — spray-painted or vinyl doors in any colour. Trims and handles are colour-matched for a seamless look.',
+    note: 'PaxBespoke: within IKEA/PAX range · Select: full colour and style freedom',
     noteClass: 'text-[#2d5c37]',
   },
   {
     icon: Wrench,
     title: 'Proper skirting finish and integration',
-    description: 'We remove skirting, cut coving, and adjust rails so the wardrobe sits properly against the wall. On Select, the skirting finish is flush. On PaxBespoke, we integrate fully into the wall itself.',
-    note: 'Skirting finish on Select · Full integration on PaxBespoke',
-    noteClass: 'text-warm-500',
+    description: 'Wardrobes can be raised on a timber platform and finished with a new skirting board matched to the room. We remove existing skirting, cut coving, and adjust rails so the wardrobe sits properly against the wall.',
+    note: 'Skirting board finish on PaxBespoke & Select',
+    noteClass: 'text-[#2d5c37]',
   },
 ];
 

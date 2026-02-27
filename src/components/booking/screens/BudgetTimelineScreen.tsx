@@ -50,7 +50,7 @@ export default function BudgetTimelineScreen({
           This helps us give you the most relevant advice on the call.
         </p>
         <p className="text-xs text-warm-400 mb-8 font-[family-name:var(--font-heading)]">
-          There&apos;s no wrong answer. This just helps us make the most of your 20 minutes.
+          There&apos;s no wrong answer. This just helps us make the most of your call.
         </p>
       </motion.div>
 

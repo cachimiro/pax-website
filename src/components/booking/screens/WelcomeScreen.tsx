@@ -19,7 +19,7 @@ const stepPreview = [
 ];
 
 const expectations = [
-  { icon: Video, title: 'What it is', text: 'A 20-minute video call where we look at your space together and discuss options.' },
+  { icon: Video, title: 'What it is', text: 'A 15–45 minute Google Meet call (depending on package) where we look at your space together and discuss options.' },
   { icon: ShieldCheck, title: 'What it isn\'t', text: 'Not a sales pitch. Not a commitment. You\'re free to take time and decide after.' },
   { icon: CheckCircle, title: 'What you\'ll know after', text: 'Which package suits you, a clear price range, and the timeline for your project.' },
   { icon: Clock, title: 'What you don\'t need', text: 'No exact measurements. No decisions made beforehand. No money upfront.' },

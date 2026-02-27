@@ -38,7 +38,7 @@ const stats = [
   { value: '500+', label: 'Wardrobes installed' },
   { value: '5.0', label: 'Average review rating' },
   { value: '1–2', label: 'Days to install' },
-  { value: '100%', label: 'Fixed-price quotes' },
+  { value: '100%', label: 'Transparent pricing' },
 ];
 
 export default function AboutPage() {
@@ -60,10 +60,13 @@ export default function AboutPage() {
                 fully bespoke but couldn&apos;t justify the price. Traditional fitted wardrobes cost
                 thousands and take weeks. IKEA Pax on its own looks... like IKEA.
               </p>
-              <p className="text-lg text-warm-700 leading-relaxed mb-8">
+              <p className="text-lg text-warm-700 leading-relaxed mb-4">
                 Our solution: take the precision engineering of IKEA Pax and add genuinely custom
-                finishes — bespoke doors, colour-matched trims, premium handles, integrated lighting.
-                The result looks and feels fully bespoke, at a fraction of the cost, with fitting completed in just 1–2 days on site.
+                finishes — doors customised within the IKEA/PAX ecosystem or fully bespoke spray-painted and vinyl doors, colour-matched trims, premium handles, and integrated lighting.
+                The result looks and feels fully fitted, at a fraction of the cost, with fitting completed in just 1–2 days on site.
+              </p>
+              <p className="text-base text-green-800 bg-green-50 rounded-xl px-4 py-3 mb-8">
+                The PAX interior is easy to change later — drawers, trays, and organisers can be swapped at any time, unlike most traditional fitted wardrobes.
               </p>
               <Link
                 href="/how-it-works"

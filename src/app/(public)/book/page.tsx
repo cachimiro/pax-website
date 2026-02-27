@@ -66,6 +66,11 @@ function BookingFlowInner() {
     photos: [] as File[],
     measurements: '',
     shareOnCall: false,
+    plannerLink: '',
+    homeVisit: false,
+    doorFinishType: '',
+    doorModel: '',
+    spaceConstraints: [] as string[],
     name: '',
     email: '',
     phone: '',
@@ -86,7 +91,7 @@ function BookingFlowInner() {
     if (step > 0) goTo(step - 1);
   }, [step, goTo]);
 
-  const updateField = useCallback((field: string, value: string | boolean | File[]) => {
+  const updateField = useCallback((field: string, value: string | boolean | File[] | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
@@ -188,10 +193,16 @@ function BookingFlowInner() {
 
           {step === 6 && (
             <SpaceScreen
+              packageChoice={formData.packageChoice}
               onNext={(data) => {
                 updateField('photos', data.photos);
                 updateField('measurements', data.measurements);
                 updateField('shareOnCall', data.shareOnCall);
+                if (data.plannerLink !== undefined) updateField('plannerLink', data.plannerLink);
+                if (data.homeVisit !== undefined) updateField('homeVisit', data.homeVisit);
+                if (data.doorFinishType !== undefined) updateField('doorFinishType', data.doorFinishType);
+                if (data.doorModel !== undefined) updateField('doorModel', data.doorModel);
+                if (data.spaceConstraints !== undefined) updateField('spaceConstraints', data.spaceConstraints);
                 goTo(7);
               }}
             />
@@ -242,6 +253,11 @@ function BookingFlowInner() {
                       budgetRange: formData.budgetRange,
                       timeline: formData.timeline,
                       measurements: formData.measurements,
+                      plannerLink: formData.plannerLink,
+                      homeVisit: formData.homeVisit,
+                      doorFinishType: formData.doorFinishType,
+                      doorModel: formData.doorModel,
+                      spaceConstraints: formData.spaceConstraints,
                       whatsappOptIn: formData.whatsappOptIn,
                       date,
                       time,

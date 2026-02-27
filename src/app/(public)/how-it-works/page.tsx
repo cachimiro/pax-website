@@ -15,7 +15,7 @@ const steps = [
     step: 1,
     icon: Video,
     title: 'Free Video Consultation',
-    description: 'Book a 20-minute video call at a time that suits you. Share your space, ideas, and budget — we\'ll recommend the right package and give you a clear price range.',
+    description: 'Book a video call at a time that suits you. Budget consultations are 15–20 minutes; PaxBespoke and Select consultations are 30–45 minutes. Share your space, ideas, and budget — we\'ll recommend the right package and give you a clear price range.',
     details: [
       'No obligation, no hard sell',
       'Rough measurements are fine — we guide you',
@@ -26,37 +26,39 @@ const steps = [
   {
     step: 2,
     icon: Ruler,
-    title: 'Design & Fixed Quote',
-    description: 'Based on your consultation, we create a detailed design and fixed-price quote. No hidden costs, no surprises. The consultation refines your price — it doesn\'t inflate it.',
+    title: 'Design & Quote',
+    description: 'We create a quote during or after the call. For Budget, we review your IKEA Planner design and quote on the call. For PaxBespoke and Select, we create a 3D design live and agree the layout together.',
     details: [
-      'Detailed layout drawing',
-      'Fixed price — what we quote is what you pay',
-      'Revisions included until you\'re happy',
+      'Budget: quote created on the call based on your IKEA Planner design',
+      'PaxBespoke & Select: 3D design created live, quote emailed after',
+      'If needed, a home visit can be arranged for difficult spaces (PaxBespoke & Select)',
+      'To secure a fitting slot, you pay a 50% deposit',
     ],
-    reassurance: 'You approve everything before we order a single item.',
+    reassurance: 'You approve everything before we proceed.',
   },
   {
     step: 3,
     icon: Palette,
-    title: 'Choose Your Finishes',
-    description: 'Pick your doors, handles, trims, and colours from our curated range. We can send physical samples so you can see and feel the materials before committing.',
+    title: 'Preparation',
+    description: 'What happens next depends on your package. On Budget, you order the IKEA items yourself and let us know when they arrive. On PaxBespoke and Select, we prepare the full IKEA setup, bespoke doors, trims, and all materials.',
     details: [
-      'Samples available for PaxBespoke and Select packages',
-      'We\'ll suggest combinations that work with your room',
-      'Change your mind? No problem — until we order',
+      'Budget: you order the full IKEA setup and confirm nothing is missing or damaged',
+      'PaxBespoke: we order IKEA items, bespoke doors, trims, and materials',
+      'Select: we order everything plus confirm your door specification (spray-painted or vinyl)',
+      'Fitting date confirmed once everything is ready',
     ],
     reassurance: null,
   },
   {
     step: 4,
     icon: Wrench,
-    title: 'Expert Installation',
-    description: 'Once your design is finalised, our experienced team fits everything in 1–2 days on site. We handle delivery, assembly, fitting, and cleanup.',
+    title: 'Fitting Day',
+    description: 'Our team arrives, reconfirms the space and design with you, installs the wardrobes, and reviews the result. Budget fitting is typically half a day to one day. PaxBespoke and Select fitting is typically 1–2 days on site.',
     details: [
-      'On-site fitting typically completed in 1–2 days',
-      'We protect your floors and furniture',
-      'Full cleanup — we leave your home tidy',
-      'Aftercare support included',
+      'Budget: assembly, securing to wall, and filler panels fitted',
+      'PaxBespoke & Select: full assembly, bespoke doors, flush fillers, skirting, and finishing',
+      'PaxBespoke & Select: rubbish removal and cleanup included',
+      'Balance due on completion',
     ],
     reassurance: 'We\'ve installed hundreds of wardrobes. Your home is in safe hands.',
   },
@@ -70,7 +72,7 @@ export default function HowItWorksPage() {
           <SectionHeading
             label="How It Works"
             title="From idea to installed in 4 simple steps"
-            description="We've designed the process to be as easy as possible. You don't need technical knowledge, exact measurements, or hours of research. We handle everything."
+            description="We've designed the process to be as easy as possible. You don't need technical knowledge, exact measurements, or hours of research. The process differs slightly by package — see each step below."
           />
 
           <div className="space-y-12 md:space-y-16">

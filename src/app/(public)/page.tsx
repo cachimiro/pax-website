@@ -20,10 +20,10 @@ const packages = [
     id: 'budget',
     name: 'Budget',
     tagline: 'Smart & Simple',
-    bestFor: 'Practical built-in storage at the best price. Standard IKEA doors, boxed in with filler panels — clean, tidy, done.',
+    bestFor: 'A reasonably priced alternative to traditional fitted wardrobes. Standard IKEA PAX doors, boxed in with filler panels. You provide measurements and purchase the IKEA items — we handle the fitting.',
     priceRange: 'From £800',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax system', 'Standard door finishes', 'Filler panels fitted', 'Professional installation'],
+    features: ['Standard IKEA PAX doors', 'Filler panels fitted', 'Assembly & securing to wall', 'PAX interior system'],
     leadTime: '1–2 weeks',
     finishLevel: 'Standard',
     ctaText: 'Get Started',
@@ -32,22 +32,22 @@ const packages = [
     id: 'paxbespoke',
     name: 'PaxBespoke',
     tagline: 'Where Pax Meets Bespoke',
-    bestFor: 'Bespoke hinged doors, colour-matched trims, and flush filler panels — a fitted wardrobe that looks nothing like IKEA.',
+    bestFor: 'A high-quality built-in finish at a sensible budget. Doors customised within the IKEA/PAX ecosystem, colour-matched trims, flush filler panels, and skirting board finish. We supply everything.',
     priceRange: 'From £1,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['Bespoke hinged doors', 'Custom trim colours', 'Flush filler panels', 'Skirting finish', 'Design consultation', 'Rubbish removal'],
+    features: ['Doors within IKEA/PAX range', 'Custom trim colours', 'Flush filler panels', 'Skirting board finish', 'Design consultation', 'Rubbish removal'],
     leadTime: '2–3 weeks',
-    finishLevel: 'Custom bespoke',
+    finishLevel: 'Custom fitted',
     ctaText: 'Get Started',
   },
   {
     id: 'select',
     name: 'Select',
     tagline: 'Designed Without Limits',
-    bestFor: 'Full bespoke integration with sliding doors, floor-to-ceiling builds, and advanced carpentry for complex spaces.',
+    bestFor: 'The most premium finishes and styling options. Bespoke doors (spray-painted or vinyl), more freedom on colour and door styles, and little to no restrictions within the PAX system.',
     priceRange: 'From £2,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['Everything in PaxBespoke', 'Sliding door systems', 'Floor-to-ceiling builds', 'Full wall integration', 'Advanced carpentry', 'Custom infills & boxing'],
+    features: ['Everything in PaxBespoke', 'Bespoke doors (spray-painted or vinyl)', 'Full wall integration', 'Sliding door systems', 'Floor-to-ceiling builds', 'Advanced carpentry'],
     leadTime: '3–4 weeks',
     finishLevel: 'Full bespoke',
     popular: true,
@@ -61,7 +61,7 @@ const steps = [
     title: 'Free Video Consultation',
     description: 'Share your space over a quick video call. We\'ll recommend the right package and give you a clear price range.',
     why: 'A video call lets us see your space without you needing to take perfect measurements. It\'s faster and easier than an in-person visit.',
-    duration: '20 minutes',
+    duration: '15–45 minutes',
     youNeed: 'A phone or laptop. That\'s it.',
     icon: Video,
     reassurance: 'Rough measurements are fine — we guide you.',
@@ -69,29 +69,29 @@ const steps = [
   {
     step: 2,
     title: 'Design & Quote',
-    description: 'We create a detailed design and fixed-price quote based on your space, package choice, and finish preferences.',
-    why: 'This step ensures there are no surprises. The price you see is the price you pay. The consultation refines — it doesn\'t inflate.',
-    duration: '2–3 days after consultation',
-    youNeed: 'Nothing — we do the work.',
+    description: 'Budget: we review your IKEA Planner design and quote on the call. PaxBespoke & Select: we create a 3D design live and agree the layout together.',
+    why: 'You approve everything before we proceed. To secure a fitting slot, you pay a 50% deposit.',
+    duration: 'During or shortly after the call',
+    youNeed: 'Budget: your IKEA Planner link. PaxBespoke & Select: nothing — we do the work.',
     icon: Ruler,
-    reassurance: 'You approve everything before we order.',
+    reassurance: 'You approve everything before we proceed.',
   },
   {
     step: 3,
-    title: 'Choose Your Finish',
-    description: 'Pick from our range of doors, handles, trims, and colours. We\'ll send samples if you want to see them in person.',
-    why: 'Your wardrobe should match your room, not the other way around. We offer enough choice to get it right without overwhelming you.',
-    duration: 'At your pace',
-    youNeed: 'Just your preference — we\'ll guide options.',
+    title: 'Preparation',
+    description: 'Budget: you order the IKEA items yourself and let us know when they arrive. PaxBespoke & Select: we prepare the full IKEA setup, doors, trims, and all materials.',
+    why: 'On PaxBespoke and Select, we handle everything so you don\'t have to. On Budget, you stay in control of ordering to keep costs down.',
+    duration: 'Varies by package',
+    youNeed: 'Budget: order and check your IKEA items. PaxBespoke & Select: nothing.',
     icon: Palette,
   },
   {
     step: 4,
-    title: 'Expert Installation',
-    description: 'Once your design is finalised, our team fits everything in 1–2 days on site. We handle all assembly, fitting, trimming, and cleanup.',
-    why: 'Professional fitting is what makes IKEA Pax look bespoke. Precise trimming, gap-free alignment, and colour-matched finishing.',
-    duration: '1–2 days on site',
-    youNeed: 'Access to the room. We handle the rest.',
+    title: 'Fitting Day',
+    description: 'Our team arrives, installs the wardrobes, and reviews the result with you. Budget: typically half a day to one day. PaxBespoke & Select: typically 1–2 days on site.',
+    why: 'Professional fitting is what makes IKEA Pax look built-in. PaxBespoke & Select include rubbish removal and cleanup.',
+    duration: 'Half a day to 2 days',
+    youNeed: 'Access to the room — we handle the rest.',
     icon: Wrench,
   },
 ];
@@ -192,7 +192,7 @@ export default function Home() {
 
               {/* Reassurance micro-copy */}
               <p className="text-xs text-green-100/50 mt-4 font-[family-name:var(--font-heading)]">
-                20-min video call · No measurements needed · Get a clear price range — not a sales pitch
+                15–45 min video call · No exact measurements needed · Get a clear price range — not a sales pitch
               </p>
             </div>
 
@@ -225,6 +225,15 @@ export default function Home() {
 
       {/* ===== PACKAGES (first real content — let them choose) ===== */}
       <PackagesSection packages={packages} />
+
+      {/* ===== UNIVERSAL PAX BENEFIT ===== */}
+      <section className="bg-green-50/50 border-y border-green-100">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
+          <p className="text-sm sm:text-base text-green-900 font-medium font-[family-name:var(--font-heading)]">
+            All packages use the IKEA PAX interior system — drawers, trays, and organisers can be changed at any time, unlike most traditional fitted wardrobes.
+          </p>
+        </div>
+      </section>
 
       <SectionDivider />
 

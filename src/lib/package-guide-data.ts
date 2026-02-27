@@ -2,7 +2,7 @@
 // Images mapped by PDF page order and cross-referenced with text descriptions.
 // Package hierarchy (ascending): Budget < PaxBespoke < Select
 //   Budget: affordable pre-designed storage install, standard doors, basic finishing
-//   PaxBespoke: IKEA-based fitted wardrobes with custom finishes, bespoke hinged doors, rubbish removal
+//   PaxBespoke: IKEA-based fitted wardrobes with custom finishes, doors within IKEA/PAX ecosystem, rubbish removal
 //   Select: everything in PaxBespoke + full bespoke integration, sliding doors, advanced carpentry
 
 export interface ProjectType {
@@ -272,46 +272,47 @@ export const processSteps: Record<string, ProcessStep[]> = {
   budget: [
     {
       step: 1,
-      title: 'Submit Your Booking',
-      description: 'Fill in the booking form with your details and room information.',
+      title: 'Submit the Budget Form',
+      description: 'Complete the form with your room measurements, photos, and IKEA Planner design link.',
       who: 'customer',
       details: [
-        'Choose the Budget package',
-        'Tell us about your space and what you need',
-        'Select a consultation time',
+        'Provide room measurements and photos of the space',
+        'Include your IKEA Planner design link (created by you)',
+        'Select availability for a 15–20 min Google Meet call',
       ],
     },
     {
       step: 2,
-      title: 'Design Call',
-      description: 'We discuss your space, confirm measurements, and agree on the configuration.',
+      title: 'Design Call (15–20 min, Google Meet)',
+      description: 'We review your IKEA Planner design together, adjust if needed, and create a quote.',
       who: 'both',
       details: [
-        'We review your room measurements and photos',
-        'We recommend the right Pax configuration',
-        'You receive a clear, fixed quote',
+        'We review your IKEA Planner design (screen share)',
+        'If adjustments are needed, we update the design and send a new link',
+        'You receive a quote and we share fitting availability',
+        'You pay the 50% deposit to secure the fitting slot',
       ],
     },
     {
       step: 3,
-      title: 'We Prepare Your Order',
-      description: 'We prepare the full IKEA setup and any required materials.',
-      who: 'paxbespoke',
+      title: 'Customer Orders and Checks the IKEA Items',
+      description: 'You order the full IKEA setup, receive it, and confirm everything is ready.',
+      who: 'customer',
       details: [
-        'IKEA items and materials ordered',
-        'Fitting date confirmed',
-        'You pay the 50% deposit to secure the slot',
+        'Order the full IKEA setup (including any extra materials for infill/filler)',
+        'Receive the order and confirm no damaged or missing items',
+        'Message us once everything has arrived and is ready for fitting',
       ],
     },
     {
       step: 4,
       title: 'Fitting Day',
-      description: 'Our team arrives, assembles everything, and boxes it in with filler panels.',
+      description: 'Our team arrives, reconfirms the space, installs the wardrobes, and issues the final invoice.',
       who: 'paxbespoke',
       details: [
-        'Assembly, securing to wall, and filler panels fitted',
-        'Typically completed in half a day to one day',
-        'Post-installation support included',
+        'Reconfirm the space and the final design with you',
+        'Install the wardrobes — typically half a day to one day',
+        'Review the result and issue the final invoice',
       ],
     },
   ],
@@ -416,7 +417,7 @@ export const packageFAQs: Record<string, PackageFAQ[]> = {
   budget: [
     {
       question: 'What does Budget include?',
-      answer: 'Supply & installation of standard IKEA Pax wardrobes with filler panels. We handle the materials, assembly, and securing to wall. It uses standard IKEA doors and finishes.',
+      answer: 'Professional installation of standard IKEA PAX wardrobes with filler panels. You purchase the IKEA items yourself — we handle the assembly, securing to wall, and filler panel fitting. It uses standard IKEA doors and finishes only.',
     },
     {
       question: 'Will there be gaps above the wardrobe?',
@@ -430,7 +431,7 @@ export const packageFAQs: Record<string, PackageFAQ[]> = {
   paxbespoke: [
     {
       question: 'Is this fully bespoke joinery?',
-      answer: 'The interior uses the IKEA Pax system, but the exterior — bespoke hinged doors, fillers, trims, and finishes — is fully custom. The result looks indistinguishable from traditional bespoke wardrobes.',
+      answer: 'PaxBespoke Standard is built around the IKEA PAX system, refined and custom-fitted to your room. Doors and fronts can be customised within the IKEA/PAX ecosystem. If you want fully bespoke, made-to-order doors/fronts, our Select package is the better fit.',
     },
     {
       question: 'Can you handle sloped ceilings and awkward spaces?',

@@ -37,7 +37,7 @@ export default function CTABanner({
             <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5" />
           </Link>
           <p className="text-xs text-white mt-4 font-[family-name:var(--font-heading)]">
-            20-minute video call · No measurements needed · Get a clear price range
+            15–45 min video call · No exact measurements needed · Get a clear price range
           </p>
         </ScrollReveal>
       </div>
