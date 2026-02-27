@@ -35,6 +35,15 @@ export type LostReason =
 
 export type UserRole = 'admin' | 'sales' | 'operations'
 
+export type RegionStatus = 'active' | 'coming_soon' | 'inactive'
+
+export interface ServiceRegion {
+  id: string
+  name: string
+  status: RegionStatus
+  updated_at: string
+}
+
 export type LeadStatus = 'new' | 'contacted' | 'lost'
 
 export type TaskStatus = 'open' | 'done'
@@ -222,9 +231,11 @@ export interface Database {
       tasks: { Row: Task; Insert: AnyInsert; Update: AnyUpdate }
       message_logs: { Row: MessageLog; Insert: AnyInsert; Update: AnyUpdate }
       stage_log: { Row: StageLog; Insert: AnyInsert; Update: AnyUpdate }
+      service_regions: { Row: ServiceRegion; Insert: AnyInsert; Update: AnyUpdate }
     }
     Enums: {
       opportunity_stage: OpportunityStage
+      region_status: RegionStatus
       booking_type: BookingType
       booking_outcome: BookingOutcome
       onboarding_status: OnboardingStatus

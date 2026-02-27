@@ -22,15 +22,15 @@ const faqSections = [
       },
       {
         question: 'Are there any hidden costs?',
-        answer: 'No. The quote we give you is the price you pay. It includes IKEA Pax frames, your chosen finishes, delivery, installation, and cleanup. The only exception is if you request changes after the quote is agreed — and we\'ll always confirm any cost implications before proceeding.',
+        answer: 'No. The quote we give you is the price you pay. It includes IKEA Pax system, your chosen finishes, delivery, installation, and cleanup. The only exception is if you request changes after the quote is agreed — and we\'ll always confirm any cost implications before proceeding.',
       },
       {
         question: 'What\'s the difference between the three packages?',
         answer: 'Budget uses standard IKEA doors and fittings — great value, professionally installed. PaxBespoke adds custom bespoke doors, colour-matched trims, and premium interiors — the most popular choice. Select is our highest spec: premium materials, integrated lighting, designer handles, and full project management. Visit our Packages page for a detailed comparison.',
       },
       {
-        question: 'Do I need to buy the IKEA Pax frames myself?',
-        answer: 'No. We handle everything — sourcing, delivery, and installation. The cost of IKEA Pax frames is included in your quote.',
+        question: 'Do I need to buy the IKEA Pax system myself?',
+        answer: 'No. We handle everything — sourcing, delivery, and installation. The cost of IKEA Pax system is included in your quote.',
       },
       {
         question: 'Do you offer finance or payment plans?',

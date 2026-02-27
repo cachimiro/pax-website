@@ -1,7 +1,7 @@
 import { Star, Clock, MapPin, Shield } from 'lucide-react';
 
 const trustItems = [
-  { icon: MapPin, text: '50-mile radius', detail: 'From Warrington, NW' },
+  { icon: MapPin, text: 'UK-wide', detail: 'Nationwide installation' },
   { icon: Clock, text: '1–2 day install', detail: 'Minimal disruption' },
   { icon: Star, text: 'IKEA Pax specialists', detail: '5-star rated' },
   { icon: Shield, text: 'Free consultation', detail: 'No obligation' },

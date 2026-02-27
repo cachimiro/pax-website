@@ -4,7 +4,7 @@ import ScrollReveal from './ScrollReveal';
 const objections = [
   {
     question: 'Will it look like IKEA?',
-    answer: 'No. Custom doors, colour-matched trims, and professional fitting make it indistinguishable from traditional bespoke wardrobes. The Pax frame is hidden — what you see is a fully finished, built-in wardrobe.',
+    answer: 'No. Custom doors, colour-matched trims, and professional fitting make it indistinguishable from traditional bespoke wardrobes. The Pax system is hidden — what you see is a fully finished, built-in wardrobe.',
   },
   {
     question: 'Is it actually affordable?',

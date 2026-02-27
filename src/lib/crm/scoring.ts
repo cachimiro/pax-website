@@ -18,7 +18,7 @@ export function scoreLead(lead: Lead, opportunity?: Opportunity | null): LeadSco
   const budgetScore = scoreBudget(lead.budget_band)
   factors.push({ label: 'Budget', score: budgetScore, max: 30 })
 
-  // 2. Location match (20 pts) — NW England postcodes score higher
+  // 2. Location match (20 pts) — valid UK postcode scores well
   const locationScore = scoreLocation(lead.postcode)
   factors.push({ label: 'Location', score: locationScore, max: 20 })
 
@@ -52,13 +52,10 @@ function scoreBudget(budgetBand?: string | null): number {
 
 function scoreLocation(postcode?: string | null): number {
   if (!postcode) return 5
-  const area = postcode.replace(/\s+/g, '').slice(0, 2).toUpperCase()
-  // Core NW England service areas
-  const tier1 = ['WA', 'CW', 'CH'] // Warrington, Crewe, Chester
-  const tier2 = ['M', 'L', 'SK', 'WN', 'BL', 'OL', 'PR', 'ST'] // Manchester, Liverpool, etc.
-  if (tier1.some((t) => area.startsWith(t))) return 20
-  if (tier2.some((t) => area.startsWith(t))) return 15
-  return 8 // outside core area
+  // Any valid UK postcode format scores well — no geographic bias
+  const cleaned = postcode.replace(/\s+/g, '').toUpperCase()
+  if (/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(cleaned)) return 18
+  return 8
 }
 
 function scoreResponseSpeed(lead: Lead): number {

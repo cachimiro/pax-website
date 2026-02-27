@@ -16,6 +16,8 @@ import type {
   Profile,
   LostReason,
   OpportunityWithLead,
+  ServiceRegion,
+  RegionStatus,
 } from './types'
 import { toast } from 'sonner'
 import { runStageAutomations } from './automation'
@@ -553,3 +555,40 @@ export function useStageLogByOpportunityIds(opportunityIds: string[]) {
     enabled: opportunityIds.length > 0,
   })
 }
+
+// ─── Service Regions ─────────────────────────────────────────────────────────
+
+export function useServiceRegions() {
+  return useQuery({
+    queryKey: ['service_regions'],
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from('service_regions')
+        .select('*')
+        .order('name')
+      if (error) throw error
+      return data as ServiceRegion[]
+    },
+  })
+}
+
+export function useUpdateServiceRegion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: RegionStatus }) => {
+      const { error } = await supabase()
+        .from('service_regions')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['service_regions'] })
+      toast.success('Region updated')
+    },
+    onError: (err: Error) => {
+      toast.error(err.message)
+    },
+  })
+}
+

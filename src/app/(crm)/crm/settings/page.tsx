@@ -1,15 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useProfiles } from '@/lib/crm/hooks'
+import { useProfiles, useServiceRegions, useUpdateServiceRegion } from '@/lib/crm/hooks'
 import { createClient } from '@/lib/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Users, Mail, MapPin, Edit3, Save, X, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react'
+import { Users, Mail, MapPin, Edit3, Save, X, ChevronDown, ChevronUp, Copy, Check, Globe } from 'lucide-react'
 import { DEFAULT_TEMPLATES } from '@/lib/crm/messaging/templates'
-import type { Profile, UserRole } from '@/lib/crm/types'
+import type { Profile, UserRole, RegionStatus } from '@/lib/crm/types'
 
-type SettingsTab = 'users' | 'templates'
+type SettingsTab = 'users' | 'templates' | 'coverage'
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<SettingsTab>('users')
@@ -23,6 +23,7 @@ export default function SettingsPage() {
         {[
           { key: 'users' as const, label: 'Users', icon: <Users size={14} /> },
           { key: 'templates' as const, label: 'Templates', icon: <Mail size={14} /> },
+          { key: 'coverage' as const, label: 'Coverage', icon: <Globe size={14} /> },
         ].map((t) => (
           <button
             key={t.key}
@@ -40,6 +41,7 @@ export default function SettingsPage() {
 
       {tab === 'users' && <UsersSection />}
       {tab === 'templates' && <TemplatesSection />}
+      {tab === 'coverage' && <CoverageSection />}
     </div>
   )
 }
@@ -280,3 +282,112 @@ function TemplatesSection() {
     </div>
   )
 }
+
+// ─── Coverage ────────────────────────────────────────────────────────────────
+
+const STATUS_OPTIONS: { value: RegionStatus; label: string }[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'coming_soon', label: 'Coming Soon' },
+  { value: 'inactive', label: 'Inactive' },
+]
+
+function CoverageSection() {
+  const { data: regions = [], isLoading } = useServiceRegions()
+  const updateRegion = useUpdateServiceRegion()
+  const [filter, setFilter] = useState<RegionStatus | 'all'>('all')
+
+  const filtered = filter === 'all' ? regions : regions.filter((r) => r.status === filter)
+
+  const counts = {
+    active: regions.filter((r) => r.status === 'active').length,
+    coming_soon: regions.filter((r) => r.status === 'coming_soon').length,
+    inactive: regions.filter((r) => r.status === 'inactive').length,
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-14 bg-[var(--warm-50)] rounded-xl shimmer" />)}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <p className="text-xs text-[var(--warm-400)] mb-4">
+        Manage which regions appear on the public coverage map. Changes take effect within a few minutes.
+      </p>
+
+      {/* Filter buttons */}
+      <div className="flex items-center gap-3 mb-5">
+        <button
+          onClick={() => setFilter('all')}
+          className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
+            filter === 'all' ? 'bg-[var(--green-600)] text-white' : 'text-[var(--warm-500)] hover:bg-[var(--warm-50)]'
+          }`}
+        >
+          All ({regions.length})
+        </button>
+        <button
+          onClick={() => setFilter('active')}
+          className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
+            filter === 'active' ? 'bg-[var(--orange-500)] text-white' : 'text-[var(--warm-500)] hover:bg-[var(--warm-50)]'
+          }`}
+        >
+          Active ({counts.active})
+        </button>
+        <button
+          onClick={() => setFilter('coming_soon')}
+          className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
+            filter === 'coming_soon' ? 'bg-[var(--warm-700)] text-white' : 'text-[var(--warm-500)] hover:bg-[var(--warm-50)]'
+          }`}
+        >
+          Coming Soon ({counts.coming_soon})
+        </button>
+        <button
+          onClick={() => setFilter('inactive')}
+          className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
+            filter === 'inactive' ? 'bg-[var(--warm-300)] text-white' : 'text-[var(--warm-500)] hover:bg-[var(--warm-50)]'
+          }`}
+        >
+          Inactive ({counts.inactive})
+        </button>
+      </div>
+
+      {/* Region list */}
+      <div className="space-y-2">
+        {filtered.map((region) => (
+          <div
+            key={region.id}
+            className="flex items-center justify-between bg-white rounded-xl border border-[var(--warm-100)] px-4 py-3 hover:shadow-sm transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-2.5 h-2.5 rounded-full ${
+                region.status === 'active' ? 'bg-[var(--orange-400)]' :
+                region.status === 'coming_soon' ? 'bg-[var(--warm-700)]' : 'bg-[var(--warm-200)]'
+              }`} />
+              <span className="text-sm font-medium text-[var(--warm-800)]">{region.name}</span>
+            </div>
+
+            <select
+              value={region.status}
+              onChange={(e) => updateRegion.mutate({ id: region.id, status: e.target.value as RegionStatus })}
+              className="text-xs px-3 py-1.5 rounded-lg border border-[var(--warm-200)] bg-[var(--warm-50)] text-[var(--warm-700)] focus:outline-none focus:border-[var(--green-500)] cursor-pointer"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="p-8 text-center text-sm text-[var(--warm-400)]">
+          No regions match this filter.
+        </div>
+      )}
+    </div>
+  )
+}
+

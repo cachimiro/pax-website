@@ -10,7 +10,7 @@ import CTABanner from '@/components/CTABanner';
 
 export const metadata: Metadata = {
   title: 'Packages',
-  description: 'Three wardrobe packages to suit every budget. Budget from £800, PaxBespoke from £1,500, Select from £2,500. Available across the North West. Free design consultation included.',
+  description: 'Three wardrobe packages to suit every budget. Budget from £800, PaxBespoke from £1,500, Select from £2,500. Available UK-wide. Free design consultation included.',
 };
 
 const packages = [
@@ -20,7 +20,7 @@ const packages = [
     bestFor: 'Best for: smart storage on a budget',
     priceRange: 'From £800',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax frames', 'Standard door finishes', 'Professional installation', 'Basic interior fittings'],
+    features: ['IKEA Pax system', 'Standard door finishes', 'Professional installation', 'Basic interior fittings'],
     leadTime: '1–2 weeks',
     finishLevel: 'Standard',
   },
@@ -30,7 +30,7 @@ const packages = [
     bestFor: 'Best for: a custom look without the custom price',
     priceRange: 'From £1,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax frames', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior layout', 'Soft-close upgrades'],
+    features: ['IKEA Pax system', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior layout', 'Soft-close upgrades'],
     leadTime: '2–3 weeks',
     finishLevel: 'Custom bespoke',
     popular: true,
@@ -41,14 +41,14 @@ const packages = [
     bestFor: 'Best for: a fully bespoke, designer finish',
     priceRange: 'From £2,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax frames', 'Premium bespoke doors & panels', 'Integrated lighting', 'Full custom interior', 'Designer handle options', 'End-to-end project management'],
+    features: ['IKEA Pax system', 'Premium bespoke doors & panels', 'Integrated lighting', 'Full custom interior', 'Designer handle options', 'End-to-end project management'],
     leadTime: '3–4 weeks',
     finishLevel: 'Premium bespoke',
   },
 ];
 
 const comparisonFeatures = [
-  { feature: 'IKEA Pax frames', budget: true, paxbespoke: true, select: true },
+  { feature: 'IKEA Pax system', budget: true, paxbespoke: true, select: true },
   { feature: 'Professional installation', budget: true, paxbespoke: true, select: true },
   { feature: 'Free design consultation', budget: true, paxbespoke: true, select: true },
   { feature: 'Standard IKEA doors', budget: true, paxbespoke: false, select: false },
@@ -117,7 +117,7 @@ export default function PackagesPage() {
           <SectionHeading
             label="Our Packages"
             title="Find the right package for your space and budget"
-            description="Every package uses IKEA Pax frames as the foundation — giving you quality engineering at a fraction of traditional fitted wardrobe prices. The difference is in the finish."
+            description="Every package uses IKEA Pax system as the foundation — giving you quality engineering at a fraction of traditional fitted wardrobe prices. The difference is in the finish."
           />
 
           {/* Package cards */}
@@ -130,7 +130,7 @@ export default function PackagesPage() {
           <div className="mt-8 bg-green-50 rounded-xl p-6 text-center">
             <p className="text-sm text-green-900 font-medium">
               Prices are indicative starting points for a single wardrobe, professionally installed.
-              Available across our North West service area, within 50 miles of Warrington.
+              Available UK-wide.
               Your exact quote is confirmed after a free, no-obligation consultation.
               <strong className="block mt-1">The consultation refines your price — it doesn&apos;t surprise you.</strong>
             </p>

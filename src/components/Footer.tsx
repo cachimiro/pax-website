@@ -45,7 +45,7 @@ export default function Footer() {
             />
             <p className="text-warm-300 text-sm leading-relaxed max-w-sm mb-6">
               IKEA Pax wardrobe specialists. Custom finishes, expert installation,
-              delivered in 1–2 days. Serving homes within 50 miles of Warrington, UK.
+              delivered in 1–2 days. Serving homes across the UK.
             </p>
             <div className="space-y-2.5 text-sm">
               <a href="tel:+447000000000" className="flex items-center gap-2.5 hover:text-white transition-colors group">
@@ -64,7 +64,7 @@ export default function Footer() {
                 <div className="w-8 h-8 rounded-lg bg-warm-800 flex items-center justify-center">
                   <MapPin className="w-3.5 h-3.5 text-green-500" />
                 </div>
-                Warrington &amp; North West (50-mile radius)
+                UK-wide installation
               </div>
             </div>
             <div className="flex gap-3 mt-6">

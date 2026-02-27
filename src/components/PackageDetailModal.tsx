@@ -30,7 +30,7 @@ const packageDetails: Record<string, PackageDetail> = {
     whoItsFor:
       'For anyone who wants practical, good-looking built-in storage without stretching their finances. You value function over flair, and you want a straightforward upgrade from flat-pack.',
     includes: [
-      'IKEA Pax frames tailored to your space',
+      'IKEA Pax system tailored to your space',
       'Standard IKEA door finishes',
       'Professional measurement & installation',
       'Basic interior fittings (shelves, rail)',
@@ -59,7 +59,7 @@ const packageDetails: Record<string, PackageDetail> = {
     whoItsFor:
       'For homeowners who want a wardrobe that looks and feels bespoke without the bespoke price tag. You care about design, you want something that fits your room perfectly, and you appreciate quality craftsmanship.',
     includes: [
-      'IKEA Pax frames modified to your exact space',
+      'IKEA Pax system modified to your exact space',
       'Custom bespoke doors in your chosen finish',
       'Colour-matched trims, fillers & panels',
       'Professional measurement & installation',

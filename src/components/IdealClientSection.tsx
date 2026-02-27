@@ -6,12 +6,12 @@ const forYou = [
   'You\'ve priced traditional fitted wardrobes (£3,000–£8,000+) and want the same look for less',
   'You like IKEA Pax but want it to look nothing like IKEA',
   'You want someone to handle everything — design, sourcing, fitting — not a DIY project',
-  'You\'re based in the North West, within 50 miles of Warrington',
+  'You\'re based in the UK',
 ];
 
 const notForYou = [
-  'You need fully custom-built carcasses (we use IKEA Pax frames — that\'s our advantage)',
-  'You\'re outside our 50-mile service area',
+  'You need fully custom-built carcasses (we use IKEA Pax system — that\'s our advantage)',
+  'You\'re outside the UK',
   'You\'re looking for the cheapest possible option (we\'re not the cheapest — we\'re the best value)',
 ];
 

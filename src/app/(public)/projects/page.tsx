@@ -7,7 +7,7 @@ import CTABanner from '@/components/CTABanner';
 
 export const metadata: Metadata = {
   title: 'Projects',
-  description: 'See real PaxBespoke installations across the North West. Before & after transformations across Budget, PaxBespoke, and Select packages.',
+  description: 'See real PaxBespoke installations. Before & after transformations across Budget, PaxBespoke, and Select packages.',
 };
 
 const projects = [
@@ -64,7 +64,7 @@ const projects = [
   {
     id: 'bromley-hallway',
     title: 'Hallway Storage',
-    location: 'Warrington, Cheshire',
+    location: 'Cheshire',
     packageUsed: 'Budget',
     roomType: 'Hallway',
     description: 'Maximised an awkward hallway space with slim Pax units. Coats, shoes, and bags — all hidden behind clean white doors.',
@@ -84,7 +84,7 @@ export default function ProjectsPage() {
           <SectionHeading
             label="Our Projects"
             title="Real installations. Real homes."
-            description="Every project shows what's possible with IKEA Pax frames and the right finish. Browse by room type or package level."
+            description="Every project shows what's possible with IKEA Pax system and the right finish. Browse by room type or package level."
           />
 
           {/* Filter pills — static for now, can be made interactive */}

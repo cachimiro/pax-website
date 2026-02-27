@@ -3,29 +3,17 @@ export function LocalBusinessSchema() {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: 'PaxBespoke',
-    description: 'Custom IKEA Pax wardrobe specialists. Bespoke doors, trims, and finishes on IKEA Pax frames. Expert installation in 1-2 days. Serving the North West within 50 miles of Warrington.',
+    description: 'Custom IKEA Pax wardrobe specialists. Bespoke doors, trims, and finishes on IKEA Pax system. Expert installation in 1-2 days. Serving customers across the UK.',
     url: 'https://paxbespoke.uk',
     telephone: '+447000000000',
     email: 'hello@paxbespoke.uk',
     address: {
       '@type': 'PostalAddress',
-      addressLocality: 'Warrington',
-      addressRegion: 'Cheshire',
       addressCountry: 'GB',
     },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: 53.39,
-      longitude: -2.597,
-    },
     areaServed: {
-      '@type': 'GeoCircle',
-      geoMidpoint: {
-        '@type': 'GeoCoordinates',
-        latitude: 53.39,
-        longitude: -2.597,
-      },
-      geoRadius: '80467', // 50 miles in metres
+      '@type': 'Country',
+      name: 'United Kingdom',
     },
     aggregateRating: {
       '@type': 'AggregateRating',
@@ -81,13 +69,8 @@ export function ServiceSchema() {
       name: 'PaxBespoke',
     },
     areaServed: {
-      '@type': 'GeoCircle',
-      geoMidpoint: {
-        '@type': 'GeoCoordinates',
-        latitude: 53.39,
-        longitude: -2.597,
-      },
-      geoRadius: '80467',
+      '@type': 'Country',
+      name: 'United Kingdom',
     },
     hasOfferCatalog: {
       '@type': 'OfferCatalog',

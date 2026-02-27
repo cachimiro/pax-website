@@ -1,12 +1,11 @@
-// Warrington centre coordinates
-const WARRINGTON_LAT = 53.3900;
-const WARRINGTON_LNG = -2.5970;
-const MAX_RADIUS_MILES = 50;
+// Base coordinates for distance calculation (logistics planning)
+const BASE_LAT = 53.3900;
+const BASE_LNG = -2.5970;
 
 interface PostcodeResult {
   valid: boolean;
   inRange: boolean;
-  distance?: number; // miles
+  distance?: number; // miles from base
   location?: string;
   error?: string;
 }
@@ -26,7 +25,7 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c;
 }
 
-// Check postcode against Warrington radius using postcodes.io (free, no API key)
+// Validate a UK postcode and return distance for logistics. All valid UK postcodes are accepted.
 export async function checkPostcode(postcode: string): Promise<PostcodeResult> {
   const cleaned = postcode.replace(/\s+/g, '').toUpperCase();
 
@@ -43,17 +42,16 @@ export async function checkPostcode(postcode: string): Promise<PostcodeResult> {
     }
 
     const { latitude, longitude, admin_district, region } = data.result;
-    const distance = haversineDistance(WARRINGTON_LAT, WARRINGTON_LNG, latitude, longitude);
-    const inRange = distance <= MAX_RADIUS_MILES;
+    const distance = haversineDistance(BASE_LAT, BASE_LNG, latitude, longitude);
 
     return {
       valid: true,
-      inRange,
+      inRange: true, // All UK postcodes accepted
       distance: Math.round(distance),
       location: admin_district || region || 'Unknown',
     };
   } catch {
-    // If API fails, allow through with a note
+    // If API fails, allow through
     return { valid: true, inRange: true, distance: undefined, location: undefined, error: undefined };
   }
 }

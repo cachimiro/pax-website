@@ -7,7 +7,7 @@ import CTABanner from '@/components/CTABanner';
 
 export const metadata: Metadata = {
   title: 'How It Works',
-  description: 'From free video consultation to expert installation in 1-2 days. See how PaxBespoke transforms your space in 4 simple steps. Based in Warrington, serving the North West.',
+  description: 'From free video consultation to expert installation in 1-2 days. See how PaxBespoke transforms your space in 4 simple steps.',
 };
 
 const steps = [

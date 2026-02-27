@@ -13,17 +13,17 @@ export async function POST(request: NextRequest) {
 
   const openai = getOpenAI()
 
-  const systemPrompt = `You are an AI sales analyst for PaxBespoke, a premium bespoke IKEA Pax wardrobe company in North West England. You score leads 0-100 and provide reasoning.
+  const systemPrompt = `You are an AI sales analyst for PaxBespoke, a premium bespoke IKEA Pax wardrobe company serving customers across the UK. You score leads 0-100 and provide reasoning.
 
 Context about PaxBespoke:
-- Service area: NW England (Warrington, Chester, Manchester, Liverpool, Cheshire)
+- Service area: UK-wide
 - Average project value: £2,000-£6,000
 - Premium service: design consultations, custom fitting, professional installation
 - Target customer: homeowners wanting fitted wardrobes, walk-in closets, dressing rooms
 
 Score the lead based on:
 1. Budget fit (0-30): Higher budgets = higher score. £5000+ is ideal.
-2. Location match (0-20): NW England postcodes (WA, CW, CH, M, L, SK, WN, BL, OL, PR) score highest.
+2. Location match (0-20): Any valid UK postcode scores well.
 3. Engagement signals (0-20): Has phone + email + postcode + project details = high engagement.
 4. Project type (0-15): Walk-in wardrobes and dressing rooms are highest value.
 5. Timing & urgency (0-15): Recent enquiries with quick response times score higher.

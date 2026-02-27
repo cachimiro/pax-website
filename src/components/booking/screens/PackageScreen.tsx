@@ -18,7 +18,7 @@ const packages = [
     name: 'Budget',
     tagline: 'Smart & Simple',
     price: 'From £800',
-    features: ['IKEA Pax frames', 'Standard doors', 'Professional installation'],
+    features: ['IKEA Pax system', 'Standard doors', 'Professional installation'],
     bestFor: 'Functional storage without overspending',
   },
   {
@@ -26,7 +26,7 @@ const packages = [
     name: 'PaxBespoke',
     tagline: 'Best Value',
     price: 'From £1,500',
-    features: ['IKEA Pax frames', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior'],
+    features: ['IKEA Pax system', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior'],
     bestFor: 'Custom look without the custom price',
     popular: true,
   },
@@ -35,7 +35,7 @@ const packages = [
     name: 'Select',
     tagline: 'Full Bespoke',
     price: 'From £2,500',
-    features: ['IKEA Pax frames', 'Premium bespoke doors', 'Integrated lighting', 'Full custom interior'],
+    features: ['IKEA Pax system', 'Premium bespoke doors', 'Integrated lighting', 'Full custom interior'],
     bestFor: 'Designer-level finish, end to end',
   },
 ];

@@ -3,18 +3,18 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "PaxBespoke | Custom IKEA Pax Wardrobes | North West England",
+    default: "PaxBespoke | Custom IKEA Pax Wardrobes | UK",
     template: "%s | PaxBespoke",
   },
   description:
-    "IKEA Pax wardrobe specialists based in Warrington. Custom bespoke doors and finishes on IKEA Pax frames. Expert installation in 1-2 days. Serving the North West within 50 miles. Free video design consultation.",
+    "IKEA Pax wardrobe specialists. Custom bespoke doors and finishes on IKEA Pax system. Expert installation in 1-2 days. Free video design consultation.",
   keywords: [
     "IKEA Pax wardrobes",
     "custom wardrobes",
     "fitted wardrobes Manchester",
-    "fitted wardrobes Warrington",
+    "fitted wardrobes UK",
     "fitted wardrobes Cheshire",
-    "bespoke wardrobes North West",
+    "bespoke wardrobes",
     "IKEA Pax custom doors",
     "wardrobe installation",
     "fitted wardrobes Liverpool",
@@ -34,14 +34,14 @@ export const metadata: Metadata = {
     locale: "en_GB",
     url: "https://paxbespoke.uk",
     siteName: "PaxBespoke",
-    title: "PaxBespoke | Custom IKEA Pax Wardrobes | North West",
+    title: "PaxBespoke | Custom IKEA Pax Wardrobes | UK",
     description:
-      "IKEA Pax frames with bespoke doors and finishes. Expert installation in 1-2 days. Based in Warrington, serving the North West.",
+      "IKEA Pax system with bespoke doors and finishes. Expert installation in 1-2 days. Serving customers across the UK.",
   },
   twitter: {
     card: "summary_large_image",
     title: "PaxBespoke | Custom IKEA Pax Wardrobes",
-    description: "IKEA Pax frames with bespoke doors and finishes. From £800 fitted. North West England.",
+    description: "IKEA Pax system with bespoke doors and finishes. From £800 fitted. UK-wide.",
   },
   metadataBase: new URL("https://paxbespoke.uk"),
 };

@@ -11,6 +11,7 @@ import ServiceAreaCheck from '@/components/ServiceAreaCheck';
 import IdealClientSection from '@/components/IdealClientSection';
 import WhatMakesUsDifferent from '@/components/WhatMakesUsDifferent';
 import ObjectionHandler from '@/components/ObjectionHandler';
+import HomeCoverageSection from '@/components/HomeCoverageSection';
 import { HeroDesktopImages, HeroMobileBackground } from '@/components/HeroImageCarousel';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import SectionDivider from '@/components/SectionDivider';
@@ -23,7 +24,7 @@ const packages = [
     bestFor: 'You want functional, good-looking storage without overspending',
     priceRange: 'From £800',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax frames', 'Standard door finishes', 'Professional installation', 'Basic interior fittings'],
+    features: ['IKEA Pax system', 'Standard door finishes', 'Professional installation', 'Basic interior fittings'],
     leadTime: '1–2 weeks',
     finishLevel: 'Standard',
     ctaText: 'Get Started',
@@ -35,7 +36,7 @@ const packages = [
     bestFor: 'You want a custom look without the custom price tag',
     priceRange: 'From £1,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax frames', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior layout', 'Soft-close upgrades'],
+    features: ['IKEA Pax system', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior layout', 'Soft-close upgrades'],
     leadTime: '2–3 weeks',
     finishLevel: 'Custom bespoke',
     popular: true,
@@ -48,7 +49,7 @@ const packages = [
     bestFor: 'You want a fully bespoke, designer-level finish',
     priceRange: 'From £2,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax frames', 'Premium bespoke doors & panels', 'Integrated lighting', 'Full custom interior', 'Designer handle options', 'End-to-end project management'],
+    features: ['IKEA Pax system', 'Premium bespoke doors & panels', 'Integrated lighting', 'Full custom interior', 'Designer handle options', 'End-to-end project management'],
     leadTime: '3–4 weeks',
     finishLevel: 'Premium bespoke',
     ctaText: 'Go Premium',
@@ -142,11 +143,11 @@ export default function Home() {
             <div className="text-white">
               <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-orange-400 mb-6 font-[family-name:var(--font-heading)]">
                 <span className="w-8 h-px bg-orange-400" />
-                North West IKEA Pax Specialists
+                IKEA Pax Specialists
               </span>
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-[family-name:var(--font-heading)] leading-[1.08]">
-                IKEA Pax frames.
+                IKEA Pax system.
                 <br />
                 <span className="font-[family-name:var(--font-accent)] italic text-orange-400">Bespoke</span> finish.
                 <br />
@@ -162,7 +163,7 @@ export default function Home() {
               {/* Inline trust badges */}
               <div className="flex flex-wrap gap-x-5 gap-y-2 mb-8">
                 {[
-                  { icon: MapPin, text: 'Within 50 miles of Warrington' },
+                  { icon: MapPin, text: 'UK-wide installation' },
                   { icon: Clock, text: 'Installed in 1–2 days' },
                   { icon: Shield, text: 'Free, no-obligation consultation' },
                 ].map((badge) => (
@@ -327,7 +328,7 @@ export default function Home() {
           <ScrollReveal>
             <SectionHeading
               label="What Our Customers Say"
-              title="Trusted by homeowners across the North West"
+              title="Trusted by homeowners across the UK"
             />
           </ScrollReveal>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -339,6 +340,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ===== COVERAGE MAP ===== */}
+      <HomeCoverageSection />
 
       {/* ===== SERVICE AREA CHECK ===== */}
       <ServiceAreaCheck />

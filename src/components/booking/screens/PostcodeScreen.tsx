@@ -42,10 +42,10 @@ export default function PostcodeScreen({ onNext }: PostcodeScreenProps) {
         Where&apos;s your project?
       </h2>
       <p className="text-sm text-warm-500 mb-1">
-        We install within 50 miles of Warrington. Let&apos;s check we can reach you.
+        Enter your postcode so we can plan your installation.
       </p>
       <p className="text-xs text-warm-400 mb-8 font-[family-name:var(--font-heading)]">
-        Why we ask: We serve homes within 50 miles of Warrington. This confirms we can reach you.
+        We use your postcode to plan logistics and scheduling.
       </p>
 
       <div className="space-y-4">
@@ -83,7 +83,7 @@ export default function PostcodeScreen({ onNext }: PostcodeScreenProps) {
               </p>
               {result.distance !== undefined && (
                 <p className="text-xs text-green-700 mt-0.5">
-                  {result.distance} miles from our Warrington base.
+                  {result.distance} miles from our nearest team.
                 </p>
               )}
             </div>
@@ -105,8 +105,8 @@ export default function PostcodeScreen({ onNext }: PostcodeScreenProps) {
                 </p>
                 <p className="text-xs text-warm-500 mt-0.5">
                   {result.distance !== undefined
-                    ? `That's ${result.distance} miles away — outside our 60-mile radius.`
-                    : 'Outside our service area.'}
+                    ? `That's ${result.distance} miles away — we're not there yet but expanding soon.`
+                    : 'We\'re not in your area yet but expanding soon.'}
                 </p>
               </div>
             </div>

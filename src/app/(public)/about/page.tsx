@@ -8,7 +8,7 @@ import CTABanner from '@/components/CTABanner';
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'PaxBespoke: IKEA Pax wardrobe specialists based in Warrington. Learn about our team, process, and why we\'re the smarter choice for custom wardrobes across the North West.',
+  description: 'PaxBespoke: IKEA Pax wardrobe specialists. Learn about our team, process, and why we\'re the smarter choice for custom wardrobes.',
 };
 
 const values = [
@@ -131,7 +131,7 @@ export default function AboutPage() {
       <section className="section-padding bg-warm-50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <TestimonialCard
-            quote="We got quotes from three traditional fitted wardrobe companies — all over £5,000. PaxBespoke delivered a better-looking result for less than half the price. The IKEA Pax frames are rock solid and the custom doors are beautiful. Genuinely can't recommend them enough."
+            quote="We got quotes from three traditional fitted wardrobe companies — all over £5,000. PaxBespoke delivered a better-looking result for less than half the price. The IKEA Pax system are rock solid and the custom doors are beautiful. Genuinely can't recommend them enough."
             name="David & Claire H."
             location="Knutsford, Cheshire"
             packageUsed="PaxBespoke"

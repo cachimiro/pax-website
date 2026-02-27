@@ -49,7 +49,7 @@ export default function ServiceAreaCheck() {
             Do we cover your area?
           </h2>
           <p className="text-green-100/70 mb-8 max-w-md mx-auto">
-            We serve homes within 50 miles of Warrington — covering Manchester, Liverpool, Chester, Preston, and beyond.
+            We serve homes across the UK. Enter your postcode to check.
           </p>
 
           {/* Postcode input */}
@@ -95,7 +95,7 @@ export default function ServiceAreaCheck() {
             <div className="mt-6 inline-flex items-center gap-2 bg-orange-500/20 border border-orange-400/30 rounded-xl px-5 py-3 animate-fade-in-up">
               <XCircle className="w-5 h-5 text-orange-400" />
               <span className="text-sm text-orange-100">
-                That&apos;s {distance} miles away — outside our current range. We&apos;re expanding soon!
+                We&apos;re not in {distance ? `your area (${distance} miles)` : 'your area'} yet — but we&apos;re expanding. Get in touch!
               </span>
             </div>
           )}
@@ -111,7 +111,7 @@ export default function ServiceAreaCheck() {
 
           {/* Quick area list */}
           <div className="mt-8 flex flex-wrap justify-center gap-2">
-            {['Manchester', 'Liverpool', 'Chester', 'Preston', 'Bolton', 'Wigan', 'Stockport', 'Warrington'].map((area) => (
+            {['Manchester', 'Liverpool', 'London', 'Birmingham', 'Leeds', 'Bristol', 'Chester', 'Sheffield'].map((area) => (
               <span key={area} className="text-xs text-green-100/40 bg-white/5 px-3 py-1 rounded-full">
                 {area}
               </span>
