@@ -63,7 +63,7 @@ export default function AboutPage() {
               <p className="text-lg text-warm-700 leading-relaxed mb-8">
                 Our solution: take the precision engineering of IKEA Pax and add genuinely custom
                 finishes — bespoke doors, colour-matched trims, premium handles, integrated lighting.
-                The result looks and feels fully bespoke, at a fraction of the cost, installed in 1–2 days.
+                The result looks and feels fully bespoke, at a fraction of the cost, with fitting completed in just 1–2 days on site.
               </p>
               <Link
                 href="/how-it-works"

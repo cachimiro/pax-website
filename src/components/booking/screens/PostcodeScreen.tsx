@@ -42,7 +42,7 @@ export default function PostcodeScreen({ onNext }: PostcodeScreenProps) {
         Where&apos;s your project?
       </h2>
       <p className="text-sm text-warm-500 mb-1">
-        Enter your postcode so we can plan your installation.
+        Enter your postcode so we can check your area and plan ahead.
       </p>
       <p className="text-xs text-warm-400 mb-8 font-[family-name:var(--font-heading)]">
         We use your postcode to plan logistics and scheduling.

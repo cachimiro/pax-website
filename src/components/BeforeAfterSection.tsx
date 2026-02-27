@@ -93,7 +93,13 @@ export default function BeforeAfterSection() {
                       </h3>
                       <p className="text-xs text-warm-500">{project.location}</p>
                     </div>
-                    <span className="text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full font-[family-name:var(--font-heading)]">
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full font-[family-name:var(--font-heading)] ${
+                      project.packageUsed === 'Budget'
+                        ? 'bg-[#f28c43]/10 text-[#f28c43]'
+                        : project.packageUsed === 'Select'
+                        ? 'bg-[#2d5c37]/10 text-[#2d5c37]'
+                        : 'bg-gradient-to-r from-[#f28c43]/10 to-[#2d5c37]/10 text-warm-700'
+                    }`}>
                       {project.packageUsed}
                     </span>
                   </div>

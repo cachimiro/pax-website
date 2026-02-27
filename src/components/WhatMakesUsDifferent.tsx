@@ -1,27 +1,34 @@
-import Image from 'next/image';
 import ScrollReveal from './ScrollReveal';
-import { CheckCircle, Clock, PoundSterling, Sparkles } from 'lucide-react';
+import { Eye, Ruler, Palette, Wrench } from 'lucide-react';
 
-const advantages = [
+const points = [
   {
-    icon: Sparkles,
-    title: 'Precision-engineered frames',
-    text: 'IKEA Pax is the world\'s most popular modular wardrobe system. We don\'t build boxes from scratch — we start with frames that are already perfect.',
+    icon: Eye,
+    title: 'You see the wardrobe, not the system',
+    description: 'The IKEA Pax carcass is hidden behind custom finishes. What you see is a fully fitted, built-in wardrobe — not a kit. Visitors won\u0027t know there\u0027s Pax inside.',
+    note: 'Select & PaxBespoke packages',
+    noteClass: 'text-[#2d5c37]',
   },
   {
-    icon: CheckCircle,
-    title: 'Custom doors & trims',
-    text: 'We add bespoke doors, colour-matched trims, and professional finishing so your wardrobe looks fully built-in — not flat-pack.',
+    icon: Ruler,
+    title: 'Filler panels tailored to your space',
+    description: 'Every room is different. Our filler panels are cut to fit — they can be 5cm, wider, or narrower depending on your walls. On Select, fillers sit flush for a seamless finish. On Budget, standard fillers keep costs down.',
+    note: 'Flush fillers on Select · Standard fillers on Budget',
+    noteClass: 'text-warm-500',
   },
   {
-    icon: PoundSterling,
-    title: 'Up to 60% less cost',
-    text: 'By using IKEA\'s precision carcasses instead of building from scratch, we pass the savings on to you without compromising on the finished look.',
+    icon: Palette,
+    title: 'Custom doors and trim colours',
+    description: 'Choose your door style, colour, and handle. Shaker fronts, matt finishes, bold colours — whatever suits your room. Trims are colour-matched so everything looks intentional, not added on.',
+    note: 'Select & PaxBespoke only',
+    noteClass: 'text-[#2d5c37]',
   },
   {
-    icon: Clock,
-    title: 'Installed in days, not weeks',
-    text: 'Traditional fitted wardrobes take 4–8 weeks. We design, source, and install in a fraction of the time.',
+    icon: Wrench,
+    title: 'Proper skirting finish and integration',
+    description: 'We remove skirting, cut coving, and adjust rails so the wardrobe sits properly against the wall. On Select, the skirting finish is flush. On PaxBespoke, we integrate fully into the wall itself.',
+    note: 'Skirting finish on Select · Full integration on PaxBespoke',
+    noteClass: 'text-warm-500',
   },
 ];
 
@@ -29,85 +36,40 @@ export default function WhatMakesUsDifferent() {
   return (
     <section className="section-padding bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Mobile: stacked layout / Desktop: side-by-side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+        <ScrollReveal>
+          <div className="text-center mb-12">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-orange-500 mb-3 font-[family-name:var(--font-heading)]">
+              <span className="w-6 h-px bg-orange-400" />
+              Why PaxBespoke
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-3">
+              We create a finished product, not a flat-pack
+            </h2>
+            <p className="text-lg text-warm-500 max-w-2xl mx-auto">
+              Stop comparing with IKEA. What we deliver is a fitted wardrobe — designed, built, and installed to look like it&apos;s always been there.
+            </p>
+          </div>
+        </ScrollReveal>
 
-          {/* Left: Before/After visual */}
-          <ScrollReveal>
-            {/* pb-12 on mobile to make room for the overlapping after image */}
-            <div className="relative pb-14 sm:pb-16 lg:pb-12">
-              {/* Before image */}
-              <div className="relative rounded-2xl overflow-hidden shadow-lg">
-                <Image
-                  src="/images/stock/before-1.jpg"
-                  alt="Standard IKEA Pax wardrobe — before PaxBespoke"
-                  width={600}
-                  height={450}
-                  className="w-full h-auto object-cover aspect-[4/3]"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                  <span className="text-xs font-bold text-white/80 uppercase tracking-wider font-[family-name:var(--font-heading)]">
-                    Standard IKEA Pax
-                  </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
+          {points.map((point, i) => (
+            <ScrollReveal key={point.title} delay={i * 0.1}>
+              <div className="bg-warm-50 rounded-2xl p-6 md:p-8 h-full border border-warm-100">
+                <div className="w-11 h-11 rounded-xl bg-white border border-warm-100 flex items-center justify-center mb-4 shadow-sm">
+                  <point.icon className="w-5 h-5 text-warm-700" />
                 </div>
+                <h3 className="text-lg font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
+                  {point.title}
+                </h3>
+                <p className="text-sm text-warm-600 leading-relaxed mb-3">
+                  {point.description}
+                </p>
+                <p className={`text-xs font-medium font-[family-name:var(--font-heading)] ${point.noteClass}`}>
+                  {point.note}
+                </p>
               </div>
-
-              {/* After image — overlapping bottom-right */}
-              <div className="absolute -bottom-2 right-2 sm:right-0 w-[55%] sm:w-[60%] rounded-2xl overflow-hidden shadow-2xl border-4 border-white z-10">
-                <Image
-                  src="/images/stock/after-1.jpg"
-                  alt="PaxBespoke fitted wardrobe — after transformation"
-                  width={400}
-                  height={300}
-                  className="w-full h-auto object-cover aspect-[4/3]"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                  <span className="text-xs font-bold text-white/80 uppercase tracking-wider font-[family-name:var(--font-heading)]">
-                    After PaxBespoke
-                  </span>
-                </div>
-              </div>
-
-
-            </div>
-          </ScrollReveal>
-
-          {/* Right: Approach explanation */}
-          <ScrollReveal delay={0.15}>
-            <div>
-              <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-[#E8872B] mb-3 font-[family-name:var(--font-heading)]">
-                <span className="w-6 h-px bg-[#E8872B]" />
-                Our Approach
-              </span>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-4">
-                Same frames.{' '}
-                <span className="text-[#0C6B4E]">Completely different result.</span>
-              </h2>
-              <p className="text-sm sm:text-base text-warm-500 mb-6 sm:mb-8 leading-relaxed">
-                We started building fully bespoke wardrobes from scratch. Then we realised IKEA had already
-                solved the hardest part — the carcass. So we focused on what actually makes a wardrobe
-                look built-in: the doors, the trims, and the installation.
-              </p>
-
-              <div className="space-y-4 sm:space-y-5">
-                {advantages.map((item, i) => (
-                  <div key={i} className="flex gap-3 sm:gap-4">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0C6B4E]/10 flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#0C6B4E]" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-0.5">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-warm-500 leading-relaxed">
-                        {item.text}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ScrollReveal>
+            </ScrollReveal>
+          ))}
         </div>
       </div>
     </section>

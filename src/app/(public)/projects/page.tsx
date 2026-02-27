@@ -1,14 +1,71 @@
-import type { Metadata } from 'next';
+'use client';
+
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Info } from 'lucide-react';
 import SectionHeading from '@/components/SectionHeading';
 import CTABanner from '@/components/CTABanner';
+import { usePackageModal } from '@/components/PackageModalProvider';
 
-export const metadata: Metadata = {
-  title: 'Projects',
-  description: 'See real PaxBespoke installations. Before & after transformations across Budget, PaxBespoke, and Select packages.',
-};
+/* ─── Package color helpers ─── */
+
+function pkgBadgeClass(pkg: string) {
+  switch (pkg) {
+    case 'Budget':
+      return 'bg-[#f28c43]/90 backdrop-blur-sm text-white';
+    case 'Select':
+      return 'bg-[#2d5c37]/90 backdrop-blur-sm text-white';
+    case 'PaxBespoke':
+      return 'bg-gradient-to-r from-[#f28c43]/90 to-[#2d5c37]/90 backdrop-blur-sm text-white';
+    default:
+      return 'bg-warm-700/90 backdrop-blur-sm text-white';
+  }
+}
+
+function pkgCtaClass(pkg: string) {
+  switch (pkg) {
+    case 'Budget':
+      return 'text-[#f28c43] hover:text-[#e07c33]';
+    case 'Select':
+      return 'text-[#2d5c37] hover:text-[#234a2c]';
+    case 'PaxBespoke':
+      return 'text-[#f28c43] hover:text-[#e07c33]';
+    default:
+      return 'text-warm-700 hover:text-warm-900';
+  }
+}
+
+function pkgFinishBg(pkg: string) {
+  switch (pkg) {
+    case 'Budget':
+      return 'bg-[#f28c43]/5 text-[#f28c43]';
+    case 'Select':
+      return 'bg-[#2d5c37]/5 text-[#2d5c37]';
+    case 'PaxBespoke':
+      return 'bg-[#f28c43]/5 text-warm-600';
+    default:
+      return 'bg-warm-50 text-warm-600';
+  }
+}
+
+function pkgFilterClass(pkg: string, isActive: boolean) {
+  if (!isActive) return 'bg-warm-100 text-warm-700 hover:bg-warm-200';
+  switch (pkg) {
+    case 'Budget':
+      return 'bg-[#f28c43] text-white';
+    case 'Select':
+      return 'bg-[#2d5c37] text-white';
+    case 'PaxBespoke':
+      return 'bg-gradient-to-r from-[#f28c43] to-[#2d5c37] text-white';
+    case 'All':
+      return 'bg-warm-900 text-white';
+    default:
+      return 'bg-warm-900 text-white';
+  }
+}
+
+/* ─── Data ─── */
 
 const projects = [
   {
@@ -73,10 +130,24 @@ const projects = [
   },
 ];
 
-const filters = ['All', 'Bedroom', 'Dressing Room', 'Hallway'];
+const roomFilters = ['All', 'Bedroom', 'Dressing Room', 'Hallway'];
 const packageFilters = ['All', 'Budget', 'PaxBespoke', 'Select'];
 
+/* ─── Component ─── */
+
 export default function ProjectsPage() {
+  const [roomFilter, setRoomFilter] = useState('All');
+  const [packageFilter, setPackageFilter] = useState('All');
+  const { openPackageModal } = usePackageModal();
+
+  const filtered = useMemo(() => {
+    return projects.filter((p) => {
+      const roomMatch = roomFilter === 'All' || p.roomType === roomFilter;
+      const pkgMatch = packageFilter === 'All' || p.packageUsed === packageFilter;
+      return roomMatch && pkgMatch;
+    });
+  }, [roomFilter, packageFilter]);
+
   return (
     <>
       <section className="section-padding bg-warm-white">
@@ -87,15 +158,16 @@ export default function ProjectsPage() {
             description="Every project shows what's possible with IKEA Pax system and the right finish. Browse by room type or package level."
           />
 
-          {/* Filter pills — static for now, can be made interactive */}
+          {/* Filters */}
           <div className="flex flex-wrap gap-2 justify-center mb-10">
             <span className="text-xs font-medium text-warm-500 mr-2 self-center font-[family-name:var(--font-heading)]">Room:</span>
-            {filters.map((f, i) => (
+            {roomFilters.map((f) => (
               <button
                 key={f}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors font-[family-name:var(--font-heading)] ${
-                  i === 0
-                    ? 'bg-green-700 text-white'
+                onClick={() => setRoomFilter(f)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all font-[family-name:var(--font-heading)] ${
+                  roomFilter === f
+                    ? 'bg-warm-900 text-white'
                     : 'bg-warm-100 text-warm-700 hover:bg-warm-200'
                 }`}
               >
@@ -103,13 +175,12 @@ export default function ProjectsPage() {
               </button>
             ))}
             <span className="text-xs font-medium text-warm-500 ml-4 mr-2 self-center font-[family-name:var(--font-heading)]">Package:</span>
-            {packageFilters.map((f, i) => (
+            {packageFilters.map((f) => (
               <button
                 key={f}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors font-[family-name:var(--font-heading)] ${
-                  i === 0
-                    ? 'bg-green-700 text-white'
-                    : 'bg-warm-100 text-warm-700 hover:bg-warm-200'
+                onClick={() => setPackageFilter(f)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all font-[family-name:var(--font-heading)] ${
+                  pkgFilterClass(f, packageFilter === f)
                 }`}
               >
                 {f}
@@ -117,9 +188,37 @@ export default function ProjectsPage() {
             ))}
           </div>
 
+          {/* Results count */}
+          {filtered.length < projects.length && (
+            <p className="text-center text-sm text-warm-400 mb-6 font-[family-name:var(--font-heading)]">
+              Showing {filtered.length} of {projects.length} projects
+              {roomFilter !== 'All' || packageFilter !== 'All' ? (
+                <button
+                  onClick={() => { setRoomFilter('All'); setPackageFilter('All'); }}
+                  className="ml-2 text-warm-500 underline hover:text-warm-700 transition-colors"
+                >
+                  Clear filters
+                </button>
+              ) : null}
+            </p>
+          )}
+
+          {/* Empty state */}
+          {filtered.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-warm-500 mb-3">No projects match your filters.</p>
+              <button
+                onClick={() => { setRoomFilter('All'); setPackageFilter('All'); }}
+                className="text-sm font-semibold text-[#f28c43] hover:text-[#e07c33] transition-colors font-[family-name:var(--font-heading)]"
+              >
+                Show all projects
+              </button>
+            </div>
+          )}
+
           {/* Project grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project) => (
+            {filtered.map((project) => (
               <article key={project.id} id={project.id} className="group">
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden relative mb-4">
                   <Image
@@ -133,9 +232,12 @@ export default function ProjectsPage() {
                     <span className="text-xs font-medium bg-white/90 backdrop-blur-sm text-warm-700 px-2.5 py-1 rounded-full font-[family-name:var(--font-heading)]">
                       {project.roomType}
                     </span>
-                    <span className="text-xs font-medium bg-green-700/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-full font-[family-name:var(--font-heading)]">
+                    <button
+                      onClick={() => openPackageModal(project.packageUsed.toLowerCase())}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full font-[family-name:var(--font-heading)] cursor-pointer hover:opacity-80 transition-opacity ${pkgBadgeClass(project.packageUsed)}`}
+                    >
                       {project.packageUsed}
-                    </span>
+                    </button>
                   </div>
                 </div>
 
@@ -147,19 +249,28 @@ export default function ProjectsPage() {
 
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {project.finishes.map((finish) => (
-                    <span key={finish} className="text-xs bg-warm-50 text-warm-600 px-2.5 py-1 rounded-full">
+                    <span key={finish} className={`text-xs px-2.5 py-1 rounded-full font-medium ${pkgFinishBg(project.packageUsed)}`}>
                       {finish}
                     </span>
                   ))}
                 </div>
 
-                <Link
-                  href={`/book?package=${project.packageUsed.toLowerCase()}`}
-                  className="inline-flex items-center text-sm font-semibold text-green-700 hover:text-green-900 transition-colors font-[family-name:var(--font-heading)]"
-                >
-                  Get a similar design
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Link>
+                <div className="flex items-center gap-4">
+                  <Link
+                    href={`/book?package=${project.packageUsed.toLowerCase()}`}
+                    className={`inline-flex items-center text-sm font-semibold transition-colors font-[family-name:var(--font-heading)] ${pkgCtaClass(project.packageUsed)}`}
+                  >
+                    Get a similar design
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                  <button
+                    onClick={() => openPackageModal(project.packageUsed.toLowerCase())}
+                    className="inline-flex items-center gap-1 text-xs text-warm-400 hover:text-warm-600 transition-colors font-[family-name:var(--font-heading)]"
+                  >
+                    <Info className="w-3.5 h-3.5" />
+                    About {project.packageUsed}
+                  </button>
+                </div>
               </article>
             ))}
           </div>

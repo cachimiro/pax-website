@@ -2,7 +2,7 @@ import { Star, Clock, MapPin, Shield } from 'lucide-react';
 
 const trustItems = [
   { icon: MapPin, text: 'UK-wide', detail: 'Nationwide installation' },
-  { icon: Clock, text: '1–2 day install', detail: 'Minimal disruption' },
+  { icon: Clock, text: '1–2 day fitting', detail: 'Once your design is finalised' },
   { icon: Star, text: 'IKEA Pax specialists', detail: '5-star rated' },
   { icon: Shield, text: 'Free consultation', detail: 'No obligation' },
 ];

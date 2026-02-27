@@ -18,25 +18,28 @@ const packages = [
     name: 'Budget',
     tagline: 'Smart & Simple',
     price: 'From £800',
-    features: ['IKEA Pax system', 'Standard doors', 'Professional installation'],
-    bestFor: 'Functional storage without overspending',
+    features: ['Standard doors', 'Filler panels fitted', 'Professional installation'],
+    bestFor: 'Practical storage at the best price',
+    color: '#f28c43',
   },
   {
     id: 'paxbespoke',
     name: 'PaxBespoke',
-    tagline: 'Best Value',
+    tagline: 'Where Pax Meets Bespoke',
     price: 'From £1,500',
-    features: ['IKEA Pax system', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior'],
-    bestFor: 'Custom look without the custom price',
-    popular: true,
+    features: ['Bespoke hinged doors', 'Custom trim colours', 'Flush fillers', 'Skirting finish'],
+    bestFor: 'Looks fully bespoke, not like IKEA',
+    color: '#2d5c37',
   },
   {
     id: 'select',
     name: 'Select',
-    tagline: 'Full Bespoke',
+    tagline: 'Designed Without Limits',
     price: 'From £2,500',
-    features: ['IKEA Pax system', 'Premium bespoke doors', 'Integrated lighting', 'Full custom interior'],
-    bestFor: 'Designer-level finish, end to end',
+    features: ['Everything in PaxBespoke', 'Sliding doors', 'Floor-to-ceiling', 'Full wall integration'],
+    bestFor: 'Complex spaces, no compromises',
+    popular: true,
+    color: '#2d5c37',
   },
 ];
 
@@ -80,11 +83,13 @@ export default function PackageScreen({ value, onChange, onNext, postcodeLocatio
                       {pkg.name}
                     </p>
                     {pkg.popular && (
-                      <span className="text-[10px] font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full font-[family-name:var(--font-heading)]">
-                        Most Popular
+                      <span className="text-[10px] font-bold bg-[#2d5c37] text-white px-2 py-0.5 rounded-full font-[family-name:var(--font-heading)]">
+                        Recommended
                       </span>
                     )}
-                    <span className="text-[10px] font-semibold text-warm-400 uppercase tracking-wider font-[family-name:var(--font-heading)]">
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider font-[family-name:var(--font-heading)] ${
+                      pkg.id === 'budget' ? 'text-[#f28c43]' : pkg.id === 'paxbespoke' ? 'text-[#2d5c37]' : 'text-[#2d5c37]'
+                    }`}>
                       {pkg.tagline}
                     </span>
                   </div>
@@ -92,7 +97,7 @@ export default function PackageScreen({ value, onChange, onNext, postcodeLocatio
                   <div className="flex flex-wrap gap-x-3 gap-y-1">
                     {pkg.features.map((f) => (
                       <span key={f} className="flex items-center gap-1 text-xs text-warm-600">
-                        <Check className="w-3 h-3 text-green-500" />
+                        <Check className="w-3 h-3" style={{ color: pkg.color }} />
                         {f}
                       </span>
                     ))}

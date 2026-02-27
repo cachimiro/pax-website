@@ -26,7 +26,7 @@ export default function CTABanner({
           <h2 className="text-2xl md:text-4xl font-bold text-white mb-4 font-[family-name:var(--font-heading)]">
             {title}
           </h2>
-          <p className="text-green-100/70 text-lg mb-8 max-w-xl mx-auto">
+          <p className="text-white text-lg mb-8 max-w-xl mx-auto">
             {description}
           </p>
           <Link
@@ -36,7 +36,7 @@ export default function CTABanner({
             {buttonText}
             <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <p className="text-xs text-green-100/40 mt-4 font-[family-name:var(--font-heading)]">
+          <p className="text-xs text-white mt-4 font-[family-name:var(--font-heading)]">
             20-minute video call · No measurements needed · Get a clear price range
           </p>
         </ScrollReveal>

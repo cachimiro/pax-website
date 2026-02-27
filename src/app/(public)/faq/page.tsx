@@ -22,15 +22,15 @@ const faqSections = [
       },
       {
         question: 'Are there any hidden costs?',
-        answer: 'No. The quote we give you is the price you pay. It includes IKEA Pax system, your chosen finishes, delivery, installation, and cleanup. The only exception is if you request changes after the quote is agreed — and we\'ll always confirm any cost implications before proceeding.',
+        answer: 'No. The quote we give you is the price you pay. It includes materials, your chosen finishes, and installation. The only exception is if you request changes after the quote is agreed — and we\'ll always confirm any cost implications before proceeding.',
       },
       {
         question: 'What\'s the difference between the three packages?',
-        answer: 'Budget uses standard IKEA doors and fittings — great value, professionally installed. PaxBespoke adds custom bespoke doors, colour-matched trims, and premium interiors — the most popular choice. Select is our highest spec: premium materials, integrated lighting, designer handles, and full project management. Visit our Packages page for a detailed comparison.',
+        answer: 'Budget uses standard IKEA doors and fittings — great value, professionally installed. PaxBespoke adds bespoke hinged doors, colour-matched trims, flush fillers, skirting finish, and rubbish removal. Select is our highest spec: everything in PaxBespoke plus full wall integration, sliding door systems, floor-to-ceiling builds, and advanced carpentry. Visit our Packages page for a detailed comparison.',
       },
       {
         question: 'Do I need to buy the IKEA Pax system myself?',
-        answer: 'No. We handle everything — sourcing, delivery, and installation. The cost of IKEA Pax system is included in your quote.',
+        answer: 'No. We handle sourcing and delivery across all packages. The cost of the IKEA Pax system and materials is included in your quote.',
       },
       {
         question: 'Do you offer finance or payment plans?',
@@ -62,7 +62,7 @@ const faqSections = [
     faqs: [
       {
         question: 'How long does installation take?',
-        answer: 'Most installations are completed in 1–2 days. A single wardrobe is typically done in half a day. Larger projects (multiple wardrobes, walk-in spaces) may take 2 days. We\'ll confirm the timeline in your quote.',
+        answer: 'The on-site fitting takes 1–2 days. A single wardrobe is typically done in half a day. Larger projects (multiple wardrobes, walk-in spaces) may take 2 days. This is scheduled after your consultation and design are finalised — we\'ll confirm the fitting date in your quote.',
       },
       {
         question: 'What\'s the lead time from order to installation?',

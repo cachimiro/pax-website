@@ -3,7 +3,7 @@ export function LocalBusinessSchema() {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: 'PaxBespoke',
-    description: 'Custom IKEA Pax wardrobe specialists. Bespoke doors, trims, and finishes on IKEA Pax system. Expert installation in 1-2 days. Serving customers across the UK.',
+    description: 'Custom IKEA Pax wardrobe specialists. Bespoke doors, trims, and finishes on IKEA Pax system. Fitting completed in 1-2 days on site. Serving customers across the UK.',
     url: 'https://paxbespoke.uk',
     telephone: '+447000000000',
     email: 'hello@paxbespoke.uk',

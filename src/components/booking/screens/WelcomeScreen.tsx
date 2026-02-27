@@ -115,6 +115,9 @@ export default function WelcomeScreen({ onNext }: WelcomeScreenProps) {
             You get a clear price range — no obligation to proceed
           </li>
         </ol>
+        <p className="text-xs text-green-600/70 mt-2 italic">
+          This books a consultation, not an installation. If you decide to go ahead, we&apos;ll arrange fitting at a later date.
+        </p>
       </motion.div>
 
       {/* Social proof */}

@@ -24,7 +24,7 @@ interface PackageCarouselProps {
 
 export default function PackageCarousel({ packages, onLearnMore }: PackageCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(1); // Start on PaxBespoke (most popular)
+  const [activeIndex, setActiveIndex] = useState(2); // Start on Select (recommended)
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -80,7 +80,9 @@ export default function PackageCarousel({ packages, onLearnMore }: PackageCarous
               el.scrollTo({ left: cardWidth * i, behavior: 'smooth' });
             }}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === activeIndex ? 'w-6 bg-orange-500' : 'w-1.5 bg-warm-300'
+              i === activeIndex
+                ? `w-6 ${pkg.id === 'budget' ? 'bg-[#f28c43]' : pkg.id === 'select' ? 'bg-[#2d5c37]' : 'bg-gradient-to-r from-[#f28c43] to-[#2d5c37]'}`
+                : 'w-1.5 bg-warm-300'
             }`}
             aria-label={`Show ${pkg.name} package`}
           />

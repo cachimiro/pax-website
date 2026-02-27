@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     template: "%s | PaxBespoke",
   },
   description:
-    "IKEA Pax wardrobe specialists. Custom bespoke doors and finishes on IKEA Pax system. Expert installation in 1-2 days. Free video design consultation.",
+    "IKEA Pax wardrobe specialists. Custom bespoke doors and finishes on IKEA Pax system. Fitting completed in 1-2 days on site. Free video design consultation.",
   keywords: [
     "IKEA Pax wardrobes",
     "custom wardrobes",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     siteName: "PaxBespoke",
     title: "PaxBespoke | Custom IKEA Pax Wardrobes | UK",
     description:
-      "IKEA Pax system with bespoke doors and finishes. Expert installation in 1-2 days. Serving customers across the UK.",
+      "IKEA Pax system with bespoke doors and finishes. Fitting completed in 1-2 days on site. Serving customers across the UK.",
   },
   twitter: {
     card: "summary_large_image",

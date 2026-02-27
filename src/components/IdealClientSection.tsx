@@ -1,18 +1,54 @@
-import { Check, X } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import ScrollReveal from './ScrollReveal';
 
-const forYou = [
-  'You\'re renovating or moving in and want wardrobes that look built-in',
-  'You\'ve priced traditional fitted wardrobes (£3,000–£8,000+) and want the same look for less',
-  'You like IKEA Pax but want it to look nothing like IKEA',
-  'You want someone to handle everything — design, sourcing, fitting — not a DIY project',
-  'You\'re based in the UK',
-];
-
-const notForYou = [
-  'You need fully custom-built carcasses (we use IKEA Pax system — that\'s our advantage)',
-  'You\'re outside the UK',
-  'You\'re looking for the cheapest possible option (we\'re not the cheapest — we\'re the best value)',
+const packageFit = [
+  {
+    name: 'Budget',
+    color: '#f28c43',
+    borderClass: 'border-[#f28c43]/20',
+    bgClass: 'bg-[#f28c43]/5',
+    tagClass: 'bg-[#f28c43]/10 text-[#f28c43]',
+    ctaClass: 'text-[#f28c43] hover:text-[#e07c33]',
+    headline: 'You need practical storage at the best price',
+    description: 'Spare room, rental, or kids\u0027 room. You want it built-in, tidy, and done quickly — without spending more than you need to.',
+    ideal: [
+      'Furnishing a rental or spare room',
+      'Working to a strict budget',
+      'Function matters more than finish',
+    ],
+  },
+  {
+    name: 'PaxBespoke',
+    color: '#f28c43',
+    borderClass: 'border-warm-200',
+    bgClass: 'bg-gradient-to-br from-[#f28c43]/5 to-[#2d5c37]/5',
+    tagClass: 'bg-gradient-to-r from-[#f28c43] to-[#2d5c37] text-white',
+    ctaClass: 'text-[#f28c43] hover:text-[#e07c33]',
+    headline: 'You want it to look bespoke — without the bespoke price',
+    description: 'Custom doors, colour-matched trims, flush fillers, and a skirting finish. The wardrobe looks fully fitted. Nobody will know it\u0027s Pax inside.',
+    ideal: [
+      'Renovating or moving into a new home',
+      'You\u0027ve priced traditional fitted wardrobes and want the same look for less',
+      'You care about the finish, not just the function',
+    ],
+  },
+  {
+    name: 'Select',
+    color: '#2d5c37',
+    borderClass: 'border-[#2d5c37]/30 ring-1 ring-[#2d5c37]/10',
+    bgClass: 'bg-[#2d5c37]/5',
+    tagClass: 'bg-[#2d5c37] text-white',
+    ctaClass: 'text-[#2d5c37] hover:text-[#234a2c]',
+    headline: 'Your space is complex and needs a fully tailored solution',
+    description: 'Sliding doors, floor-to-ceiling builds, full wall integration, and advanced carpentry. For spaces that need more than standard solutions.',
+    ideal: [
+      'Non-standard or complex room shapes',
+      'You want sliding doors or floor-to-ceiling wardrobes',
+      'You want the absolute highest level of customisation',
+    ],
+    recommended: true,
+  },
 ];
 
 export default function IdealClientSection() {
@@ -23,68 +59,62 @@ export default function IdealClientSection() {
           <div className="text-center mb-12">
             <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-orange-500 mb-3 font-[family-name:var(--font-heading)]">
               <span className="w-6 h-px bg-orange-400" />
-              Is This For You?
+              A Package for Every Home
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-warm-900 font-[family-name:var(--font-heading)] mb-3">
-              We&apos;re not for everyone — and that&apos;s by design
+              Whatever you need, we&apos;ve got you covered
             </h2>
             <p className="text-lg text-warm-500 max-w-2xl mx-auto">
-              We do one thing and we do it well. Here&apos;s how to know if PaxBespoke is the right fit.
+              Three packages, three price points — each designed for a different type of project. There&apos;s no wrong choice.
             </p>
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
-          {/* For you */}
-          <ScrollReveal delay={0.1}>
-            <div className="bg-white rounded-2xl border border-green-200 p-6 md:p-8 h-full">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                  <Check className="w-5 h-5 text-green-700" />
-                </div>
-                <h3 className="text-lg font-bold text-green-900 font-[family-name:var(--font-heading)]">
-                  PaxBespoke is for you if...
-                </h3>
-              </div>
-              <ul className="space-y-4">
-                {forYou.map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Check className="w-3 h-3 text-green-600" />
-                    </div>
-                    <span className="text-sm text-warm-700 leading-relaxed">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </ScrollReveal>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {packageFit.map((pkg, i) => (
+            <ScrollReveal key={pkg.name} delay={i * 0.1}>
+              <div className={`relative bg-white rounded-2xl border p-6 h-full flex flex-col ${pkg.borderClass}`}>
+                {pkg.recommended && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold bg-[#2d5c37] text-white px-3 py-1 rounded-full font-[family-name:var(--font-heading)]">
+                    Most customers choose this
+                  </span>
+                )}
 
-          {/* Not for you */}
-          <ScrollReveal delay={0.2}>
-            <div className="bg-white rounded-2xl border border-warm-200 p-6 md:p-8 h-full">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-warm-50 flex items-center justify-center">
-                  <X className="w-5 h-5 text-warm-500" />
-                </div>
-                <h3 className="text-lg font-bold text-warm-700 font-[family-name:var(--font-heading)]">
-                  PaxBespoke might not be for you if...
+                <span className={`inline-block self-start text-[10px] font-bold px-2.5 py-1 rounded-full mb-4 font-[family-name:var(--font-heading)] ${pkg.tagClass}`}>
+                  {pkg.name}
+                </span>
+
+                <h3 className="text-base font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)] leading-snug">
+                  {pkg.headline}
                 </h3>
+
+                <p className="text-sm text-warm-600 leading-relaxed mb-5 flex-1">
+                  {pkg.description}
+                </p>
+
+                <div className={`rounded-xl p-4 mb-4 ${pkg.bgClass}`}>
+                  <p className="text-[10px] font-semibold text-warm-500 uppercase tracking-wider mb-2 font-[family-name:var(--font-heading)]">
+                    Ideal if you&apos;re...
+                  </p>
+                  <ul className="space-y-1.5">
+                    {pkg.ideal.map((item) => (
+                      <li key={item} className="text-xs text-warm-700 leading-relaxed">
+                        — {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <Link
+                  href={`/book?package=${pkg.name.toLowerCase()}`}
+                  className={`inline-flex items-center text-sm font-semibold transition-colors font-[family-name:var(--font-heading)] ${pkg.ctaClass}`}
+                >
+                  Book a free consultation
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
               </div>
-              <ul className="space-y-4">
-                {notForYou.map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-warm-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <X className="w-3 h-3 text-warm-400" />
-                    </div>
-                    <span className="text-sm text-warm-500 leading-relaxed">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-6 text-xs text-warm-400 border-t border-warm-100 pt-4">
-                No hard feelings — we&apos;d rather be upfront than waste your time.
-              </p>
-            </div>
-          </ScrollReveal>
+            </ScrollReveal>
+          ))}
         </div>
       </div>
     </section>

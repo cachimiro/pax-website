@@ -44,8 +44,8 @@ export default function Footer() {
               style={{ width: 'auto' }}
             />
             <p className="text-warm-300 text-sm leading-relaxed max-w-sm mb-6">
-              IKEA Pax wardrobe specialists. Custom finishes, expert installation,
-              delivered in 1–2 days. Serving homes across the UK.
+              IKEA Pax wardrobe specialists. Custom finishes, expert fitting
+              completed in 1–2 days on site. Serving homes across the UK.
             </p>
             <div className="space-y-2.5 text-sm">
               <a href="tel:+447000000000" className="flex items-center gap-2.5 hover:text-white transition-colors group">

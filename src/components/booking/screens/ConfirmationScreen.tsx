@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { CheckCircle, Calendar, Clock, MapPin, Package, Camera, ArrowRight, Star, MessageSquare, Ruler, Share2, CalendarPlus } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, MapPin, Package, Camera, ArrowRight, Star, MessageSquare, Ruler, Share2, CalendarPlus, ShoppingCart, Trash2, Wrench, ClipboardList } from 'lucide-react';
 import Celebration from '../Celebration';
 
 interface ConfirmationScreenProps {
@@ -120,6 +120,87 @@ export default function ConfirmationScreen({ data }: ConfirmationScreenProps) {
         </div>
       </motion.div>
 
+      {/* Package-specific next steps */}
+      {data.packageChoice === 'budget' && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-[#f28c43]/5 border border-[#f28c43]/15 rounded-2xl p-6 text-left mb-6"
+        >
+          <h3 className="text-sm font-semibold text-[#c06a20] mb-3 font-[family-name:var(--font-heading)]">
+            What&apos;s included with Budget
+          </h3>
+          <div className="space-y-2.5">
+            {[
+              { icon: Package, text: 'Supply & professional installation' },
+              { icon: Wrench, text: 'Assembly, securing to wall, and filler panels fitted' },
+              { icon: ClipboardList, text: 'Standard IKEA doors and finishes — quick, no-fuss result' },
+            ].map((item) => (
+              <div key={item.text} className="flex items-start gap-2.5 text-sm text-[#c06a20]">
+                <item.icon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 opacity-70" />
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-[#c06a20]/60 mt-3 italic">We&apos;ll go through all the details on your consultation call.</p>
+        </motion.div>
+      )}
+
+      {data.packageChoice === 'paxbespoke' && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-[#0C6B4E]/5 border border-[#0C6B4E]/10 rounded-2xl p-6 text-left mb-6"
+        >
+          <h3 className="text-sm font-semibold text-[#0C6B4E] mb-3 font-[family-name:var(--font-heading)]">
+            What&apos;s included with PaxBespoke
+          </h3>
+          <div className="space-y-2.5">
+            {[
+              { icon: Package, text: 'Full supply & installation — materials included' },
+              { icon: ClipboardList, text: 'Design consultation and bespoke hinged doors' },
+              { icon: Wrench, text: 'Custom trims, flush fillers, skirting finish' },
+              { icon: Trash2, text: 'Rubbish removal and old wardrobe removal included' },
+            ].map((item) => (
+              <div key={item.text} className="flex items-start gap-2.5 text-sm text-[#0C6B4E]">
+                <item.icon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 opacity-70" />
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-[#0C6B4E]/60 mt-3 italic">We handle the design, supply, fitting, and cleanup.</p>
+        </motion.div>
+      )}
+
+      {data.packageChoice === 'select' && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-[#0C6B4E]/5 border border-[#0C6B4E]/10 rounded-2xl p-6 text-left mb-6"
+        >
+          <h3 className="text-sm font-semibold text-[#0C6B4E] mb-3 font-[family-name:var(--font-heading)]">
+            What&apos;s included with Select
+          </h3>
+          <div className="space-y-2.5">
+            {[
+              { icon: Package, text: 'Everything in PaxBespoke, plus full bespoke integration' },
+              { icon: Wrench, text: 'Sliding door systems, floor-to-ceiling builds' },
+              { icon: ClipboardList, text: 'Advanced carpentry and wall integration' },
+              { icon: Trash2, text: 'No restrictions within the Pax system' },
+            ].map((item) => (
+              <div key={item.text} className="flex items-start gap-2.5 text-sm text-[#0C6B4E]">
+                <item.icon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 opacity-70" />
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-[#0C6B4E]/60 mt-3 italic">Our highest capability package — no compromises.</p>
+        </motion.div>
+      )}
+
       {/* What we'll cover on your call */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -144,6 +225,9 @@ export default function ConfirmationScreen({ data }: ConfirmationScreenProps) {
           ))}
         </div>
         <p className="text-xs text-[#0C6B4E]/60 mt-3 italic">No pressure, no hard sell — just honest advice.</p>
+        <p className="text-xs text-[#0C6B4E]/60 mt-2">
+          This is a consultation, not an installation booking. After the call, if you&apos;d like to proceed, we&apos;ll finalise your design and schedule fitting — typically 1–2 days on site, arranged at a time that suits you.
+        </p>
       </motion.div>
 
       {/* What to have ready */}

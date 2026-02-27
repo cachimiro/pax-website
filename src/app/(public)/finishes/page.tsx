@@ -89,7 +89,26 @@ export default function FinishesPage() {
                       </div>
                       <div className="p-3">
                         <h4 className="text-sm font-semibold text-warm-900 font-[family-name:var(--font-heading)]">{item.name}</h4>
-                        <p className="text-xs text-warm-500 mt-1">Available on: {item.availability}</p>
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {item.availability === 'All packages' ? (
+                            <span className="text-[10px] font-medium bg-warm-100 text-warm-600 px-1.5 py-0.5 rounded">All packages</span>
+                          ) : (
+                            item.availability.split(', ').map((pkg) => (
+                              <span
+                                key={pkg}
+                                className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                  pkg === 'Budget'
+                                    ? 'bg-[#f28c43]/10 text-[#f28c43]'
+                                    : pkg === 'Select'
+                                    ? 'bg-[#2d5c37]/10 text-[#2d5c37]'
+                                    : 'bg-gradient-to-r from-[#f28c43]/10 to-[#2d5c37]/10 text-warm-700'
+                                }`}
+                              >
+                                {pkg}
+                              </span>
+                            ))
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

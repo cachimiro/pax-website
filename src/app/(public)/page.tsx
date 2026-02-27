@@ -7,7 +7,6 @@ import SectionHeading from '@/components/SectionHeading';
 import CTABanner from '@/components/CTABanner';
 import ScrollReveal from '@/components/ScrollReveal';
 import BeforeAfterSection from '@/components/BeforeAfterSection';
-import ServiceAreaCheck from '@/components/ServiceAreaCheck';
 import IdealClientSection from '@/components/IdealClientSection';
 import WhatMakesUsDifferent from '@/components/WhatMakesUsDifferent';
 import ObjectionHandler from '@/components/ObjectionHandler';
@@ -21,10 +20,10 @@ const packages = [
     id: 'budget',
     name: 'Budget',
     tagline: 'Smart & Simple',
-    bestFor: 'You want functional, good-looking storage without overspending',
+    bestFor: 'Practical built-in storage at the best price. Standard IKEA doors, boxed in with filler panels — clean, tidy, done.',
     priceRange: 'From £800',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax system', 'Standard door finishes', 'Professional installation', 'Basic interior fittings'],
+    features: ['IKEA Pax system', 'Standard door finishes', 'Filler panels fitted', 'Professional installation'],
     leadTime: '1–2 weeks',
     finishLevel: 'Standard',
     ctaText: 'Get Started',
@@ -32,27 +31,27 @@ const packages = [
   {
     id: 'paxbespoke',
     name: 'PaxBespoke',
-    tagline: 'Best Value',
-    bestFor: 'You want a custom look without the custom price tag',
+    tagline: 'Where Pax Meets Bespoke',
+    bestFor: 'Bespoke hinged doors, colour-matched trims, and flush filler panels — a fitted wardrobe that looks nothing like IKEA.',
     priceRange: 'From £1,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax system', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior layout', 'Soft-close upgrades'],
+    features: ['Bespoke hinged doors', 'Custom trim colours', 'Flush filler panels', 'Skirting finish', 'Design consultation', 'Rubbish removal'],
     leadTime: '2–3 weeks',
     finishLevel: 'Custom bespoke',
-    popular: true,
-    ctaText: 'Most Popular — Book Now',
+    ctaText: 'Get Started',
   },
   {
     id: 'select',
     name: 'Select',
-    tagline: 'Full Bespoke',
-    bestFor: 'You want a fully bespoke, designer-level finish',
+    tagline: 'Designed Without Limits',
+    bestFor: 'Full bespoke integration with sliding doors, floor-to-ceiling builds, and advanced carpentry for complex spaces.',
     priceRange: 'From £2,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax system', 'Premium bespoke doors & panels', 'Integrated lighting', 'Full custom interior', 'Designer handle options', 'End-to-end project management'],
+    features: ['Everything in PaxBespoke', 'Sliding door systems', 'Floor-to-ceiling builds', 'Full wall integration', 'Advanced carpentry', 'Custom infills & boxing'],
     leadTime: '3–4 weeks',
-    finishLevel: 'Premium bespoke',
-    ctaText: 'Go Premium',
+    finishLevel: 'Full bespoke',
+    popular: true,
+    ctaText: 'Recommended — Get Started',
   },
 ];
 
@@ -89,7 +88,7 @@ const steps = [
   {
     step: 4,
     title: 'Expert Installation',
-    description: 'Our team installs everything in 1–2 days. We handle all assembly, fitting, trimming, and cleanup.',
+    description: 'Once your design is finalised, our team fits everything in 1–2 days on site. We handle all assembly, fitting, trimming, and cleanup.',
     why: 'Professional fitting is what makes IKEA Pax look bespoke. Precise trimming, gap-free alignment, and colour-matched finishing.',
     duration: '1–2 days on site',
     youNeed: 'Access to the room. We handle the rest.',
@@ -111,7 +110,7 @@ const testimonials = [
     packageUsed: 'PaxBespoke',
   },
   {
-    quote: 'From consultation to installation in under two weeks. The Select finish is stunning — integrated lighting and everything. Worth every penny.',
+    quote: 'From consultation to installation in under two weeks. The Select finish is stunning — sliding doors, floor-to-ceiling, everything integrated perfectly. Worth every penny.',
     name: 'Priya K.',
     location: 'Woolton, Liverpool',
     packageUsed: 'Select',
@@ -155,16 +154,16 @@ export default function Home() {
               </h1>
 
               <p className="text-base sm:text-lg text-green-100/80 mb-8 max-w-lg leading-relaxed">
-                We take the world&apos;s best modular wardrobe system and add custom doors,
-                trims, and finishes — so you get wardrobes that look fully bespoke,
-                at a fraction of the price.
+                Three packages for every budget. From simple built-in storage to fully
+                bespoke wardrobes with custom doors, trims, and finishes — we have a
+                solution that fits your space and your price point.
               </p>
 
               {/* Inline trust badges */}
               <div className="flex flex-wrap gap-x-5 gap-y-2 mb-8">
                 {[
                   { icon: MapPin, text: 'UK-wide installation' },
-                  { icon: Clock, text: 'Installed in 1–2 days' },
+                  { icon: Clock, text: 'Fitted in just 1–2 days on site' },
                   { icon: Shield, text: 'Free, no-obligation consultation' },
                 ].map((badge) => (
                   <div key={badge.text} className="flex items-center gap-2 text-sm text-green-100/70">
@@ -184,10 +183,10 @@ export default function Home() {
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
                 <Link
-                  href="/packages"
+                  href="#packages"
                   className="inline-flex items-center justify-center px-8 py-4 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-200 text-base font-[family-name:var(--font-heading)] active:scale-[0.98]"
                 >
-                  See Packages & Pricing
+                  Choose Your Package
                 </Link>
               </div>
 
@@ -224,6 +223,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== PACKAGES (first real content — let them choose) ===== */}
+      <PackagesSection packages={packages} />
+
       <SectionDivider />
 
       {/* ===== WHAT MAKES US DIFFERENT ===== */}
@@ -231,8 +233,8 @@ export default function Home() {
 
       <SectionDivider flip />
 
-      {/* ===== IDEAL CLIENT ===== */}
-      <IdealClientSection />
+      {/* ===== BEFORE / AFTER ===== */}
+      <BeforeAfterSection />
 
       {/* ===== HOW IT WORKS ===== */}
       <section className="section-padding bg-white">
@@ -311,16 +313,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== PACKAGES ===== */}
-      <PackagesSection packages={packages} />
+      {/* ===== IDEAL CLIENT ===== */}
+      <IdealClientSection />
 
       {/* ===== OBJECTION HANDLING ===== */}
       <ObjectionHandler />
 
       <SectionDivider />
-
-      {/* ===== BEFORE / AFTER ===== */}
-      <BeforeAfterSection />
 
       {/* ===== SOCIAL PROOF ===== */}
       <section className="section-padding bg-warm-50">
@@ -341,11 +340,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== COVERAGE MAP ===== */}
+      {/* ===== COVERAGE MAP + POSTCODE CHECK ===== */}
       <HomeCoverageSection />
-
-      {/* ===== SERVICE AREA CHECK ===== */}
-      <ServiceAreaCheck />
 
       {/* ===== CTA BANNER ===== */}
       <CTABanner />

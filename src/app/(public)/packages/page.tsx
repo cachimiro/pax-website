@@ -10,64 +10,70 @@ import CTABanner from '@/components/CTABanner';
 
 export const metadata: Metadata = {
   title: 'Packages',
-  description: 'Three wardrobe packages to suit every budget. Budget from £800, PaxBespoke from £1,500, Select from £2,500. Available UK-wide. Free design consultation included.',
+  description: 'Three wardrobe packages to suit every budget. Budget from £800, PaxBespoke from £1,500, Select from £2,500. UK-wide. Free design consultation included.',
 };
 
 const packages = [
   {
     id: 'budget',
     name: 'Budget',
-    bestFor: 'Best for: smart storage on a budget',
+    bestFor: 'Practical built-in storage at the best price. Standard doors, filler panels fitted, done.',
     priceRange: 'From £800',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax system', 'Standard door finishes', 'Professional installation', 'Basic interior fittings'],
+    features: ['IKEA Pax system', 'Standard door finishes', 'Filler panels fitted', 'Professional installation'],
     leadTime: '1–2 weeks',
     finishLevel: 'Standard',
   },
   {
     id: 'paxbespoke',
     name: 'PaxBespoke',
-    bestFor: 'Best for: a custom look without the custom price',
+    bestFor: 'Bespoke hinged doors, colour-matched trims, flush fillers, and a skirting finish. Looks fully bespoke.',
     priceRange: 'From £1,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax system', 'Custom bespoke doors', 'Colour-matched trims', 'Premium interior layout', 'Soft-close upgrades'],
+    features: ['Bespoke hinged doors', 'Custom trim colours', 'Flush filler panels', 'Skirting removal & cutting', 'Design consultation', 'Rubbish removal'],
     leadTime: '2–3 weeks',
     finishLevel: 'Custom bespoke',
-    popular: true,
   },
   {
     id: 'select',
     name: 'Select',
-    bestFor: 'Best for: a fully bespoke, designer finish',
+    bestFor: 'Full bespoke integration with sliding doors, floor-to-ceiling builds, and advanced carpentry.',
     priceRange: 'From £2,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
-    features: ['IKEA Pax system', 'Premium bespoke doors & panels', 'Integrated lighting', 'Full custom interior', 'Designer handle options', 'End-to-end project management'],
+    features: ['Everything in PaxBespoke', 'Sliding door systems', 'Floor-to-ceiling builds', 'Full wall integration', 'Advanced carpentry', 'Custom infills & boxing'],
     leadTime: '3–4 weeks',
-    finishLevel: 'Premium bespoke',
+    finishLevel: 'Full bespoke',
+    popular: true,
   },
 ];
 
 const comparisonFeatures = [
-  { feature: 'IKEA Pax system', budget: true, paxbespoke: true, select: true },
-  { feature: 'Professional installation', budget: true, paxbespoke: true, select: true },
-  { feature: 'Free design consultation', budget: true, paxbespoke: true, select: true },
-  { feature: 'Standard IKEA doors', budget: true, paxbespoke: false, select: false },
-  { feature: 'Custom bespoke doors', budget: false, paxbespoke: true, select: true },
-  { feature: 'Colour-matched trims', budget: false, paxbespoke: true, select: true },
-  { feature: 'Premium interior layout', budget: false, paxbespoke: true, select: true },
-  { feature: 'Soft-close upgrades', budget: false, paxbespoke: true, select: true },
-  { feature: 'Integrated lighting', budget: false, paxbespoke: false, select: true },
-  { feature: 'Designer handle options', budget: false, paxbespoke: false, select: true },
-  { feature: 'End-to-end project management', budget: false, paxbespoke: false, select: true },
-  { feature: 'Full custom interior design', budget: false, paxbespoke: false, select: true },
+  { feature: 'Supply & installation', budget: true, paxbespoke: true, select: true },
+  { feature: 'Measure visit', budget: true, paxbespoke: true, select: true },
+  { feature: 'LED lighting', budget: true, paxbespoke: true, select: true },
+  { feature: 'External materials supplied', budget: true, paxbespoke: true, select: true },
+  { feature: 'Design consultation', budget: false, paxbespoke: true, select: true },
+  { feature: 'Bespoke hinged doors', budget: false, paxbespoke: true, select: true },
+  { feature: 'Custom trim colours', budget: false, paxbespoke: true, select: true },
+  { feature: 'Flush filler panels', budget: false, paxbespoke: true, select: true },
+  { feature: 'Skirting removal & cutting', budget: false, paxbespoke: true, select: true },
+  { feature: 'Custom internal layouts', budget: false, paxbespoke: true, select: true },
+  { feature: 'High-ceiling solutions', budget: false, paxbespoke: true, select: true },
+  { feature: 'Rubbish removal', budget: false, paxbespoke: true, select: true },
+  { feature: 'Old wardrobe removal', budget: false, paxbespoke: true, select: true },
+  { feature: 'MDF cornice finish', budget: false, paxbespoke: true, select: true },
+  { feature: 'Full bespoke wall integration', budget: false, paxbespoke: false, select: true },
+  { feature: 'Sliding door systems', budget: false, paxbespoke: false, select: true },
+  { feature: 'Floor-to-ceiling builds', budget: false, paxbespoke: false, select: true },
+  { feature: 'Advanced carpentry', budget: false, paxbespoke: false, select: true },
 ];
 
 const packageDetails = [
   {
     id: 'budget',
     name: 'Budget',
-    whoFor: 'You want functional, good-looking storage without overspending. You\'re happy with IKEA\'s standard door range and want a professional, clean installation.',
-    ifYouWant: 'If you want a tidy, well-fitted wardrobe that does the job beautifully — without the custom price tag — this is your package.',
+    whoFor: 'You want practical, built-in storage without overspending. You\'re happy with standard IKEA doors and want a clean, professional installation with filler panels boxing everything in. No custom doors, no height adjustments — just a simple, tidy result.',
+    ifYouWant: 'A no-fuss wardrobe that works well for everyday storage. Best suited for spare rooms, rentals, or kids\' rooms where function matters more than finish.',
     testimonial: {
       quote: 'We needed wardrobes for the spare room and didn\'t want to spend a fortune. The Budget package was exactly right — looks great, fits perfectly, and was installed in a morning.',
       name: 'Tom R.',
@@ -78,8 +84,8 @@ const packageDetails = [
   {
     id: 'paxbespoke',
     name: 'PaxBespoke',
-    whoFor: 'You want a wardrobe that looks fully custom but at a fraction of the cost. You care about finishes, colour matching, and a premium feel — but you\'re practical about budget.',
-    ifYouWant: 'If you want visitors to say "where did you get that?" — and you want to answer honestly without the price tag to match — choose PaxBespoke.',
+    whoFor: 'You want a wardrobe that looks fully bespoke — bespoke hinged doors, colour-matched trims, flush filler panels, and a proper skirting finish. The Pax interior stays reliable; the outside is transformed to match your exact taste.',
+    ifYouWant: 'The sweet spot between price and finish. Bespoke doors, flush fillers, and a skirting finish that makes the wardrobe look like it\'s always been there. Indistinguishable from traditional fitted wardrobes at a fraction of the cost.',
     testimonial: {
       quote: 'The custom doors completely transformed the room. You genuinely cannot tell these are IKEA frames underneath. The consultation was relaxed and helpful — no hard sell at all.',
       name: 'Sarah M.',
@@ -90,10 +96,10 @@ const packageDetails = [
   {
     id: 'select',
     name: 'Select',
-    whoFor: 'You want the full experience: premium materials, integrated lighting, designer details, and someone managing the entire project for you. This is our highest-spec package.',
-    ifYouWant: 'If you\'re investing in a master bedroom, dressing room, or statement space — and you want it to feel truly bespoke — Select delivers.',
+    whoFor: 'Your space is complex or non-standard and needs full bespoke integration. Sliding door systems, floor-to-ceiling builds, wall integration, and advanced carpentry — there are no restrictions within the Pax system. This is our highest capability package.',
+    ifYouWant: 'For master bedrooms, dressing rooms, or statement spaces where you want the absolute highest level of customisation. Everything in PaxBespoke, plus full wall integration and sliding systems.',
     testimonial: {
-      quote: 'From consultation to installation in under two weeks. The Select finish is stunning — integrated lighting and everything. Worth every penny.',
+      quote: 'From consultation to installation in under two weeks. The finish is stunning — sliding doors, floor-to-ceiling, everything integrated perfectly. Worth every penny.',
       name: 'Priya K.',
       location: 'Wilmslow, Cheshire',
       packageUsed: 'Select',
@@ -150,14 +156,16 @@ export default function PackagesPage() {
               <thead>
                 <tr className="border-b-2 border-warm-200">
                   <th className="text-left py-4 pr-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">Feature</th>
-                  <th className="text-center py-4 px-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">Budget</th>
-                  <th className="text-center py-4 px-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">
+                  <th className="text-center py-4 px-4 font-semibold text-[#f28c43] font-[family-name:var(--font-heading)]">Budget</th>
+                  <th className="text-center py-4 px-4 font-semibold font-[family-name:var(--font-heading)]">
+                    <span className="bg-gradient-to-r from-[#f28c43] to-[#2d5c37] bg-clip-text text-transparent">PaxBespoke</span>
+                  </th>
+                  <th className="text-center py-4 pl-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">
                     <span className="inline-flex items-center gap-1">
-                      PaxBespoke
-                      <span className="text-[10px] font-semibold bg-orange-500 text-white px-1.5 py-0.5 rounded-full">Popular</span>
+                      <span className="text-[#2d5c37]">Select</span>
+                      <span className="text-[10px] font-semibold bg-[#2d5c37] text-white px-1.5 py-0.5 rounded-full">Recommended</span>
                     </span>
                   </th>
-                  <th className="text-center py-4 pl-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">Select</th>
                 </tr>
               </thead>
               <tbody>
@@ -165,21 +173,21 @@ export default function PackagesPage() {
                   <tr key={row.feature} className="border-b border-warm-100">
                     <td className="py-3 pr-4 text-warm-700">{row.feature}</td>
                     <td className="py-3 px-4 text-center">
-                      {row.budget ? <Check className="w-4 h-4 text-green-600 mx-auto" /> : <X className="w-4 h-4 text-warm-300 mx-auto" />}
+                      {row.budget ? <Check className="w-4 h-4 text-[#f28c43] mx-auto" /> : <X className="w-4 h-4 text-warm-300 mx-auto" />}
                     </td>
-                    <td className="py-3 px-4 text-center bg-green-50/50">
-                      {row.paxbespoke ? <Check className="w-4 h-4 text-green-600 mx-auto" /> : <X className="w-4 h-4 text-warm-300 mx-auto" />}
+                    <td className="py-3 px-4 text-center">
+                      {row.paxbespoke ? <Check className="w-4 h-4 text-[#2d5c37] mx-auto" /> : <X className="w-4 h-4 text-warm-300 mx-auto" />}
                     </td>
-                    <td className="py-3 pl-4 text-center">
-                      {row.select ? <Check className="w-4 h-4 text-green-600 mx-auto" /> : <X className="w-4 h-4 text-warm-300 mx-auto" />}
+                    <td className="py-3 pl-4 text-center bg-[#2d5c37]/5">
+                      {row.select ? <Check className="w-4 h-4 text-[#2d5c37] mx-auto" /> : <X className="w-4 h-4 text-warm-300 mx-auto" />}
                     </td>
                   </tr>
                 ))}
                 <tr className="border-t-2 border-warm-200">
                   <td className="py-4 pr-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">Starting from</td>
-                  <td className="py-4 px-4 text-center font-bold text-warm-900 font-[family-name:var(--font-heading)]">£800</td>
-                  <td className="py-4 px-4 text-center font-bold text-warm-900 bg-green-50/50 font-[family-name:var(--font-heading)]">£1,500</td>
-                  <td className="py-4 pl-4 text-center font-bold text-warm-900 font-[family-name:var(--font-heading)]">£2,500</td>
+                  <td className="py-4 px-4 text-center font-bold text-[#f28c43] font-[family-name:var(--font-heading)]">£800</td>
+                  <td className="py-4 px-4 text-center font-bold font-[family-name:var(--font-heading)]"><span className="bg-gradient-to-r from-[#f28c43] to-[#2d5c37] bg-clip-text text-transparent">£1,500</span></td>
+                  <td className="py-4 pl-4 text-center font-bold text-[#2d5c37] bg-[#2d5c37]/5 font-[family-name:var(--font-heading)]">£2,500</td>
                 </tr>
               </tbody>
             </table>
@@ -188,24 +196,34 @@ export default function PackagesPage() {
       </section>
 
       {/* Detailed package sections */}
-      {packageDetails.map((pkg) => (
+      {packageDetails.map((pkg) => {
+        const labelColor = pkg.id === 'budget' ? 'text-[#f28c43]' : pkg.id === 'select' ? 'text-[#2d5c37]' : 'text-[#f28c43]';
+        const tipBg = pkg.id === 'budget' ? 'bg-[#f28c43]/5' : pkg.id === 'select' ? 'bg-[#2d5c37]/5' : 'bg-gradient-to-r from-[#f28c43]/5 to-[#2d5c37]/5';
+        const tipText = pkg.id === 'budget' ? 'text-[#f28c43]' : pkg.id === 'select' ? 'text-[#2d5c37]' : 'text-[#2d5c37]';
+        const ctaClass = pkg.id === 'budget'
+          ? 'bg-[#f28c43] hover:bg-[#e07c33]'
+          : pkg.id === 'select'
+          ? 'bg-[#2d5c37] hover:bg-[#234a2c]'
+          : 'bg-gradient-to-r from-[#f28c43] to-[#2d5c37] hover:opacity-90';
+
+        return (
         <section key={pkg.id} id={pkg.id} className="section-padding bg-warm-white even:bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
               <div>
-                <span className="inline-block text-xs font-semibold tracking-widest uppercase text-orange-500 mb-3 font-[family-name:var(--font-heading)]">
+                <span className={`inline-block text-xs font-semibold tracking-widest uppercase mb-3 font-[family-name:var(--font-heading)] ${labelColor}`}>
                   {pkg.name} Package
                 </span>
                 <h3 className="text-2xl md:text-3xl font-bold text-warm-900 mb-6 font-[family-name:var(--font-heading)]">
                   Who is {pkg.name} for?
                 </h3>
                 <p className="text-warm-700 leading-relaxed mb-6">{pkg.whoFor}</p>
-                <div className="bg-green-50 rounded-xl p-5 mb-8">
-                  <p className="text-sm text-green-900 font-medium italic">{pkg.ifYouWant}</p>
+                <div className={`${tipBg} rounded-xl p-5 mb-8`}>
+                  <p className={`text-sm font-medium italic ${tipText}`}>{pkg.ifYouWant}</p>
                 </div>
                 <Link
                   href={`/book?package=${pkg.id}`}
-                  className="inline-flex items-center px-6 py-3 bg-green-700 text-white font-semibold rounded-lg hover:bg-green-900 transition-colors text-sm font-[family-name:var(--font-heading)]"
+                  className={`inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg transition-all text-sm font-[family-name:var(--font-heading)] ${ctaClass}`}
                 >
                   Book Consultation — {pkg.name}
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -238,7 +256,8 @@ export default function PackagesPage() {
             </div>
           </div>
         </section>
-      ))}
+        );
+      })}
 
       <CTABanner />
     </>

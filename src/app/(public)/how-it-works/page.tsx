@@ -7,7 +7,7 @@ import CTABanner from '@/components/CTABanner';
 
 export const metadata: Metadata = {
   title: 'How It Works',
-  description: 'From free video consultation to expert installation in 1-2 days. See how PaxBespoke transforms your space in 4 simple steps.',
+  description: 'From free video consultation to expert fitting in 4 simple steps. Installation takes just 1-2 days on site. See how PaxBespoke transforms your space.',
 };
 
 const steps = [
@@ -51,9 +51,9 @@ const steps = [
     step: 4,
     icon: Wrench,
     title: 'Expert Installation',
-    description: 'Our experienced team installs everything in 1–2 days. We handle delivery, assembly, fitting, and cleanup. You just enjoy the result.',
+    description: 'Once your design is finalised, our experienced team fits everything in 1–2 days on site. We handle delivery, assembly, fitting, and cleanup.',
     details: [
-      'Typically completed in 1–2 days',
+      'On-site fitting typically completed in 1–2 days',
       'We protect your floors and furniture',
       'Full cleanup — we leave your home tidy',
       'Aftercare support included',
