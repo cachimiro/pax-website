@@ -1,68 +1,100 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 
-// 6 images that rotate through all 3 positions
+const MAIN_INTERVAL = 7000;
+const MAIN_FADE_MS = 1400;
+const THUMB_STAGGER_MS = 600;
+const THUMB_FADE_MS = 800;
+
+// 6 Select package images that rotate through all 3 positions
 const allImages = [
-  { src: '/images/stock/hero-main.jpg', alt: 'Modern fitted wardrobe with custom doors' },
-  { src: '/images/stock/project-1.jpg', alt: 'Custom sage green wardrobe installation' },
-  { src: '/images/stock/project-2.jpg', alt: 'Walk-in dressing room with integrated lighting' },
-  { src: '/images/stock/project-4.jpg', alt: 'Navy wardrobe doors with chrome handles' },
-  { src: '/images/stock/hero-detail.jpg', alt: 'Custom wardrobe door finish detail' },
-  { src: '/images/stock/hero-fitting.jpg', alt: 'Expert wardrobe installation' },
+  { src: '/images/select-package/spray-painted-doors/spray-painted-door-01.png', alt: 'White spray-painted shaker wardrobe fitted into period alcove' },
+  { src: '/images/select-package/spray-painted-doors/spray-painted-door-03.png', alt: 'Sage green spray-painted shaker wardrobe with chrome handles' },
+  { src: '/images/select-package/spray-painted-doors/spray-painted-door-09.png', alt: 'Cream fretwork mirrored wardrobe doors with matching drawers' },
+  { src: '/images/select-package/spray-painted-doors/spray-painted-door-10.png', alt: 'Navy blue spray-painted wardrobe suite with TV area' },
+  { src: '/images/select-package/spray-painted-doors/spray-painted-door-05.png', alt: 'Light grey spray-painted shaker wardrobe in period room' },
+  { src: '/images/select-package/homepage/hero-spray-painted-white-doors.png', alt: 'White L-shaped corner wardrobe with shaker and beaded doors' },
 ];
 
 export function HeroDesktopImages() {
-  // Track which image index is in each position
-  // main=0, detail(bottom-left)=1, fitting(top-right)=2 initially
-  const [positions, setPositions] = useState({ main: 0, detail: 1, fitting: 2 });
-  const [transitioning, setTransitioning] = useState(false);
-  // Track the "outgoing" images for crossfade
-  const [prev, setPrev] = useState<{ main: number; detail: number; fitting: number } | null>(null);
+  const [mainIdx, setMainIdx] = useState(0);
+  const [detailIdx, setDetailIdx] = useState(1);
+  const [fittingIdx, setFittingIdx] = useState(2);
+
+  const [prevMain, setPrevMain] = useState<number | null>(null);
+  const [prevDetail, setPrevDetail] = useState<number | null>(null);
+  const [prevFitting, setPrevFitting] = useState<number | null>(null);
+
+  const [progressKey, setProgressKey] = useState(0);
+
+  const pausedRef = useRef(false);
+  const nextAvailableRef = useRef(3);
 
   const advance = useCallback(() => {
-    setTransitioning(true);
-    setPrev(positions);
+    if (pausedRef.current) return;
 
-    // The current fitting image "graduates" out, detail moves to fitting,
-    // main moves to detail, and a new image enters as main
-    const nextMainIdx = (positions.fitting + 1) % allImages.length;
+    // Main image changes immediately
+    const newMain = nextAvailableRef.current % allImages.length;
+    nextAvailableRef.current = (nextAvailableRef.current + 1) % allImages.length;
 
-    setPositions({
-      main: nextMainIdx,
-      detail: positions.main,
-      fitting: positions.detail,
-    });
+    setPrevMain(mainIdx);
+    setMainIdx(newMain);
+    setProgressKey((k) => k + 1);
+    setTimeout(() => setPrevMain(null), MAIN_FADE_MS);
 
-    // Clear transition state after animation completes
+    // Detail thumbnail changes after stagger
     setTimeout(() => {
-      setTransitioning(false);
-      setPrev(null);
-    }, 900);
-  }, [positions]);
+      if (pausedRef.current) return;
+      const newDetail = nextAvailableRef.current % allImages.length;
+      nextAvailableRef.current = (nextAvailableRef.current + 1) % allImages.length;
+
+      setPrevDetail(detailIdx);
+      setDetailIdx(newDetail);
+      setTimeout(() => setPrevDetail(null), THUMB_FADE_MS);
+    }, THUMB_STAGGER_MS);
+
+    // Fitting thumbnail changes after 2x stagger
+    setTimeout(() => {
+      if (pausedRef.current) return;
+      const newFitting = nextAvailableRef.current % allImages.length;
+      nextAvailableRef.current = (nextAvailableRef.current + 1) % allImages.length;
+
+      setPrevFitting(fittingIdx);
+      setFittingIdx(newFitting);
+      setTimeout(() => setPrevFitting(null), THUMB_FADE_MS);
+    }, THUMB_STAGGER_MS * 2);
+  }, [mainIdx, detailIdx, fittingIdx]);
 
   useEffect(() => {
-    const timer = setInterval(advance, 5000);
+    const timer = setInterval(advance, MAIN_INTERVAL);
     return () => clearInterval(timer);
   }, [advance]);
 
-  const mainImg = allImages[positions.main];
-  const detailImg = allImages[positions.detail];
-  const fittingImg = allImages[positions.fitting];
+  const mainImg = allImages[mainIdx];
+  const detailImg = allImages[detailIdx];
+  const fittingImg = allImages[fittingIdx];
+  const kenBurnsClass = mainIdx % 2 === 0 ? 'animate-ken-burns-left' : 'animate-ken-burns-right';
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+    >
       {/* Main image with crossfade */}
       <div className="rounded-2xl overflow-hidden shadow-2xl shadow-black/30 aspect-[4/3] relative">
         {/* Previous main (fading out) */}
-        {prev && (
+        {prevMain !== null && (
           <div
-            className="absolute inset-0 z-[1] transition-opacity duration-[900ms] ease-in-out opacity-0"
+            key={`prev-main-${prevMain}`}
+            className="absolute inset-0 z-[1]"
+            style={{ animation: `heroFadeOut ${MAIN_FADE_MS}ms ease-in-out forwards` }}
           >
             <Image
-              src={allImages[prev.main].src}
-              alt={allImages[prev.main].alt}
+              src={allImages[prevMain].src}
+              alt={allImages[prevMain].alt}
               fill
               className="object-cover"
               sizes="(min-width: 1024px) 50vw, 100vw"
@@ -71,58 +103,51 @@ export function HeroDesktopImages() {
         )}
         {/* Current main */}
         <div
-          className={`absolute inset-0 z-[2] transition-opacity duration-[900ms] ease-in-out ${
-            transitioning ? 'opacity-0 animate-hero-fade-in' : 'opacity-100'
-          }`}
-          style={transitioning ? { animation: 'heroFadeIn 900ms ease-in-out forwards' } : {}}
+          key={`main-${mainIdx}`}
+          className="absolute inset-0 z-[2]"
+          style={prevMain !== null ? { animation: `heroFadeIn ${MAIN_FADE_MS}ms ease-in-out forwards` } : {}}
         >
           <Image
             src={mainImg.src}
             alt={mainImg.alt}
             fill
-            className="object-cover animate-ken-burns"
+            className={`object-cover ${kenBurnsClass}`}
             priority
             sizes="(min-width: 1024px) 50vw, 100vw"
           />
         </div>
 
-        {/* Carousel dots */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-          {allImages.slice(0, 4).map((_, i) => {
-            // Map dot index to whether it's the current main
-            const isActive = positions.main % 4 === i || (positions.main >= 4 && i === positions.main - 4);
-            return (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  isActive ? 'bg-white w-4' : 'bg-white/40 w-1.5'
-                }`}
-              />
-            );
-          })}
+        {/* Progress bar — inside overflow-hidden, below floating elements */}
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/10 z-[3]">
+          <div
+            key={progressKey}
+            className="h-full bg-white/40"
+            style={{ animation: `progressFill ${MAIN_INTERVAL}ms linear forwards` }}
+          />
         </div>
       </div>
 
       {/* Floating detail card — bottom left */}
-      <div
-        className="absolute -bottom-6 -left-6 w-48 rounded-xl overflow-hidden shadow-xl shadow-black/20 border-4 border-white transition-all duration-[900ms] ease-in-out"
-      >
-        {/* Outgoing detail */}
-        {prev && (
-          <div className="absolute inset-0 z-[1]" style={{ animation: 'heroFadeOut 900ms ease-in-out forwards' }}>
+      <div className="absolute -bottom-6 -left-6 w-48 rounded-xl overflow-hidden shadow-xl shadow-black/20 border-4 border-white">
+        {prevDetail !== null && (
+          <div
+            key={`prev-detail-${prevDetail}`}
+            className="absolute inset-0 z-[1]"
+            style={{ animation: `thumbnailFadeOut ${THUMB_FADE_MS}ms ease-in-out forwards` }}
+          >
             <Image
-              src={allImages[prev.detail].src}
-              alt={allImages[prev.detail].alt}
+              src={allImages[prevDetail].src}
+              alt={allImages[prevDetail].alt}
               width={300}
               height={300}
               className="w-full h-auto object-cover aspect-square"
             />
           </div>
         )}
-        {/* Current detail */}
         <div
+          key={`detail-${detailIdx}`}
           className="relative z-[2]"
-          style={transitioning ? { animation: 'heroFadeIn 900ms ease-in-out forwards' } : {}}
+          style={prevDetail !== null ? { animation: `thumbnailFadeIn ${THUMB_FADE_MS}ms ease-out forwards` } : {}}
         >
           <Image
             src={detailImg.src}
@@ -135,25 +160,26 @@ export function HeroDesktopImages() {
       </div>
 
       {/* Floating fitting card — top right */}
-      <div
-        className="absolute -top-4 -right-4 w-40 rounded-xl overflow-hidden shadow-xl shadow-black/20 border-4 border-white transition-all duration-[900ms] ease-in-out"
-      >
-        {/* Outgoing fitting */}
-        {prev && (
-          <div className="absolute inset-0 z-[1]" style={{ animation: 'heroFadeOut 900ms ease-in-out forwards' }}>
+      <div className="absolute -top-4 -right-4 w-40 rounded-xl overflow-hidden shadow-xl shadow-black/20 border-4 border-white">
+        {prevFitting !== null && (
+          <div
+            key={`prev-fitting-${prevFitting}`}
+            className="absolute inset-0 z-[1]"
+            style={{ animation: `thumbnailFadeOut ${THUMB_FADE_MS}ms ease-in-out forwards` }}
+          >
             <Image
-              src={allImages[prev.fitting].src}
-              alt={allImages[prev.fitting].alt}
+              src={allImages[prevFitting].src}
+              alt={allImages[prevFitting].alt}
               width={300}
               height={300}
               className="w-full h-auto object-cover aspect-square"
             />
           </div>
         )}
-        {/* Current fitting */}
         <div
+          key={`fitting-${fittingIdx}`}
           className="relative z-[2]"
-          style={transitioning ? { animation: 'heroFadeIn 900ms ease-in-out forwards' } : {}}
+          style={prevFitting !== null ? { animation: `thumbnailFadeIn ${THUMB_FADE_MS}ms ease-out forwards` } : {}}
         >
           <Image
             src={fittingImg.src}
@@ -186,7 +212,7 @@ export function HeroMobileBackground() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % allImages.length);
-    }, 5000);
+    }, MAIN_INTERVAL);
     return () => clearInterval(timer);
   }, []);
 
@@ -195,14 +221,17 @@ export function HeroMobileBackground() {
       {allImages.map((img, i) => (
         <div
           key={img.src}
-          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
-          style={{ opacity: i === current ? 1 : 0 }}
+          className="absolute inset-0"
+          style={{
+            opacity: i === current ? 1 : 0,
+            transition: `opacity ${MAIN_FADE_MS}ms ease-in-out`,
+          }}
         >
           <Image
             src={img.src}
             alt={img.alt}
             fill
-            className="object-cover"
+            className={`object-cover ${i % 2 === 0 ? 'animate-ken-burns-left' : 'animate-ken-burns-right'}`}
             priority={i === 0}
             sizes="(min-width: 1024px) 1px, 100vw"
           />

@@ -1,0 +1,66 @@
+{
+  "source": "https://budget.paxbespoke.uk/",
+  "package": "PaxBespoke Budget",
+  "description": "Wardrobe images from the PaxBespoke Budget package website. Budget uses standard IKEA Pax units with filler panels, no custom doors or modifications.",
+  "notes": "Non-wardrobe images (ruler/room plan, team photo, logos) were excluded. The carousel tall image (5RUYMCe0Ncq1j6YMe9yYAmXvI.jpg) is shared with Select and already stored in select-package/homepage/.",
+  "images": [
+    {
+      "file": "budget-white-pax-wardrobe-square.jpg",
+      "label": "White IKEA Pax wardrobe - budget installation, square crop",
+      "dimensions": "600x600",
+      "alt": "white wardrobe",
+      "usage": "Homepage highlighted projects carousel - slide 1",
+      "source_url": "https://framerusercontent.com/images/2fBV4Z7IMaLChmf521WgPIkHIY.jpg"
+    },
+    {
+      "file": "budget-white-pax-wardrobe-tall.jpg",
+      "label": "White IKEA Pax wardrobe - budget installation, tall portrait",
+      "dimensions": "747x1600",
+      "alt": "white wardrobe",
+      "usage": "Homepage highlighted projects carousel - slide 2",
+      "source_url": "https://framerusercontent.com/images/1tPgjE3yBTsNXwhCyOyCSXctYY.jpg"
+    },
+    {
+      "file": "budget-white-pax-wardrobe-full-height.jpg",
+      "label": "White IKEA Pax wardrobe - budget installation, full height view",
+      "dimensions": "600x1285",
+      "alt": "white wardrobe",
+      "usage": "Homepage highlighted projects carousel - slide 3",
+      "source_url": "https://framerusercontent.com/images/9dEalbFWRUwWKesm0VOokeTew.jpg"
+    },
+    {
+      "file": "budget-white-pax-wardrobe-landscape.jpg",
+      "label": "White IKEA Pax wardrobe - budget installation, landscape view",
+      "dimensions": "600x450",
+      "alt": "white wardrobe",
+      "usage": "Homepage highlighted projects carousel - slide 4",
+      "source_url": "https://framerusercontent.com/images/7aVLsqubqIqmlovnO6mJtYqXs.jpg"
+    },
+    {
+      "file": "budget-grey-pax-wardrobe-highres.jpg",
+      "label": "Grey IKEA Pax wardrobe - budget installation, high resolution",
+      "dimensions": "3024x4032",
+      "alt": "grey wardrobe",
+      "usage": "Homepage highlighted projects carousel - slide 5",
+      "source_url": "https://framerusercontent.com/images/Ya1HEHq0QbyQIqn950MF3EBFu0.jpg"
+    }
+  ],
+  "totals": {
+    "wardrobe_images": 5,
+    "skipped_non_wardrobe": 3
+  },
+  "skipped_images": [
+    {
+      "reason": "Not a wardrobe image - ruler and room plan on table",
+      "source_url": "https://framerusercontent.com/images/6VzF9koOcRgbmtoPO3sluettHvA.png"
+    },
+    {
+      "reason": "Not a wardrobe image - team/tradesman stock photo",
+      "source_url": "https://framerusercontent.com/images/ZwoHq4BW7d206qmhdVF4A41gi4.png"
+    },
+    {
+      "reason": "Already in select-package - shared carousel tall image",
+      "source_url": "https://framerusercontent.com/images/5RUYMCe0Ncq1j6YMe9yYAmXvI.jpg"
+    }
+  ]
+}

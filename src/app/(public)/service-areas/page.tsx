@@ -107,10 +107,10 @@ export default async function ServiceAreasPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { src: '/images/stock/service-1.jpg', alt: 'Wardrobe doors being fitted' },
-              { src: '/images/stock/service-2.jpg', alt: 'Custom trim installation' },
-              { src: '/images/stock/service-3.jpg', alt: 'Interior layout assembly' },
-              { src: '/images/stock/service-4.jpg', alt: 'Finished wardrobe in bedroom' },
+              { src: '/images/select-package/spray-painted-doors/spray-painted-door-01.png', alt: 'White spray-painted shaker wardrobe fitted into alcove' },
+              { src: '/images/paxbespoke-projects/skirting/skirting-white-wardrobe-blue-wall.jpg', alt: 'White wardrobe with skirting board integration' },
+              { src: '/images/paxbespoke-projects/loft/loft-white-wardrobe-05.jpg', alt: 'White wardrobe fitted to angled loft ceiling' },
+              { src: '/images/select-package/spray-painted-doors/spray-painted-door-03.png', alt: 'Sage green spray-painted shaker wardrobe' },
             ].map((img) => (
               <div key={img.src} className="aspect-[3/4] rounded-2xl overflow-hidden">
                 <Image

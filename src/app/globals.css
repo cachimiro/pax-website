@@ -128,23 +128,47 @@ h1, h2, h3, h4, h5, h6 {
   100% { background-position: 200% 0; }
 }
 
-@keyframes kenBurns {
+@keyframes kenBurnsLeft {
   0% { transform: scale(1) translate(0, 0); }
-  100% { transform: scale(1.08) translate(-1%, -1%); }
+  100% { transform: scale(1.06) translate(-0.8%, -0.5%); }
 }
 
-.animate-ken-burns {
-  animation: kenBurns 6s ease-out forwards;
+@keyframes kenBurnsRight {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.06) translate(0.8%, -0.5%); }
+}
+
+.animate-ken-burns-left {
+  animation: kenBurnsLeft 8s ease-out forwards;
+}
+
+.animate-ken-burns-right {
+  animation: kenBurnsRight 8s ease-out forwards;
 }
 
 @keyframes heroFadeIn {
-  0% { opacity: 0; transform: scale(1.04); }
-  100% { opacity: 1; transform: scale(1); }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 @keyframes heroFadeOut {
-  0% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.96); }
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes thumbnailFadeIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes thumbnailFadeOut {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes progressFill {
+  0% { width: 0%; }
+  100% { width: 100%; }
 }
 
 @keyframes countUp {

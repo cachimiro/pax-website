@@ -110,9 +110,21 @@ const packageDetails = [
 ];
 
 const packageImages = {
-  budget: ['/images/stock/project-3.jpg', '/images/stock/project-6.jpg', '/images/stock/wardrobe-1.jpg'],
-  paxbespoke: ['/images/stock/project-1.jpg', '/images/stock/project-4.jpg', '/images/stock/wardrobe-2.jpg'],
-  select: ['/images/stock/project-2.jpg', '/images/stock/project-5.jpg', '/images/stock/wardrobe-3.jpg'],
+  budget: [
+    '/images/budget-package/budget-white-pax-wardrobe-tall.jpg',
+    '/images/budget-package/budget-grey-pax-wardrobe-highres.jpg',
+    '/images/budget-package/budget-white-pax-wardrobe-full-height.jpg',
+  ],
+  paxbespoke: [
+    '/images/paxbespoke-package/products/paxbespoke-white-wardrobe-blue-wall.jpg',
+    '/images/paxbespoke-projects/sliding/sliding-mirrored-door.jpg',
+    '/images/paxbespoke-projects/dressing-room/dressing-room-grey-wardrobe.jpg',
+  ],
+  select: [
+    '/images/select-package/spray-painted-doors/spray-painted-door-09.png',
+    '/images/select-package/spray-painted-doors/spray-painted-door-10.png',
+    '/images/select-package/spray-painted-doors/spray-painted-door-05.png',
+  ],
 };
 
 export default function PackagesPage() {

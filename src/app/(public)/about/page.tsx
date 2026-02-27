@@ -78,8 +78,8 @@ export default function AboutPage() {
             </div>
             <div className="rounded-2xl overflow-hidden aspect-[4/3]">
               <Image
-                src="/images/stock/team-workshop.jpg"
-                alt="PaxBespoke workshop — wardrobe assembly and custom finishing"
+                src="/images/paxbespoke-package/products/paxbespoke-high-ceiling-l-shaped.jpeg"
+                alt="Floor-to-ceiling PaxBespoke wardrobe installation"
                 width={800}
                 height={600}
                 className="w-full h-full object-cover"

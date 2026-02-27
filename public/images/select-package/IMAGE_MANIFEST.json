@@ -1,0 +1,238 @@
+{
+  "source": "https://select.paxbespoke.uk/",
+  "package": "PaxBespoke Select",
+  "description": "Images extracted from the PaxBespoke Select package website, including homepage, spray-painted doors product page, and vinyl-wrapped doors product page.",
+  "images": {
+    "shared": [
+      {
+        "file": "shared/paxbespoke-select-logo.png",
+        "label": "PaxBespoke Select logo icon",
+        "dimensions": "195x163",
+        "usage": "Navigation bar logo / brand mark (white on transparent)"
+      },
+      {
+        "file": "shared/paxbespoke-logotype-white.png",
+        "label": "PaxBespoke logotype in white",
+        "dimensions": "687x116",
+        "usage": "Footer logotype (white text on transparent)"
+      },
+      {
+        "file": "shared/pinterest-icon.png",
+        "label": "Pinterest social media icon",
+        "dimensions": "426x512",
+        "usage": "Footer social media link icon"
+      }
+    ],
+    "homepage": [
+      {
+        "file": "homepage/hero-spray-painted-white-doors.png",
+        "label": "White L-shaped corner wardrobe with shaker and beaded spray-painted doors, black handles",
+        "dimensions": "1080x1350",
+        "alt": "spray painted white doors",
+        "usage": "Hero section main image"
+      },
+      {
+        "file": "homepage/design-consultation-room-plan.png",
+        "label": "White L-shaped corner wardrobe (rounded corner crop, same project as hero)",
+        "dimensions": "1080x1350",
+        "alt": "two men looking at room plan on paper",
+        "usage": "Design consultation section image"
+      },
+      {
+        "file": "homepage/project-highlight-wardrobe-full.jpg",
+        "label": "White wardrobe full-height showcase image (highlighted projects carousel)",
+        "dimensions": "600x1285",
+        "alt": "white wardrobe",
+        "usage": "Highlighted projects carousel - tall before image"
+      },
+      {
+        "file": "homepage/project-highlight-wardrobe-1.jpg",
+        "label": "White wardrobe project photo 1 (highlighted projects carousel)",
+        "dimensions": "600x800",
+        "alt": "white wardrobe",
+        "usage": "Highlighted projects carousel - slide 1"
+      },
+      {
+        "file": "homepage/project-highlight-wardrobe-2.jpg",
+        "label": "White wardrobe project photo 2 (highlighted projects carousel)",
+        "dimensions": "600x800",
+        "alt": "white wardrobe",
+        "usage": "Highlighted projects carousel - slide 2"
+      },
+      {
+        "file": "homepage/project-highlight-wardrobe-3.jpg",
+        "label": "White wardrobe project photo 3 (highlighted projects carousel)",
+        "dimensions": "600x800",
+        "alt": "white wardrobe",
+        "usage": "Highlighted projects carousel - slide 3"
+      },
+      {
+        "file": "homepage/project-highlight-wardrobe-4.jpg",
+        "label": "White wardrobe project photo 4 (highlighted projects carousel)",
+        "dimensions": "600x800",
+        "alt": "white wardrobe",
+        "usage": "Highlighted projects carousel - slide 4"
+      },
+      {
+        "file": "homepage/product-spray-painted-doors-thumbnail.png",
+        "label": "Spray-painted doors product thumbnail - white shaker wardrobe with black handles",
+        "dimensions": "748x740",
+        "usage": "Listed Products section - spray painted doors card"
+      },
+      {
+        "file": "homepage/product-vinyl-wrapped-doors-thumbnail.jpg",
+        "label": "Vinyl-wrapped doors product thumbnail",
+        "dimensions": "1600x1200",
+        "usage": "Listed Products section - vinyl wrapped doors card"
+      },
+      {
+        "file": "homepage/team-photo.png",
+        "label": "PaxBespoke team member / tradesman with tool belt by van",
+        "dimensions": "940x788",
+        "alt": "the PaxBespoke team",
+        "usage": "Ready to Start CTA section"
+      }
+    ],
+    "spray-painted-doors": [
+      {
+        "file": "spray-painted-doors/spray-painted-door-01.png",
+        "label": "White spray-painted 5-door shaker wardrobe fitted into alcove, wooden floor, period room",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-02.png",
+        "label": "White spray-painted 5-door shaker wardrobe, front-on view, wooden floor",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-03.png",
+        "label": "Sage green spray-painted 5-panel shaker wardrobe with chrome handles, spotlights, carpet",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-04.png",
+        "label": "Sage green spray-painted 6-door shaker wardrobe, front-on view, chrome handles, spotlights",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-05.png",
+        "label": "Light grey/putty spray-painted 5-door shaker wardrobe, chrome handles, wooden floor, period room",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-06.png",
+        "label": "Pair of sage/grey shaker wardrobes flanking Victorian fireplace, symmetrical alcove fit, carpet",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-07.png",
+        "label": "Sage/grey shaker wardrobes flanking Victorian fireplace, angled view showing both units",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-08.png",
+        "label": "Full bedroom suite - grey/putty spray-painted wardrobe with matching chest of drawers and desk",
+        "dimensions": "1200x630"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-09.png",
+        "label": "Luxury cream fretwork/lattice mirrored wardrobe doors with matching chest of drawers",
+        "dimensions": "768x1344"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-10.png",
+        "label": "Dark navy/blue bedroom suite - two tall wardrobes flanking chest of drawers with TV area, gold wallpaper",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-11.png",
+        "label": "White L-shaped corner wardrobe with shaker and beaded doors, long black handles (alternate angle)",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-12.jpeg",
+        "label": "Spray-painted wardrobe project photo 12",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-13.jpeg",
+        "label": "Spray-painted wardrobe project photo 13",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-14.jpeg",
+        "label": "Spray-painted wardrobe project photo 14",
+        "dimensions": "1080x1350"
+      },
+      {
+        "file": "spray-painted-doors/spray-painted-door-15.jpeg",
+        "label": "Spray-painted wardrobe project photo 15",
+        "dimensions": "1080x1350"
+      }
+    ],
+    "vinyl-wrapped-doors": [
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-01.jpg",
+        "label": "Vinyl-wrapped wardrobe doors showcase (same as homepage vinyl thumbnail)",
+        "dimensions": "1600x1200"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-02.jpeg",
+        "label": "Vinyl-wrapped wardrobe project photo - portrait orientation",
+        "dimensions": "900x1600"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-03.jpg",
+        "label": "Vinyl-wrapped wardrobe project photo - narrow portrait",
+        "dimensions": "747x1600"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-04.jpg",
+        "label": "Vinyl-wrapped wardrobe project photo - portrait",
+        "dimensions": "1200x1600"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-05.jpg",
+        "label": "Vinyl-wrapped wardrobe project photo - narrow portrait",
+        "dimensions": "747x1600"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-06.jpeg",
+        "label": "Vinyl-wrapped wardrobe project photo - small portrait",
+        "dimensions": "563x1000"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-07.jpg",
+        "label": "Vinyl-wrapped wardrobe project photo - landscape",
+        "dimensions": "1600x1200"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-08.jpeg",
+        "label": "Vinyl-wrapped wardrobe project photo - portrait",
+        "dimensions": "900x1600"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-09.jpeg",
+        "label": "Vinyl-wrapped wardrobe project photo - portrait",
+        "dimensions": "900x1600"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-10.jpeg",
+        "label": "Vinyl-wrapped wardrobe project photo - portrait",
+        "dimensions": "900x1600"
+      },
+      {
+        "file": "vinyl-wrapped-doors/vinyl-wrapped-door-11.jpeg",
+        "label": "Vinyl-wrapped wardrobe project photo - portrait",
+        "dimensions": "900x1600"
+      }
+    ]
+  },
+  "totals": {
+    "shared": 3,
+    "homepage": 10,
+    "spray-painted-doors": 15,
+    "vinyl-wrapped-doors": 11,
+    "total": 39
+  }
+}

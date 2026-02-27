@@ -1,0 +1,133 @@
+{
+  "source": "https://paxbespoke.uk/projects",
+  "package": "PaxBespoke",
+  "description": "Project gallery images from the PaxBespoke projects page. Organized by category as shown on the site. These are real PaxBespoke installations showing modified IKEA Pax wardrobes.",
+  "categories": {
+    "alcove": {
+      "description": "Alcove and in front of chimney wardrobe installations",
+      "count": 9,
+      "images": [
+        { "file": "alcove/alcove-wardrobe-doors-open.jpg", "label": "Wardrobe with doors open showing interior", "dimensions": "600x1285" },
+        { "file": "alcove/alcove-white-wardrobe-01.jpg", "label": "White alcove wardrobe", "dimensions": "600x1285" },
+        { "file": "alcove/alcove-white-wardrobe-tv.jpg", "label": "White custom wardrobe with TV on wall", "dimensions": "600x1053" },
+        { "file": "alcove/alcove-white-wardrobe-02.jpg", "label": "White alcove wardrobe (alternate view)", "dimensions": "600x1066" },
+        { "file": "alcove/alcove-grey-wardrobe.jpg", "label": "Grey alcove wardrobe", "dimensions": "600x750" },
+        { "file": "alcove/alcove-wardrobe-rendering.jpg", "label": "Wardrobe 3D rendering", "dimensions": "600x600" },
+        { "file": "alcove/alcove-white-wardrobe-doors-open.jpg", "label": "White wardrobe with doors open", "dimensions": "600x750" },
+        { "file": "alcove/alcove-white-wardrobe-03.jpg", "label": "White alcove wardrobe (landscape)", "dimensions": "600x450" },
+        { "file": "alcove/alcove-white-wardrobe-rendering.jpg", "label": "White wardrobe 3D rendering", "dimensions": "600x600" }
+      ]
+    },
+    "before-after": {
+      "description": "Before and after wardrobe installation photos - walls before and completed wardrobes after",
+      "count": 10,
+      "images": [
+        { "file": "before-after/before-after-01.jpg", "label": "Before/after composite image 1", "dimensions": "600x600" },
+        { "file": "before-after/before-after-02.jpg", "label": "Before/after composite image 2", "dimensions": "600x600" },
+        { "file": "before-after/before-after-03.jpg", "label": "Before/after composite image 3", "dimensions": "600x600" },
+        { "file": "before-after/before-after-04.jpg", "label": "Before/after composite image 4", "dimensions": "600x600" },
+        { "file": "before-after/before-01-wall.jpg", "label": "Before - empty wall prepared for wardrobe 1", "dimensions": "1920x4112" },
+        { "file": "before-after/after-01-wardrobe.jpg", "label": "After - completed wardrobe installation 1", "dimensions": "1920x4112" },
+        { "file": "before-after/before-02-wall.jpg", "label": "Before - empty wall prepared for wardrobe 2", "dimensions": "1920x4112" },
+        { "file": "before-after/after-02-wardrobe.jpg", "label": "After - completed wardrobe installation 2", "dimensions": "1920x4112" },
+        { "file": "before-after/before-03-wall.jpg", "label": "Before - empty wall prepared for wardrobe 3", "dimensions": "1920x4111" },
+        { "file": "before-after/after-03-wardrobe.jpg", "label": "After - completed wardrobe installation 3", "dimensions": "1920x4111" }
+      ]
+    },
+    "skirting": {
+      "description": "Wardrobe installations with skirting board integration",
+      "count": 7,
+      "images": [
+        { "file": "skirting/skirting-white-wardrobe-01.jpg", "label": "White wardrobe with skirting integration", "dimensions": "600x800" },
+        { "file": "skirting/skirting-white-wardrobe-02.jpg", "label": "White wardrobe with skirting (tall)", "dimensions": "600x1285" },
+        { "file": "skirting/skirting-white-wardrobe-03.jpg", "label": "White wardrobe with skirting (tall, alternate)", "dimensions": "600x1285" },
+        { "file": "skirting/skirting-white-wardrobe-blue-wall.jpg", "label": "White wardrobe in room with blue wall", "dimensions": "600x800" },
+        { "file": "skirting/skirting-white-wardrobe-04.jpg", "label": "White wardrobe with skirting detail", "dimensions": "600x800" },
+        { "file": "skirting/skirting-white-wardrobe-05.jpg", "label": "White wardrobe with skirting (portrait)", "dimensions": "600x1072" },
+        { "file": "skirting/skirting-white-wardrobe-06.jpg", "label": "White wardrobe with skirting (full height)", "dimensions": "600x1285" }
+      ]
+    },
+    "dressing-room": {
+      "description": "Dressing room and boxroom wardrobe installations with desks and storage",
+      "count": 10,
+      "images": [
+        { "file": "dressing-room/dressing-room-table.jpg", "label": "White dressing room table/desk area", "dimensions": "600x1067" },
+        { "file": "dressing-room/dressing-room-white-wardrobe.jpg", "label": "White dressing room wardrobe", "dimensions": "600x1285" },
+        { "file": "dressing-room/dressing-room-grey-wardrobe.jpg", "label": "Grey dressing room wardrobe", "dimensions": "600x1285" },
+        { "file": "dressing-room/dressing-room-full.jpg", "label": "Full dressing room view", "dimensions": "600x1285" },
+        { "file": "dressing-room/dressing-room-brown-wardrobe.jpg", "label": "Brown/wood dressing room wardrobe", "dimensions": "600x1053" },
+        { "file": "dressing-room/dressing-room-white-wardrobe-02.jpg", "label": "White dressing room wardrobe (alternate)", "dimensions": "600x1066" },
+        { "file": "dressing-room/dressing-room-doors-open.jpg", "label": "White dressing room wardrobe with doors open", "dimensions": "600x1285" },
+        { "file": "dressing-room/dressing-room-wardrobe-03.jpg", "label": "Dressing room wardrobe view 3", "dimensions": "600x1066" },
+        { "file": "dressing-room/dressing-room-wardrobe-04.jpg", "label": "Dressing room wardrobe view 4", "dimensions": "600x1285" },
+        { "file": "dressing-room/dressing-room-white-wardrobe-03.jpg", "label": "White dressing room wardrobe view 3", "dimensions": "600x1067" }
+      ]
+    },
+    "sliding": {
+      "description": "SKYTTA sliding door wardrobe installations - mirrored, black, and white options",
+      "count": 10,
+      "images": [
+        { "file": "sliding/sliding-mirrored-door.jpg", "label": "Mirrored sliding door wardrobe", "dimensions": "600x1066" },
+        { "file": "sliding/sliding-mirrored-wardrobe-01.jpg", "label": "Mirrored sliding wardrobe installation 1", "dimensions": "600x1066" },
+        { "file": "sliding/sliding-mirrored-wardrobe-02.jpg", "label": "Mirrored sliding wardrobe installation 2", "dimensions": "600x1066" },
+        { "file": "sliding/sliding-white-wardrobe.jpg", "label": "White sliding door wardrobe", "dimensions": "600x1067" },
+        { "file": "sliding/sliding-black-mirrored.jpg", "label": "Black wardrobe with mirrored sliding doors", "dimensions": "600x338" },
+        { "file": "sliding/sliding-black-wardrobe.jpg", "label": "Black sliding wardrobe", "dimensions": "600x338" },
+        { "file": "sliding/sliding-mirrored-wardrobe-03.jpg", "label": "Mirrored sliding wardrobe installation 3", "dimensions": "600x1066" },
+        { "file": "sliding/sliding-wardrobe-01.jpg", "label": "Sliding wardrobe general view", "dimensions": "600x1066" },
+        { "file": "sliding/sliding-mirrored-wardrobe-04.jpg", "label": "Mirrored sliding wardrobe installation 4", "dimensions": "600x1067" },
+        { "file": "sliding/sliding-black-wardrobe-02.jpg", "label": "Black sliding wardrobe (portrait)", "dimensions": "600x1060" }
+      ]
+    },
+    "loft": {
+      "description": "Loft and angled space wardrobe installations - fitted to sloped ceilings",
+      "count": 9,
+      "images": [
+        { "file": "loft/loft-wardrobe-rendering.jpg", "label": "Loft wardrobe 3D rendering", "dimensions": "600x600" },
+        { "file": "loft/loft-white-wardrobe-01.jpg", "label": "White loft wardrobe fitted to angled ceiling", "dimensions": "600x1285" },
+        { "file": "loft/loft-white-wardrobe-02.jpg", "label": "White loft wardrobe (alternate angle)", "dimensions": "600x1285" },
+        { "file": "loft/loft-white-wardrobe-03.jpg", "label": "White loft wardrobe (landscape)", "dimensions": "600x280" },
+        { "file": "loft/loft-white-wardrobe-04.jpg", "label": "White loft wardrobe (full height)", "dimensions": "600x1285" },
+        { "file": "loft/loft-white-wardrobe-05.jpg", "label": "White loft wardrobe (clean view)", "dimensions": "600x1285" },
+        { "file": "loft/loft-wardrobe-doors-open.jpg", "label": "Loft wardrobe with doors open showing angled cut", "dimensions": "600x1285" },
+        { "file": "loft/loft-bedroom-wardrobe.jpg", "label": "Loft bedroom wardrobe installation", "dimensions": "600x1285" },
+        { "file": "loft/loft-bedroom-wardrobes.jpg", "label": "Loft bedroom wardrobes (wide view)", "dimensions": "600x280" }
+      ]
+    },
+    "other": {
+      "description": "Other project types - wall-to-wall, TV spaces, open-end designs, high ceilings, renderings",
+      "count": 19,
+      "images": [
+        { "file": "other/other-white-wardrobe-01.jpeg", "label": "White wardrobe project", "dimensions": "600x1067" },
+        { "file": "other/other-wardrobe-rendering-01.jpeg", "label": "Wardrobe 3D rendering 1", "dimensions": "600x600" },
+        { "file": "other/other-wall-mounted-wardrobe.jpeg", "label": "White wall-mounted wardrobe", "dimensions": "600x1067" },
+        { "file": "other/other-white-wardrobe-02.jpeg", "label": "White wardrobe project 2", "dimensions": "600x1057" },
+        { "file": "other/other-wardrobe-rendering-02.jpeg", "label": "Wardrobe 3D rendering 2", "dimensions": "600x600" },
+        { "file": "other/other-room-white-furniture-mirror.jpeg", "label": "Room with white furniture and mirror", "dimensions": "600x1067" },
+        { "file": "other/other-wardrobe-rendering-03.jpeg", "label": "Wardrobe 3D rendering 3", "dimensions": "600x600" },
+        { "file": "other/other-brown-dressing-room.jpeg", "label": "Brown dressing room wardrobe", "dimensions": "600x1082" },
+        { "file": "other/other-wardrobe-rendering-04.jpeg", "label": "Wardrobe 3D rendering 4", "dimensions": "600x600" },
+        { "file": "other/other-grey-wardrobe.jpeg", "label": "Grey wardrobe project", "dimensions": "600x800" },
+        { "file": "other/other-white-wardrobe-03.jpeg", "label": "White wardrobe project 3", "dimensions": "600x800" },
+        { "file": "other/other-white-custom-wardrobe.jpeg", "label": "White custom wardrobe", "dimensions": "600x1285" },
+        { "file": "other/other-wardrobe-rendering-05.jpeg", "label": "Wardrobe 3D rendering 5", "dimensions": "600x600" },
+        { "file": "other/other-black-wardrobe.jpeg", "label": "Black wardrobe project", "dimensions": "600x1072" },
+        { "file": "other/other-wardrobe-rendering-06.jpeg", "label": "Wardrobe 3D rendering 6", "dimensions": "600x600" },
+        { "file": "other/other-before-after-makeover.jpeg", "label": "Before/after wardrobe makeover composite", "dimensions": "600x600" },
+        { "file": "other/other-wardrobe-rendering-07.jpeg", "label": "Wardrobe 3D rendering 7", "dimensions": "600x600" },
+        { "file": "other/other-wardrobe-tv-space-01.jpeg", "label": "Wardrobe with TV space 1", "dimensions": "600x1067" },
+        { "file": "other/other-wardrobe-tv-space-02.jpeg", "label": "Wardrobe with TV space 2", "dimensions": "600x1067" }
+      ]
+    }
+  },
+  "totals": {
+    "alcove": 9,
+    "before_after": 10,
+    "skirting": 7,
+    "dressing_room": 10,
+    "sliding": 10,
+    "loft": 9,
+    "other": 19,
+    "total": 74
+  }
+}

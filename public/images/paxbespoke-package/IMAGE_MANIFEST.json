@@ -1,0 +1,57 @@
+{
+  "source": "https://paxbespoke.uk/products",
+  "package": "PaxBespoke",
+  "description": "Wardrobe images from the PaxBespoke product catalogue page. These showcase the PaxBespoke package - modified IKEA Pax with custom fitting, trims, and standard IKEA doors.",
+  "images": [
+    {
+      "file": "products/paxbespoke-dressing-table-wardrobe.png",
+      "label": "Custom PAX wardrobe with built-in dressing table, push-open doors",
+      "dimensions": "271x432"
+    },
+    {
+      "file": "products/paxbespoke-skytta-sliding-door.jpeg",
+      "label": "Custom SKYTTA sliding door wardrobe with mirror panel",
+      "dimensions": "670x826"
+    },
+    {
+      "file": "products/paxbespoke-high-ceiling-l-shaped.jpeg",
+      "label": "High ceiling L-shaped Pax wardrobe, floor-to-ceiling white",
+      "dimensions": "900x1600"
+    },
+    {
+      "file": "products/paxbespoke-dressing-room-category.png",
+      "label": "Dressing room wardrobe category thumbnail - table under window",
+      "dimensions": "267x310"
+    },
+    {
+      "file": "products/paxbespoke-wardrobe-desk-under-window.png",
+      "label": "PaxBespoke wardrobe with desk under window (thumbnail)",
+      "dimensions": "452x718"
+    },
+    {
+      "file": "products/paxbespoke-wardrobe-desk-full.jpg",
+      "label": "PaxBespoke wardrobe with desk under window (full resolution)",
+      "dimensions": "1920x4111"
+    },
+    {
+      "file": "products/paxbespoke-white-wardrobe-blue-wall.jpg",
+      "label": "White PaxBespoke wardrobe in room with blue patterned wall",
+      "dimensions": "1920x2560"
+    },
+    {
+      "file": "products/paxbespoke-budget-white-wardrobe.jpg",
+      "label": "White budget wardrobe (used as Budget package representative on products page)",
+      "dimensions": "1920x2560"
+    }
+  ],
+  "totals": {
+    "wardrobe_images": 8
+  },
+  "skipped_images": [
+    { "reason": "Not a wardrobe - laptop rendering on screen", "alt": "rendering on laptop screen" },
+    { "reason": "Not a wardrobe - two men at computer", "alt": "two men looking at a computer screen" },
+    { "reason": "Not a wardrobe - three men looking at rendering", "alt": "three men looking at a printed wardrobe rendering" },
+    { "reason": "Already in select-package - spray painted door 04", "id": "yA8X3uJCWKWXnx36sPixl5L8Ix4" },
+    { "reason": "Already in select-package - vinyl wrapped thumbnail", "id": "xdEzsjOln4QFWyAlcBAEqZDhLU" }
+  ]
+}
