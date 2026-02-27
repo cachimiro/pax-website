@@ -41,7 +41,7 @@ function getCardColors(id: string, popular?: boolean) {
         tagline: 'text-[#2d5c37]',
         checkBg: 'bg-gradient-to-br from-[#f28c43]/10 to-[#2d5c37]/10',
         checkIcon: 'text-[#2d5c37]',
-        cta: 'bg-gradient-to-r from-[#f28c43] to-[#2d5c37] text-white hover:opacity-90 shadow-lg shadow-[#f28c43]/25',
+        cta: 'border-2 border-[#2d5c37] text-[#2d5c37] hover:bg-[#2d5c37]/5 shadow-none',
         badge: 'bg-gradient-to-r from-[#f28c43] to-[#2d5c37]',
       };
     case 'select':

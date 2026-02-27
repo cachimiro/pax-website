@@ -129,10 +129,10 @@ export default function HowItWorksPage() {
       <section className="section-padding bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <TestimonialCard
-            quote="I was nervous about the whole process but the team made it so straightforward. The video call was relaxed, the quote was clear, and the installation was done before I knew it. I wish I'd done it sooner."
+            quote="I was nervous about the whole process but the team made it so straightforward. The video call was relaxed, the quote was clear, and the Select finish exceeded every expectation. I wish I'd done it sooner."
             name="Emma W."
             location="Sale, Greater Manchester"
-            packageUsed="PaxBespoke"
+            packageUsed="Select"
           />
         </div>
       </section>

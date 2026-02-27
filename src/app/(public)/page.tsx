@@ -31,25 +31,25 @@ const packages = [
   {
     id: 'paxbespoke',
     name: 'PaxBespoke',
-    tagline: 'Where Pax Meets Bespoke',
-    bestFor: 'A high-quality built-in finish at a sensible budget. Doors customised within the IKEA/PAX ecosystem, colour-matched trims, flush filler panels, and skirting board finish. We supply everything.',
+    tagline: 'The Fitted Standard',
+    bestFor: 'A clean, fitted wardrobe at a sensible price. Doors customised within the IKEA/PAX ecosystem, colour-matched trims, flush filler panels, and skirting board finish. We supply everything.',
     priceRange: 'From £1,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
     features: ['Doors within IKEA/PAX range', 'Custom trim colours', 'Flush filler panels', 'Skirting board finish', 'Design consultation', 'Rubbish removal'],
     leadTime: '2–3 weeks',
-    finishLevel: 'Custom fitted',
+    finishLevel: 'Fitted',
     ctaText: 'Get Started',
   },
   {
     id: 'select',
     name: 'Select',
-    tagline: 'Designed Without Limits',
-    bestFor: 'The most premium finishes and styling options. Bespoke doors (spray-painted or vinyl), more freedom on colour and door styles, and little to no restrictions within the PAX system.',
+    tagline: 'The Designer Finish',
+    bestFor: 'A fully bespoke bedroom finish. Spray-painted or vinyl doors in any colour or style, full wall integration, and advanced carpentry — designed to match your room, not just fit it.',
     priceRange: 'From £2,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
     features: ['Everything in PaxBespoke', 'Bespoke doors (spray-painted or vinyl)', 'Full wall integration', 'Sliding door systems', 'Floor-to-ceiling builds', 'Advanced carpentry'],
     leadTime: '3–4 weeks',
-    finishLevel: 'Full bespoke',
+    finishLevel: 'Designer bespoke',
     popular: true,
     ctaText: 'Recommended — Get Started',
   },
@@ -98,10 +98,10 @@ const steps = [
 
 const testimonials = [
   {
-    quote: 'The video consultation was so easy. They walked me through everything and I knew exactly what to expect before committing. The installation was done in a day — couldn\'t believe it.',
-    name: 'Sarah M.',
-    location: 'Altrincham, Cheshire',
-    packageUsed: 'PaxBespoke',
+    quote: 'From consultation to installation in under two weeks. The Select finish is stunning — sliding doors, floor-to-ceiling, everything integrated perfectly. Worth every penny.',
+    name: 'Priya K.',
+    location: 'Woolton, Liverpool',
+    packageUsed: 'Select',
   },
   {
     quote: 'We wanted something that looked high-end but didn\'t cost a fortune. The PaxBespoke package was perfect — custom doors on IKEA frames, and you genuinely can\'t tell the difference.',
@@ -110,9 +110,9 @@ const testimonials = [
     packageUsed: 'PaxBespoke',
   },
   {
-    quote: 'From consultation to installation in under two weeks. The Select finish is stunning — sliding doors, floor-to-ceiling, everything integrated perfectly. Worth every penny.',
-    name: 'Priya K.',
-    location: 'Woolton, Liverpool',
+    quote: 'The spray-painted doors completely transformed the bedroom. It looks like a designer fitted wardrobe — no one believes it\'s IKEA Pax underneath. The whole process was straightforward.',
+    name: 'Sarah M.',
+    location: 'Altrincham, Cheshire',
     packageUsed: 'Select',
   },
 ];
@@ -154,8 +154,8 @@ export default function Home() {
               </h1>
 
               <p className="text-sm sm:text-base md:text-lg text-green-100/80 mb-8 max-w-lg leading-relaxed">
-                Three packages for every budget. From simple built-in storage to fully
-                bespoke wardrobes with custom doors, trims, and finishes — we have a
+                Three packages for every budget. From simple built-in storage to a fully
+                bespoke bedroom finish with custom doors, colours, and designer details — we have a
                 solution that fits your space and your price point.
               </p>
 

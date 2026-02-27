@@ -33,7 +33,7 @@ export default function PackagesSection({ packages }: PackagesSectionProps) {
           <SectionHeading
             label="Choose Your Package"
             title="Three packages. One clear next step."
-            description="Every package includes IKEA Pax system, professional installation, and a free design consultation. Pick the finish level that suits you."
+            description="Every package includes the IKEA Pax system, professional installation, and a free design consultation. Choose the finish that matches your vision."
           />
         </ScrollReveal>
         <PackageCarousel packages={packages} onLearnMore={openPackageModal} />

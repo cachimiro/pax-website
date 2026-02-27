@@ -72,6 +72,12 @@ export default function FinishesPage() {
             description="Browse doors, handles, trims, and interior fittings. Each item shows which packages it's available on. Not sure what to choose? We'll help you during your consultation."
           />
 
+          <div className="bg-[#2d5c37]/5 rounded-xl p-5 text-center mb-12">
+            <p className="text-sm text-[#2d5c37] font-medium">
+              Looking for the widest choice? Our <Link href="/packages#select" className="font-semibold underline underline-offset-2 hover:text-[#234a2c] transition-colors">Select package</Link> gives you access to every finish below, including custom RAL colours and premium materials.
+            </p>
+          </div>
+
           <div className="space-y-16">
             {categories.map((category) => (
               <div key={category.title}>

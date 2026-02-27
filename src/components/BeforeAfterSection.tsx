@@ -7,11 +7,11 @@ import SectionHeading from './SectionHeading';
 const projects = [
   {
     id: 'project-1',
-    title: 'Bedroom Wardrobe',
+    title: 'Designer Bedroom Suite',
     location: 'Cheshire',
-    packageUsed: 'PaxBespoke',
+    packageUsed: 'Select',
     before: '/images/paxbespoke-projects/before-after/before-01-wall.jpg',
-    after: '/images/paxbespoke-projects/before-after/after-01-wardrobe.jpg',
+    after: '/images/select-package/spray-painted-doors/spray-painted-door-08.png',
   },
   {
     id: 'project-2',

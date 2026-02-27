@@ -46,7 +46,7 @@ export default function WhatMakesUsDifferent() {
               We create a finished product, not a flat-pack
             </h2>
             <p className="text-base sm:text-lg text-warm-500 max-w-2xl mx-auto">
-              Stop comparing with IKEA. What we deliver is a fitted wardrobe — designed, built, and installed to look like it&apos;s always been there.
+              Stop comparing with IKEA. What we deliver is a fitted wardrobe — designed, built, and installed to look like it was always part of the room.
             </p>
           </div>
         </ScrollReveal>

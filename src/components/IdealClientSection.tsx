@@ -25,7 +25,7 @@ const packageFit = [
     bgClass: 'bg-gradient-to-br from-[#f28c43]/5 to-[#2d5c37]/5',
     tagClass: 'bg-gradient-to-r from-[#f28c43] to-[#2d5c37] text-white',
     ctaClass: 'text-[#f28c43] hover:text-[#e07c33]',
-    headline: 'You want a high-quality built-in finish at a sensible budget',
+    headline: 'You want a clean fitted wardrobe at a sensible price',
     description: 'Doors customised within the IKEA/PAX ecosystem, colour-matched trims, flush fillers, and a skirting board finish. The wardrobe looks fully fitted. The PAX interior is easy to change later.',
     ideal: [
       'Renovating or moving into a new home',
@@ -40,7 +40,7 @@ const packageFit = [
     bgClass: 'bg-[#2d5c37]/5',
     tagClass: 'bg-[#2d5c37] text-white',
     ctaClass: 'text-[#2d5c37] hover:text-[#234a2c]',
-    headline: 'You want the most premium finishes with little to no restrictions',
+    headline: 'You want a fully bespoke bedroom finish',
     description: 'Bespoke doors (spray-painted or vinyl), a broader choice of styles, colours, and finishes. Full wall integration, sliding doors, and advanced carpentry are all available. The PAX interior is easy to change later.',
     ideal: [
       'You want spray-painted or vinyl doors in any colour or style',
@@ -76,7 +76,7 @@ export default function IdealClientSection() {
               <div className={`relative bg-white rounded-2xl border p-6 h-full flex flex-col ${pkg.borderClass}`}>
                 {pkg.recommended && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold bg-[#2d5c37] text-white px-3 py-1 rounded-full font-[family-name:var(--font-heading)]">
-                    Most customers choose this
+                    Chosen for premium bedrooms
                   </span>
                 )}
 

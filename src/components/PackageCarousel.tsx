@@ -61,7 +61,7 @@ export default function PackageCarousel({ packages, onLearnMore }: PackageCarous
       <div className="md:hidden relative">
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 -mx-4 px-4"
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pt-5 pb-4 -mx-4 px-4"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
         >
           {packages.map((pkg) => (
@@ -71,9 +71,9 @@ export default function PackageCarousel({ packages, onLearnMore }: PackageCarous
           ))}
         </div>
         {/* Right edge fade to hint scrollability */}
-        <div className="pointer-events-none absolute top-0 right-0 bottom-4 w-8 bg-gradient-to-l from-warm-50 to-transparent" />
+        <div className="pointer-events-none absolute top-5 right-0 bottom-4 w-8 bg-gradient-to-l from-warm-50 to-transparent" />
         {/* Left edge fade */}
-        <div className="pointer-events-none absolute top-0 left-0 bottom-4 w-8 bg-gradient-to-r from-warm-50 to-transparent" />
+        <div className="pointer-events-none absolute top-5 left-0 bottom-4 w-8 bg-gradient-to-r from-warm-50 to-transparent" />
       </div>
 
       {/* Swipe hint — fades out after first scroll */}

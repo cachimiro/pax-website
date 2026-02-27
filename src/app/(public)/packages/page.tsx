@@ -27,22 +27,22 @@ const packages = [
   {
     id: 'paxbespoke',
     name: 'PaxBespoke',
-    bestFor: 'A high-quality built-in finish at a sensible budget. Custom-fitted to the room with doors customised within the IKEA/PAX ecosystem, colour-matched trims, and flush filler panels.',
+    bestFor: 'A clean, fitted wardrobe at a sensible price. Custom-fitted to the room with doors customised within the IKEA/PAX ecosystem, colour-matched trims, and flush filler panels.',
     priceRange: 'From £1,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
     features: ['Doors within IKEA/PAX range', 'Custom trim colours', 'Flush filler panels', 'Skirting board finish', 'Design consultation', 'Rubbish removal'],
     leadTime: '2–3 weeks',
-    finishLevel: 'Custom fitted',
+    finishLevel: 'Fitted',
   },
   {
     id: 'select',
     name: 'Select',
-    bestFor: 'The most premium finishes and styling options. Bespoke-looking front with spray-painted or vinyl doors, more freedom on colour and door styles, and little to no restrictions.',
+    bestFor: 'A fully bespoke bedroom finish. Spray-painted or vinyl doors in any colour or style, full wall integration, and advanced carpentry — designed to match your room, not just fit it.',
     priceRange: 'From £2,500',
     priceLabel: 'Per wardrobe, fitted. Final price confirmed after consultation.',
     features: ['Everything in PaxBespoke', 'Bespoke doors (spray-painted or vinyl)', 'Full wall integration', 'Sliding door systems', 'Floor-to-ceiling builds', 'Advanced carpentry'],
     leadTime: '3–4 weeks',
-    finishLevel: 'Full bespoke',
+    finishLevel: 'Designer bespoke',
     popular: true,
   },
 ];
@@ -86,8 +86,8 @@ const packageDetails = [
   {
     id: 'paxbespoke',
     name: 'PaxBespoke',
-    whoFor: 'You want a clean, built-in finish with a balanced price, while maximising usable storage. Doors and fronts can be customised within the IKEA/PAX ecosystem. This package includes custom cuts, trims, and craftsmanship — flush filler panels, skirting board finish, cornice/coving, and more. The PAX interior system is fully available and can be changed easily over time.',
-    ifYouWant: 'A finish similar to bespoke fitted wardrobes, while still using the practical and efficient PAX system. Ideal for customers who want a quality finish and do not want to lose storage due to gaps or angles. For fully bespoke, made-to-order doors, our Select package is the better fit.',
+    whoFor: 'You want a clean, fitted wardrobe at a sensible price, while maximising usable storage. Doors and fronts can be customised within the IKEA/PAX ecosystem. This package includes custom cuts, trims, and craftsmanship — flush filler panels, skirting board finish, cornice/coving, and more. The PAX interior system is fully available and can be changed easily over time.',
+    ifYouWant: 'A clean fitted look using the practical and efficient PAX system. Ideal for customers who want a quality finish and do not want to lose storage due to gaps or angles. For a fully bespoke bedroom finish with designer doors, our Select package is the better fit.',
     testimonial: {
       quote: 'The custom doors completely transformed the room. You genuinely cannot tell these are IKEA frames underneath. The consultation was relaxed and helpful — no hard sell at all.',
       name: 'Sarah M.',
@@ -99,7 +99,7 @@ const packageDetails = [
     id: 'select',
     name: 'Select',
     whoFor: 'You want the most premium finishes and styling options with little to no restrictions. Select upgrades the outside significantly — choose from spray-painted or vinyl doors in a broader range of styles, colours, and finishes, while keeping the practical IKEA PAX interior. Advanced carpentry, full wall integration, and sliding door systems are all available.',
-    ifYouWant: 'For master bedrooms, dressing rooms, or statement spaces. Want different-coloured doors? Shaker fronts? Sleek modern style? We design the front to match your exact taste while keeping the practical benefits of the PAX interior. The PAX interior system is fully available and can be changed easily over time.',
+    ifYouWant: 'For master bedrooms, dressing rooms, or statement spaces. Want different-coloured doors? Shaker fronts? A sleek modern look? We design the front to match your room\'s style while keeping the practical benefits of the PAX interior. The PAX interior system is fully available and can be changed easily over time.',
     testimonial: {
       quote: 'From consultation to installation in under two weeks. The finish is stunning — sliding doors, floor-to-ceiling, everything integrated perfectly. Worth every penny.',
       name: 'Priya K.',
@@ -177,7 +177,7 @@ export default function PackagesPage() {
                   <th className="text-center py-4 pl-3 sm:pl-4 font-semibold text-warm-900 font-[family-name:var(--font-heading)]">
                     <span className="inline-flex items-center gap-1">
                       <span className="text-[#2d5c37]">Select</span>
-                      <span className="text-[10px] font-semibold bg-[#2d5c37] text-white px-1.5 py-0.5 rounded-full hidden sm:inline">Recommended</span>
+                      <span className="text-[10px] font-semibold bg-[#2d5c37] text-white px-1.5 py-0.5 rounded-full">Recommended</span>
                     </span>
                   </th>
                 </tr>

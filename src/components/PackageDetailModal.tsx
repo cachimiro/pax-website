@@ -74,11 +74,11 @@ const packageDetails: Record<string, FullPackageDetail> = {
   paxbespoke: {
     id: 'paxbespoke',
     name: 'PaxBespoke',
-    tagline: 'Where Pax Meets Bespoke',
+    tagline: 'The Fitted Standard',
     priceRange: 'From £1,500',
-    summary: 'A high-quality built-in finish at a sensible budget. Doors customised within the IKEA/PAX ecosystem, colour-matched trims, flush filler panels, and a skirting board finish. Custom-fitted to the room for a noticeably better final result.',
-    positioning: 'IKEA-based fitted wardrobes with custom finishes.',
-    coreValue: 'Cost-effective fitted look using the IKEA Pax system with upgrades. PaxBespoke keeps the reliable Pax interior but transforms the outside with doors customised within the IKEA/PAX ecosystem, flush filler panels, and custom trim colours. This package does not include fully bespoke, made-to-order doors — for that, our Select package is the better fit.',
+    summary: 'A clean, fitted wardrobe at a sensible price. Doors customised within the IKEA/PAX ecosystem, colour-matched trims, flush filler panels, and a skirting board finish. Custom-fitted to the room for a noticeably better final result.',
+    positioning: 'A fitted wardrobe with a clean, integrated look.',
+    coreValue: 'A fitted wardrobe that looks built-in, not flat-pack. PaxBespoke keeps the reliable Pax interior and transforms the outside with doors customised within the IKEA/PAX ecosystem, flush filler panels, and custom trim colours. For fully bespoke doors and a designer bedroom finish, our Select package is the better fit.',
     forYouIf: [
       'You want a wardrobe that looks fully bespoke, not like IKEA',
       'You care about custom door colours, trims, and finishes',
@@ -124,11 +124,11 @@ const packageDetails: Record<string, FullPackageDetail> = {
   select: {
     id: 'select',
     name: 'Select',
-    tagline: 'Designed Without Limits',
+    tagline: 'The Designer Finish',
     priceRange: 'From £2,500',
-    summary: 'The most premium finishes and styling options. Bespoke-looking front with spray-painted or vinyl doors, more freedom on colour, door styles, and details. Little to no restrictions compared with the other packages.',
-    positioning: 'Bespoke front, practical interior. The highest flexibility in our range.',
-    coreValue: 'Select upgrades the outside significantly — a broader choice of door styles, colours, and premium finishes, while keeping the practical IKEA PAX interior. Want different-coloured doors? Shaker fronts? Sleek modern style? We design the front to match your exact taste. Full wall integration, sliding door systems, and advanced carpentry are all available.',
+    summary: 'A fully bespoke bedroom finish. Spray-painted or vinyl doors in any colour or style, full wall integration, and advanced carpentry — designed to match your room, not just fit it.',
+    positioning: 'A fully bespoke bedroom finish with the practical PAX interior.',
+    coreValue: 'Select gives you a designer-grade finish — a broader choice of door styles, colours, and premium materials, while keeping the practical IKEA PAX interior. Want different-coloured doors? Shaker fronts? A sleek modern look? We design the front to match your room\'s style. Full wall integration, sliding door systems, and advanced carpentry are all available.',
     forYouIf: [
       'You want spray-painted or vinyl doors in any colour or style',
       'Your space is complex, non-standard, or needs full wall integration',
@@ -221,7 +221,7 @@ function getTabClass(id: string, isActive: boolean) {
 
 function getSuggestion(currentId: string): { id: string; name: string; reason: string } | null {
   if (currentId === 'budget') return { id: 'paxbespoke', name: 'PaxBespoke', reason: 'Want custom doors and a bespoke finish?' };
-  if (currentId === 'paxbespoke') return { id: 'select', name: 'Select', reason: 'Need sliding doors or full wall integration?' };
+  if (currentId === 'paxbespoke') return { id: 'select', name: 'Select', reason: 'Want a designer bedroom finish?' };
   return null;
 }
 
