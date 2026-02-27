@@ -11,6 +11,7 @@ export interface ProjectType {
   description: string;
   benefit: string;
   images: string[];
+  imageCaptions?: string[];
   packages: ('budget' | 'paxbespoke' | 'select')[];
 }
 
@@ -34,50 +35,67 @@ export const projectTypes: ProjectType[] = [
   // ── Budget (PDF pages 6–10) ──
   {
     id: 'budget-large-filler',
-    title: 'Standard Fitted Wardrobe',
-    description: 'A standard IKEA Pax wardrobe boxed in with filler panels. No custom doors or height adjustments — just a clean, built-in look at the lowest price. Filler panels are flush with the frame (not the doors) and colour-matched to the frame.',
-    benefit: 'Built-in storage without the built-in price.',
+    title: 'Large Filler Panels',
+    description: 'Standard IKEA PAX units boxed in with filler panels. Filler panels are flush with the frame (not the doors) and colour-matched to the frame. No custom doors, no frame cutting, scribing, or height alterations.',
+    benefit: 'Built-in look at the lowest price — filler panels flush with the frame.',
     images: ['/images/guide/budget-large-filler.jpg'],
+    imageCaptions: ['Standard IKEA PAX doors with filler panels flush with the frame, colour-matched to the frame'],
     packages: ['budget'],
   },
   {
     id: 'budget-gap-above',
-    title: 'Budget – Gap Above',
-    description: 'When Pax does not reach the ceiling, or the ceiling shape prevents a standard closure. A practical solution for very tall or sloping ceilings using standard Pax heights.',
+    title: 'Gap Above (Tall / Sloping Ceiling)',
+    description: 'When PAX does not reach the ceiling, or the ceiling shape prevents a standard closure. A practical solution for very tall or sloping ceilings using standard PAX heights. You may see visible gaps above.',
     benefit: 'Practical storage even with tricky ceiling heights.',
-    images: ['/images/guide/budget-gaps-above.jpg', '/images/guide/budget-gap-above-2.jpg'],
+    images: ['/images/guide/budget-gaps-above.jpg', '/images/guide/budget-gap-above-2.jpg', '/images/guide/budget-gap-above-3.jpg'],
+    imageCaptions: [
+      'Standard PAX units that don\'t reach the ceiling — visible gap above',
+      'PAX interior system open — drawers, shelves, and hanging rails can be changed at any time',
+      'Standard IKEA doors with mirror option — gap above visible',
+    ],
     packages: ['budget'],
   },
 
   // ── PaxBespoke Standard (PDF pages 11–49, projects 1–19) ──
 
-  // Project 1: Filler panel flush with doors (PDF page 15)
+  // Project 1: Filler panel flush with doors (PDF pages 16, 21)
   {
     id: 'pb-filler-flush',
     title: 'Flush Filler Surround',
-    description: 'Precision-cut filler panels that sit flush with the doors (not just the frame). The filler can be 5cm, wider, or narrower depending on your walls — tailored to your space.',
-    benefit: 'Seamless finish that looks fully built-in.',
+    description: 'Filler panels sit flush with the doors (not just the frame). The filler can be 5cm, wider, or narrower depending on your walls — tailored to your space for a noticeably better finish.',
+    benefit: 'Filler panels flush with the doors — not the frame — for a noticeably better finish.',
     images: ['/images/guide/pb-filler-flush-1.jpg', '/images/guide/pb-filler-flush-2.jpg'],
+    imageCaptions: [
+      'Flush filler panels visible on both sides — sits level with the doors, not recessed like Budget',
+      'Flush fillers with cornice and skirting — the complete PaxBespoke finish',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 2: Skirting Board Finish (PDF page 16)
+  // Project 2: Skirting Board Finish (PDF pages 16–17)
   {
     id: 'pb-skirting',
     title: 'Skirting Board Finish',
-    description: 'Wardrobes raised on a timber platform and finished with a new skirting board matched to the room. Looks like a true built-in, makes the top filler look smaller.',
-    benefit: 'No gaps at the bottom — looks like it was always there.',
-    images: ['/images/guide/pb-skirting-1.jpg'],
+    description: 'Wardrobes raised on a timber platform and finished with a new skirting board matched to the room. The skirting board is raised to match the height of the skirting board in the room of the customer.',
+    benefit: 'Wardrobes raised on a timber platform with a new skirting board matched to the room.',
+    images: ['/images/guide/pb-skirting-1.jpg', '/images/guide/pb-skirting-annotated.jpg'],
+    imageCaptions: [
+      'Wardrobes raised on a timber platform with skirting board finish at the base',
+      'Skirting board added to a timber platform raised to match the height of the skirting board in the room of the customer',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 3: Cornice finish with gap above (PDF page 17)
+  // Project 3: Cornice finish with gap above (PDF page 18)
   {
     id: 'pb-cornice',
     title: 'Cornice Finish',
-    description: 'Cornice across the top of the wardrobe while keeping the space above free. Preserves ceiling features and gives a traditional look.',
-    benefit: 'Finished top edge that meets the ceiling properly.',
+    description: 'An MDF cornice is fitted across the top of the wardrobe. There is a gap between the cornice and the ceiling. This is a traditional finish that works well in period homes.',
+    benefit: 'Cornice moulding across the top with a gap above — a clean, traditional finish.',
     images: ['/images/guide/pb-cornice-1.jpg'],
+    imageCaptions: [
+      'Cornice across the top of the wardrobe with gap above — preserves ceiling features',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
@@ -85,79 +103,114 @@ export const projectTypes: ProjectType[] = [
   {
     id: 'pb-coving',
     title: 'Coving Over Filler Panel',
-    description: 'When a filler panel would be too wide, cornice or coving visually wraps it. Hides large fillers and makes the finish look intentional.',
+    description: 'When the filler panel above would be too wide, coving visually wraps it. Turns a large filler into a design feature rather than a compromise.',
     benefit: 'Turns a problem filler into a design feature.',
     images: ['/images/guide/pb-coving-1.jpg'],
+    imageCaptions: [
+      'Coving wraps the top filler panel — hides large fillers and makes the finish look intentional',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 5: Skirting + cornice combined (PDF pages 19–21)
+  // Project 5: Skirting + cornice combined (PDF pages 19, 21)
   {
     id: 'pb-skirting-cornice',
     title: 'Skirting + Cornice Combined',
     description: 'Skirting at the base and cornice at the top, with a gap above. Best for Victorian or period features where you want a traditional finish without interfering with ceiling details.',
     benefit: 'Traditional finish that keeps existing ceiling features.',
     images: ['/images/guide/pb-skirting-cornice-1.jpg', '/images/guide/pb-skirting-cornice-2.jpg'],
+    imageCaptions: [
+      'Cornice at the top, skirting at the bottom, gap above preserved — period room',
+      'Skirting + cornice finish with flush filler panels on both sides',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 6: Skirting + coving over filler (PDF pages 22–23)
+  // Project 6: Skirting + coving over filler (PDF pages 22–24)
   {
     id: 'pb-skirting-coving',
     title: 'Skirting + Coving Over Filler',
-    description: 'For homes where the top filler would be very tall (20–30cm). Coving on the filler panels turns a problem into a strong traditional feature.',
+    description: 'For homes where the top filler would be very tall (20–30cm). Coving on the filler panels turns a problem into a strong traditional feature. Skirting board at the base.',
     benefit: 'Turns tall fillers into a premium design detail.',
-    images: ['/images/guide/pb-skirting-coving-1.jpg', '/images/guide/pb-skirting-coving-2.jpg', '/images/guide/pb-skirting-coving-3.jpg'],
+    images: ['/images/guide/pb-skirting-coving-1.jpg', '/images/guide/pb-skirting-coving-2.jpg', '/images/guide/pb-skirting-coving-3.jpg', '/images/guide/pb-coving-skirting-annotated.jpg'],
+    imageCaptions: [
+      'Close-up of ornate ceiling coving — the type of feature that needs to be preserved',
+      'Cornice across the top with gap above, skirting board at the base',
+      'Skirting board finish at the base with matching chest of drawers',
+      'Coving on filler panels at the top, skirting board at the base',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 7: Sloping back cut / loft (PDF page 24)
+  // Project 7: Sloping back cut / loft (PDF page 25)
   {
     id: 'pb-loft-angle',
     title: 'Loft & Sloping Back Cut',
-    description: 'Wardrobes cut to follow sloping ceilings at the back. Ideal for loft rooms — improves the perceived shape of the space.',
-    benefit: 'Makes awkward loft spaces usable and beautiful.',
+    description: 'Frames cut to follow the sloping ceiling at the back. Maximises usable storage in loft rooms where the ceiling slopes away from the wall.',
+    benefit: 'Frames cut to follow the sloping ceiling at the back — maximises usable storage in loft rooms.',
     images: ['/images/guide/pb-loft-angle-1.jpg'],
+    imageCaptions: [
+      'Frames cut to follow sloping ceiling at the back',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 8: Angle cut wardrobes (PDF pages 25–26)
+  // Project 8: Angle cut wardrobes (PDF pages 26–27)
   {
     id: 'pb-angle-cut',
     title: 'Angle Cut Wardrobes',
-    description: 'Wardrobes cut on an angle, following the ceiling line. High-impact transformation for sloped ceilings.',
+    description: 'Wardrobes cut on an angle, following the ceiling line. The doors and frames follow the slope for a seamless look. Works for loft rooms, under-stairs, and any angled space.',
     benefit: 'Follows the ceiling line for a seamless look.',
     images: ['/images/guide/pb-angle-cut-1.jpg', '/images/guide/pb-angle-cut-2.jpg'],
+    imageCaptions: [
+      'Angle cut wardrobes following the ceiling — loft room with skylight',
+      'Angle cut following staircase line — under-stairs storage',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 9: Tall ceiling with 2nd cupboard above (PDF pages 27–31)
+  // Project 9: Tall ceiling with 2nd cupboard above (PDF pages 29–30)
   {
     id: 'pb-tall-ceiling',
     title: 'Tall Ceiling Solutions',
-    description: 'For rooms with high ceilings, a second cupboard is added above to use the full height. Maximises storage and looks fully built-in.',
+    description: 'For rooms with high ceilings, a second cupboard is added above the main wardrobe to use the full height. Maximises storage and looks fully built-in.',
     benefit: 'No wasted space above — storage all the way up.',
-    images: ['/images/guide/pb-tall-ceiling-1.jpg', '/images/guide/pb-tall-ceiling-2.jpg', '/images/guide/pb-tall-ceiling-3.jpg', '/images/guide/pb-tall-ceiling-4.jpg'],
+    images: ['/images/guide/pb-tall-ceiling-1.jpg', '/images/guide/pb-tall-ceiling-2.jpg'],
+    imageCaptions: [
+      'Second row of cupboards above the main wardrobes — full ceiling height used',
+      'Tall ceiling solution with second cupboards above and mirror doors',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 10: Dressing room (PDF pages 32–33)
+  // Project 10: Dressing room (PDF pages 31–34)
   {
     id: 'pb-dressing-room',
     title: 'Dressing Room',
-    description: 'Full room fit-outs using multiple Pax units configured as a dressing room. Options include dressing table and drawer island.',
+    description: 'Full room fit-outs using multiple PAX units configured as a dressing room. Options include a built-in dressing table and a drawer island.',
     benefit: 'A complete dressing room at a fraction of bespoke joinery cost.',
-    images: ['/images/guide/pb-dressing-room-1.jpg', '/images/guide/pb-dressing-room-2.jpg'],
+    images: ['/images/guide/pb-dressing-room-3.jpg', '/images/guide/pb-dressing-room-4.jpg', '/images/guide/pb-dressing-room-1.jpg', '/images/guide/pb-dressing-room-2.jpg'],
+    imageCaptions: [
+      'L-shaped dressing room with wardrobes on two walls and small cupboards above',
+      'Cupboard above — tall wardrobe with second cupboard for maximum storage',
+      'Integrated dressing table with drawers, open shelves, and mirror',
+      'Built in dressing table (left) and island with drawers (right)',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 11: Alcoves (PDF pages 34–36)
+  // Project 11: Alcoves only (PDF pages 35–36)
   {
     id: 'pb-alcove',
     title: 'Alcove Wardrobe',
     description: 'Wardrobes designed for the alcoves either side of a chimney breast. Custom fillers and scribing ensure a tight fit against uneven walls.',
     benefit: 'Turns dead alcove space into proper storage.',
-    images: ['/images/guide/pb-alcove-1.jpg', '/images/guide/pb-alcove-2.jpg', '/images/guide/pb-alcove-3.jpg', '/images/guide/pb-alcove-4.jpg'],
+    images: ['/images/guide/pb-alcove-1.jpg', '/images/guide/pb-alcove-2.jpg', '/images/guide/pb-alcove-3.jpg'],
+    imageCaptions: [
+      'Alcove wardrobes either side of a chimney breast — TV mounted on the chimney breast wall',
+      'Alcove wardrobes with cornice at the top and open shelving',
+      'Before: empty alcoves either side of chimney breast. After: wardrobes fitted into both alcoves',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
@@ -165,107 +218,145 @@ export const projectTypes: ProjectType[] = [
   {
     id: 'pb-chimney-breast',
     title: 'Chimney Breast Integration',
-    description: 'Wardrobes built to cover the chimney breast, creating an apparent flat wall. Very strong visual transformation.',
+    description: 'Wardrobes built across the chimney breast, creating an apparent flat wall. Frames cut around the chimney breast. With doors closed it looks like a flat wall.',
     benefit: 'Symmetrical storage without removing the chimney.',
     images: ['/images/guide/pb-chimney-breast-1.jpg'],
+    imageCaptions: [
+      'Wardrobes spanning the full wall across the chimney breast — PAX interior visible with doors open',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 13: TV space (PDF pages 38–39)
+  // Project 13: TV space (PDF pages 38–40)
   {
     id: 'pb-tv-space',
     title: 'TV & Media Space',
-    description: 'Dedicated open TV space with cupboards above, below, or drawers. Combines storage with entertainment in one wall.',
-    benefit: 'Storage and entertainment in one clean wall unit.',
-    images: ['/images/guide/pb-tv-space-1.jpg', '/images/guide/pb-tv-space-2.jpg'],
+    description: 'Dedicated TV space with top and bottom cupboards — with or without a chimney breast. Frames cut around the chimney breast if present. With doors closed it looks like a flat wall.',
+    benefit: 'Dedicated TV space with top and bottom cupboards — with or without a chimney breast.',
+    images: ['/images/guide/pb-tv-space-1.jpg', '/images/guide/pb-tv-space-2.jpg', '/images/guide/pb-tv-space-annotated.jpg'],
+    imageCaptions: [
+      'Frames cut around the chimney breast — with doors closed it looks like a flat wall',
+      'TV niche in the centre with cupboards above and below — no chimney breast',
+      'Dedicated space for TV with top and bottom cupboards',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 14: Bridge cupboards (PDF page 40)
+  // Project 14: Bridge cupboards (PDF page 41)
   {
     id: 'pb-bridge-cupboard',
     title: 'Over-Bed Bridge Cupboard',
-    description: 'Wardrobes either side with bridging cupboards across the top. Maximises storage in bedrooms without taking up floor space.',
+    description: 'Wardrobes either side of the bed with bridging cupboards across the top. Maximises storage in bedrooms without taking up floor space.',
     benefit: 'Extra storage above the bed without losing floor space.',
     images: ['/images/guide/pb-bridge-cupboard-1.jpg'],
+    imageCaptions: [
+      'Cupboards above the bed — wardrobes on either side with bridge cupboards spanning across the top',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 15: SKYTTA sliding (PDF pages 41–42)
+  // Project 15: SKYTTA sliding (PDF pages 42–43)
   {
     id: 'pb-skytta-sliding',
     title: 'SKYTTA Sliding Doors',
-    description: 'IKEA SKYTTA sliding door system fitted to Pax frames. Ideal for rooms where hinged doors would block space. Smooth, quiet operation.',
+    description: 'IKEA SKYTTA sliding door system fitted to PAX frames. Floor to ceiling and wall to wall. Ideal for rooms where hinged doors would block space.',
     benefit: 'Space-saving sliding doors with a premium feel.',
     images: ['/images/guide/pb-skytta-sliding-1.jpg', '/images/guide/pb-skytta-sliding-2.jpg'],
+    imageCaptions: [
+      'SKYTTA sliding panels with centre mirror — modern, clean look',
+      'Floor to ceiling and wall to wall door sliding system',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 16: Stairs bulkhead (PDF page 43)
+  // Project 16: Stairs bulkhead (PDF page 44)
   {
     id: 'pb-bulkhead',
     title: 'Built Around Bulkheads',
-    description: 'Wardrobes built around an awkward stairs bulkhead. Storage where it normally feels impossible.',
+    description: 'Wardrobes built around an awkward stairs bulkhead. Frames configured at different heights to work around the staircase structure.',
     benefit: 'Hides structural elements and maximises storage.',
     images: ['/images/guide/pb-bulkhead-1.jpg'],
+    imageCaptions: [
+      'Wardrobes built around stairs bulk head — frames at different heights to work around the structure',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 17: Custom door/frame widths (PDF pages 44–45)
+  // Project 17: Custom door/frame widths – BERGSBO / plain doors (PDF pages 45–46)
   {
     id: 'pb-custom-frames',
     title: 'Custom Frame Widths',
-    description: 'Non-standard frame widths to fill your exact wall space. We adjust Pax frames or add custom panels so the wardrobe fits wall-to-wall.',
+    description: 'When the room does not work with standard PAX widths. Non-standard frame widths to fill your exact wall space — BERGSBO (shaker) or plain doors.',
     benefit: 'Wall-to-wall fit with no awkward gaps.',
     images: ['/images/guide/pb-custom-frames-1.jpg', '/images/guide/pb-custom-frames-2.jpg'],
+    imageCaptions: [
+      'Custom width BERGSBO shaker doors — wall-to-wall fit',
+      'Custom width BERGSBO doors — non-standard widths to fill the exact space',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 18: Office (PDF pages 46–47)
+  // Project 18: Office (PDF pages 47–48)
   {
     id: 'pb-office',
     title: 'Office & Desk Storage',
-    description: 'Wardrobes combined with a bespoke desk (deeper tops, cable holes/caps). Combines storage with a work surface in one cohesive unit.',
+    description: 'Wardrobes combined with a bespoke desk — deeper tops, cable holes/caps. Combines storage with a work-from-home setup in one cohesive unit.',
     benefit: 'Work-from-home setup that looks built-in.',
     images: ['/images/guide/pb-office-1.jpg', '/images/guide/pb-office-2.jpg'],
+    imageCaptions: [
+      'Loft room desk setup with angled shelving following the ceiling slope',
+      'Large desk with drawers/shelving to be used as home office space',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
-  // Project 19: Custom frames + custom-cut doors (PDF pages 48–49)
+  // Project 19: Custom frames + custom-cut doors (PDF page 49)
   {
     id: 'pb-custom-cut-doors',
     title: 'Custom Cut Doors',
-    description: 'For spaces where standard Pax dimensions do not fit cleanly. We customise frames and cut doors to non-standard sizes for a perfect fit.',
+    description: 'For spaces where standard PAX dimensions do not fit cleanly. We customise frames and cut doors to non-standard sizes for a perfect fit.',
     benefit: 'Every door fits perfectly, no matter the space.',
-    images: ['/images/guide/pb-custom-cut-doors-1.jpg', '/images/guide/pb-custom-cut-doors-2.jpg'],
+    images: ['/images/guide/pb-custom-cut-doors-1.jpg'],
+    imageCaptions: [
+      'Custom frame and door widths — full wall of wardrobes with mixed door sizes for a perfect fit',
+    ],
     packages: ['paxbespoke', 'select'],
   },
 
   // ── Select-specific (PDF pages 50–57) ──
 
-  // Select project 1: 5cm filler surround (PDF pages 50, 53–54)
+  // Select project 1: 5cm filler panels (PDF pages 50, 53–54)
   {
     id: 'select-filler',
-    title: 'Select Flush Filler Integration',
-    description: 'Premium look with perfect front and curated door choices. Bespoke-looking result with spray-painted or vinyl doors, refined filler finishes, and design details. Can include skirting/cornice on request.',
-    benefit: 'Fully integrated into the wall itself.',
+    title: 'Select – 5cm Filler Panels',
+    description: 'Premium look with perfect front and curated door choices. Bespoke-looking result with spray-painted or vinyl doors, refined filler finishes, and design details. Broader choice of door styles, colours, and premium finishes.',
+    benefit: 'The most premium finish — bespoke front, practical interior.',
     images: ['/images/guide/select-filler-1.jpg', '/images/guide/select-filler-2.jpg', '/images/guide/select-filler-3.jpg'],
+    imageCaptions: [
+      'Select L-shaped walk-in with flush filler panels and premium finish',
+      'Doors colour-matched to the wall paint — Select offers full colour freedom',
+      'Narrow 5cm filler panels in alcoves — precision fitting with open shelving niche',
+    ],
     packages: ['select'],
   },
 
-  // Select project 2: Angle cut wardrobes (PDF pages 55–57)
+  // Select project 2: Angle cut wardrobes – PRIORITY #1 to promote (PDF pages 55, 57)
   {
     id: 'select-angle-cut',
-    title: 'Select Angle Cut & Wall Integration',
-    description: 'For loft and angled spaces where customers want shaker doors and a premium finish. Advanced angle cuts with full wall integration and the highest level of customisation.',
-    benefit: 'No restrictions — the most complex spaces handled.',
+    title: 'Select – Angle Cut Wardrobes',
+    description: 'For loft and angled spaces where customers want spray-painted or vinyl shaker doors and a premium finish. Advanced angle cuts with full wall integration. This is the #1 priority project type to promote for Select.',
+    benefit: 'Premium finish in the most difficult spaces.',
     images: ['/images/guide/select-angle-cut-1.jpg', '/images/guide/select-angle-cut-2.jpg'],
+    imageCaptions: [
+      'Select shaker doors in custom colour — wall-to-wall with premium finish',
+      'Angle-cut following loft slope with premium shaker doors',
+    ],
     packages: ['select'],
   },
 ];
 
 // ─── Process Steps (per package) ───
-// All packages include supply & installation
+// Budget: customer supplies; PaxBespoke & Select: we supply & install
 // Budget: basic install, PaxBespoke: custom finishes, Select: full bespoke integration
 
 export const processSteps: Record<string, ProcessStep[]> = {

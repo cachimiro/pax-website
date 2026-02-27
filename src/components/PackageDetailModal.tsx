@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { X, Check, Minus, ArrowRight, ChevronRight, Lightbulb, AlertTriangle, User, Building2, HelpCircle } from 'lucide-react';
 import { getProjectTypesForPackage, processSteps, packageFAQs } from '@/lib/package-guide-data';
+import ImageLightbox from './ImageLightbox';
 
 /* ─── Package data ─── */
 
@@ -244,6 +245,10 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
   const overlayRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<ContentTab>('overview');
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxCaptions, setLightboxCaptions] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const pkg = packageId ? packageDetails[packageId] : null;
 
   // Reset tab when package changes
@@ -281,6 +286,7 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
   const downgrade = pkg ? getDowngrade(pkg.id) : null;
 
   return (
+    <>
     <AnimatePresence>
       {pkg && (
         <motion.div
@@ -628,17 +634,44 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
                                   <p className="text-sm text-warm-600 leading-relaxed mb-3">{pt.description}</p>
                                   {pt.images.length > 0 && (
                                     <div className="grid grid-cols-2 gap-2">
-                                      {pt.images.map((img, i) => (
-                                        <div key={i} className="rounded-lg overflow-hidden bg-warm-200 aspect-[4/3]">
-                                          <Image
-                                            src={img}
-                                            alt={`${pt.title} example ${i + 1}`}
-                                            width={300}
-                                            height={225}
-                                            className="w-full h-full object-cover"
-                                          />
-                                        </div>
-                                      ))}
+                                      {pt.images.map((img, i) => {
+                                        const caption = pt.imageCaptions?.[i];
+                                        const isAnnotated = caption?.toLowerCase().includes('annotated');
+                                        return (
+                                          <button
+                                            key={i}
+                                            type="button"
+                                            className="text-left rounded-lg overflow-hidden bg-warm-200 group/img focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            onClick={() => {
+                                              setLightboxImages(pt.images);
+                                              setLightboxCaptions(pt.imageCaptions || []);
+                                              setLightboxIndex(i);
+                                              setLightboxOpen(true);
+                                            }}
+                                          >
+                                            <div className="relative aspect-[4/3]">
+                                              <Image
+                                                src={img}
+                                                alt={caption || `${pt.title} example ${i + 1}`}
+                                                width={300}
+                                                height={225}
+                                                className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-200"
+                                              />
+                                              {isAnnotated && (
+                                                <span className="absolute top-1.5 right-1.5 bg-amber-500/90 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                                                  Annotated
+                                                </span>
+                                              )}
+                                              <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors" />
+                                            </div>
+                                            {caption && (
+                                              <p className="text-[11px] text-warm-500 leading-tight px-2 py-1.5 bg-warm-50">
+                                                {caption}
+                                              </p>
+                                            )}
+                                          </button>
+                                        );
+                                      })}
                                     </div>
                                   )}
                                 </div>
@@ -792,5 +825,15 @@ export default function PackageDetailModal({ packageId, onClose, onSwitch }: Pac
         </motion.div>
       )}
     </AnimatePresence>
+
+      {lightboxOpen && lightboxImages.length > 0 && (
+        <ImageLightbox
+          images={lightboxImages}
+          captions={lightboxCaptions}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+    </>
   );
 }
