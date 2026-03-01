@@ -3,6 +3,8 @@
 import { STAGES } from '@/lib/crm/stages'
 import type { OpportunityStage, OpportunityWithLead } from '@/lib/crm/types'
 import { AlertCircle, ArrowRight, X } from 'lucide-react'
+import Button from '@/components/crm/Button'
+import ModalWrapper from '@/components/crm/ModalWrapper'
 
 interface StageTransitionModalProps {
   opportunity: OpportunityWithLead
@@ -25,13 +27,9 @@ export default function StageTransitionModal({
   const toConfig = STAGES[toStage]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onCancel} />
-
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-scale-in">
+    <ModalWrapper open={true} onClose={onCancel}>
         {/* Close */}
+        <div className="p-6">
         <button
           onClick={onCancel}
           className="absolute top-4 right-4 p-1.5 text-[var(--warm-300)] hover:text-[var(--warm-500)] hover:bg-[var(--warm-50)] rounded-lg transition-all"
@@ -69,21 +67,14 @@ export default function StageTransitionModal({
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-2.5 text-sm font-medium text-[var(--warm-600)] bg-[var(--warm-50)] hover:bg-[var(--warm-100)] rounded-xl transition-colors"
-          >
+          <Button variant="secondary" onClick={onCancel} className="flex-1">
             Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={isLoading}
-            className="flex-1 py-2.5 text-sm font-medium text-white bg-[var(--green-700)] hover:bg-[var(--green-900)] rounded-xl transition-all disabled:opacity-50 active:scale-[0.98]"
-          >
-            {isLoading ? 'Moving...' : 'Confirm'}
-          </button>
+          </Button>
+          <Button onClick={onConfirm} loading={isLoading} className="flex-1">
+            Confirm
+          </Button>
         </div>
-      </div>
-    </div>
+        </div>
+    </ModalWrapper>
   )
 }

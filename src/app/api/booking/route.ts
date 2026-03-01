@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { assignOwner } from '@/lib/crm/routing'
+import { syncBookingToCalendar, queryFreeBusy } from '@/lib/crm/calendar'
+import { runStageAutomations } from '@/lib/crm/automation'
+import { rateLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 const bookingSchema = z.object({
@@ -32,6 +35,19 @@ const bookingSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 bookings per IP per 10 minutes (bypass with webhook secret for testing)
+  const bypassSecret = request.headers.get('x-webhook-secret')
+  if (bypassSecret !== process.env.CRM_WEBHOOK_SECRET) {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const rl = rateLimit(`booking:${ip}`, { limit: 5, windowSeconds: 600 })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many booking attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+      )
+    }
+  }
+
   try {
     const body = await request.json()
     const parsed = bookingSchema.safeParse(body)
@@ -45,6 +61,52 @@ export async function POST(request: NextRequest) {
 
     const data = parsed.data
     const supabase = createAdminClient()
+
+    // Parse the booking date/time early so we can check for conflicts
+    const scheduledAt = parseBookingDateTime(data.date, data.time)
+    const slotEnd = new Date(scheduledAt.getTime() + 30 * 60 * 1000)
+
+    // Server-side double-booking prevention
+    // Check 1: Google Calendar FreeBusy
+    try {
+      const busy = await queryFreeBusy(supabase, scheduledAt.toISOString(), slotEnd.toISOString())
+      const hasConflict = busy.some((b) => {
+        const bStart = new Date(b.start)
+        const bEnd = new Date(b.end)
+        return scheduledAt < bEnd && slotEnd > bStart
+      })
+      if (hasConflict) {
+        return NextResponse.json(
+          { error: 'This time slot is no longer available. Please choose a different time.' },
+          { status: 409 }
+        )
+      }
+    } catch {
+      // If FreeBusy fails (no Google connected), fall through to DB check
+    }
+
+    // Check 2: Existing bookings in DB (secondary guard)
+    const { data: existingBookings } = await supabase
+      .from('bookings')
+      .select('id, scheduled_at, duration_min')
+      .gte('scheduled_at', new Date(scheduledAt.getTime() - 60 * 60 * 1000).toISOString())
+      .lte('scheduled_at', new Date(scheduledAt.getTime() + 60 * 60 * 1000).toISOString())
+      .neq('outcome', 'rescheduled')
+      .neq('outcome', 'no_show')
+
+    if (existingBookings?.length) {
+      const dbConflict = existingBookings.some((b) => {
+        const bStart = new Date(b.scheduled_at)
+        const bEnd = new Date(bStart.getTime() + (b.duration_min ?? 30) * 60 * 1000)
+        return scheduledAt < bEnd && slotEnd > bStart
+      })
+      if (dbConflict) {
+        return NextResponse.json(
+          { error: 'This time slot is no longer available. Please choose a different time.' },
+          { status: 409 }
+        )
+      }
+    }
 
     // Assign owner based on postcode
     let ownerId: string | null = null
@@ -122,12 +184,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create opportunity' }, { status: 500 })
     }
 
-    // Parse the booking date/time into a proper datetime
-    // The form sends date like "Mon 3 Mar" and time like "10:00"
-    const scheduledAt = parseBookingDateTime(data.date, data.time)
-
     // Create booking record (call1 type since this is the initial consultation)
-    const { error: bookingError } = await supabase
+    const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .insert({
         opportunity_id: opportunity.id,
@@ -137,9 +195,25 @@ export async function POST(request: NextRequest) {
         owner_user_id: ownerId,
         outcome: 'pending',
       })
+      .select()
+      .single()
 
     if (bookingError) {
       console.error('Booking creation error:', bookingError)
+    }
+
+    // Sync to Google Calendar with Meet link
+    let meetLink: string | undefined
+    if (booking) {
+      try {
+        const calResult = await syncBookingToCalendar(supabase, booking, data.name, data.email)
+        meetLink = calResult?.meetLink
+        if (meetLink) {
+          console.log(`[BOOKING] Meet link created: ${meetLink}`)
+        }
+      } catch (err) {
+        console.error('Calendar sync error:', err)
+      }
     }
 
     // Create task for the call
@@ -149,7 +223,7 @@ export async function POST(request: NextRequest) {
       due_at: scheduledAt.toISOString(),
       owner_user_id: ownerId,
       status: 'open',
-      description: `Call 1 with ${data.name} - ${data.date} at ${data.time}`,
+      description: `Call 1 with ${data.name} - ${data.date} at ${data.time}${meetLink ? `\nMeet: ${meetLink}` : ''}`,
     })
 
     // Log stage
@@ -158,6 +232,11 @@ export async function POST(request: NextRequest) {
       to_stage: 'call1_scheduled',
       notes: 'Auto-created from booking form',
     })
+
+    // Trigger stage automations (sends confirmation email/SMS/WhatsApp)
+    runStageAutomations(supabase, opportunity.id, 'call1_scheduled', scheduledAt, meetLink).catch((err) =>
+      console.error('Stage automation error:', err)
+    )
 
     // Update owner's active_opportunities count
     if (ownerId) {

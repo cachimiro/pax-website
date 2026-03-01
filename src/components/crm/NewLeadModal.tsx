@@ -6,6 +6,8 @@ import { z } from 'zod'
 import { X } from 'lucide-react'
 import { useCreateLead, useCreateOpportunity } from '@/lib/crm/hooks'
 import { useRouter } from 'next/navigation'
+import Button from '@/components/crm/Button'
+import ModalWrapper from '@/components/crm/ModalWrapper'
 
 const leadSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -92,10 +94,7 @@ export default function NewLeadModal({ onClose }: NewLeadModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+    <ModalWrapper open={true} onClose={onClose} maxWidth="max-w-lg">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-[var(--warm-100)] px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
           <h2 className="font-heading text-lg font-semibold text-[var(--warm-900)]">New Lead</h2>
@@ -234,23 +233,14 @@ export default function NewLeadModal({ onClose }: NewLeadModalProps) {
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 text-sm font-medium text-[var(--warm-600)] bg-[var(--warm-50)] hover:bg-[var(--warm-100)] rounded-lg transition-colors"
-            >
+            <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 py-2.5 text-sm font-medium text-white bg-[var(--green-700)] hover:bg-[var(--green-900)] rounded-lg transition-colors disabled:opacity-50"
-            >
-              {isSubmitting ? 'Creating...' : 'Create Lead'}
-            </button>
+            </Button>
+            <Button type="submit" loading={isSubmitting} className="flex-1">
+              Create Lead
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalWrapper>
   )
 }

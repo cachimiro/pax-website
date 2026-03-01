@@ -51,7 +51,16 @@ function BookingFlowInner() {
   const searchParams = useSearchParams();
   const preselectedPackage = searchParams.get('package') || '';
 
-  const [step, setStep] = useState(0);
+  // Pre-filled booking link: ?type=call2&opp=<id>&name=<name>&email=<email>&phone=<phone>
+  const prefillType = searchParams.get('type') || ''; // call2, onboarding
+  const prefillOpp = searchParams.get('opp') || '';
+  const prefillName = searchParams.get('name') || '';
+  const prefillEmail = searchParams.get('email') || '';
+  const prefillPhone = searchParams.get('phone') || '';
+  const isPrefilled = !!(prefillType && prefillOpp && prefillName);
+
+  // If pre-filled, skip straight to calendar (step 8)
+  const [step, setStep] = useState(isPrefilled ? 8 : 0);
   const [direction, setDirection] = useState<1 | -1>(1);
 
   const [formData, setFormData] = useState({
@@ -71,9 +80,9 @@ function BookingFlowInner() {
     doorFinishType: '',
     doorModel: '',
     spaceConstraints: [] as string[],
-    name: '',
-    email: '',
-    phone: '',
+    name: prefillName,
+    email: prefillEmail,
+    phone: prefillPhone,
     whatsappOptIn: false,
     date: '',
     time: '',
@@ -235,35 +244,71 @@ function BookingFlowInner() {
                   hasMeasurements: formData.measurements.length > 0,
                 });
 
-                // Submit to CRM with tracking attribution
+                // Submit to CRM
                 try {
-                  const tracking = getTrackingData();
-                  await fetch('/api/booking', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      name: formData.name,
-                      email: formData.email,
-                      phone: formData.phone,
-                      postcode: formData.postcode,
-                      postcodeLocation: formData.postcodeLocation,
-                      room: formData.room,
-                      style: formData.style,
-                      packageChoice: formData.packageChoice,
-                      budgetRange: formData.budgetRange,
-                      timeline: formData.timeline,
-                      measurements: formData.measurements,
-                      plannerLink: formData.plannerLink,
-                      homeVisit: formData.homeVisit,
-                      doorFinishType: formData.doorFinishType,
-                      doorModel: formData.doorModel,
-                      spaceConstraints: formData.spaceConstraints,
-                      whatsappOptIn: formData.whatsappOptIn,
-                      date,
-                      time,
-                      ...tracking,
-                    }),
-                  });
+                  if (isPrefilled && prefillOpp) {
+                    // Pre-filled link: create booking on existing opportunity
+                    const [hours, minutes] = time.split(':').map(Number);
+                    const parts = date.trim().split(/\s+/);
+                    const dayNum = parseInt(parts[1], 10);
+                    const months: Record<string, number> = {
+                      Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+                      Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+                    };
+                    const month = months[parts[2]] ?? 0;
+                    const now = new Date();
+                    let scheduledDate = new Date(now.getFullYear(), month, dayNum, hours, minutes);
+                    if (scheduledDate < now) scheduledDate = new Date(now.getFullYear() + 1, month, dayNum, hours, minutes);
+
+                    const res = await fetch('/api/booking/existing', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        opportunity_id: prefillOpp,
+                        type: prefillType,
+                        scheduled_at: scheduledDate.toISOString(),
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone,
+                      }),
+                    });
+                    if (!res.ok) {
+                      const err = await res.json().catch(() => ({}));
+                      if (res.status === 409) {
+                        alert(err.error || 'This time slot is no longer available.');
+                        return;
+                      }
+                    }
+                  } else {
+                    // Standard new booking flow
+                    const tracking = getTrackingData();
+                    await fetch('/api/booking', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone,
+                        postcode: formData.postcode,
+                        postcodeLocation: formData.postcodeLocation,
+                        room: formData.room,
+                        style: formData.style,
+                        packageChoice: formData.packageChoice,
+                        budgetRange: formData.budgetRange,
+                        timeline: formData.timeline,
+                        measurements: formData.measurements,
+                        plannerLink: formData.plannerLink,
+                        homeVisit: formData.homeVisit,
+                        doorFinishType: formData.doorFinishType,
+                        doorModel: formData.doorModel,
+                        spaceConstraints: formData.spaceConstraints,
+                        whatsappOptIn: formData.whatsappOptIn,
+                        date,
+                        time,
+                        ...tracking,
+                      }),
+                    });
+                  }
                 } catch {
                   // Don't block the user flow if CRM submission fails
                 }

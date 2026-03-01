@@ -18,6 +18,11 @@ import type {
   OpportunityWithLead,
   ServiceRegion,
   RegionStatus,
+  MessageChannel,
+  EmailThread,
+  EmailMessage,
+  EmailEvent,
+  MessageTemplate,
 } from './types'
 import { toast } from 'sonner'
 import { runStageAutomations } from './automation'
@@ -61,7 +66,7 @@ export function useProfile(id: string) {
 
 // ─── Leads ───────────────────────────────────────────────────────────────────
 
-export function useLeads(filters?: { status?: string; owner_user_id?: string }) {
+export function useLeads(filters?: { status?: string; owner_user_id?: string; deleted?: boolean }) {
   return useQuery({
     queryKey: ['leads', filters],
     queryFn: async () => {
@@ -70,10 +75,27 @@ export function useLeads(filters?: { status?: string; owner_user_id?: string }) 
         .select('*')
         .order('created_at', { ascending: false })
 
+      if (filters?.deleted) {
+        query = query.not('deleted_at', 'is', null)
+      } else {
+        query = query.is('deleted_at', null)
+      }
+
       if (filters?.status) query = query.eq('status', filters.status)
       if (filters?.owner_user_id) query = query.eq('owner_user_id', filters.owner_user_id)
 
       const { data, error } = await query
+
+      // Fallback if deleted_at column doesn't exist yet
+      if (error?.code === '42703') {
+        let fallback = supabase().from('leads').select('*').order('created_at', { ascending: false })
+        if (filters?.status) fallback = fallback.eq('status', filters.status)
+        if (filters?.owner_user_id) fallback = fallback.eq('owner_user_id', filters.owner_user_id)
+        const { data: d2, error: e2 } = await fallback
+        if (e2) throw e2
+        return (filters?.deleted ? [] : d2) as Lead[]
+      }
+
       if (error) throw error
       return data as Lead[]
     },
@@ -138,6 +160,61 @@ export function useUpdateLead() {
   })
 }
 
+export function useSoftDeleteLead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase()
+        .from('leads')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['leads'] })
+      qc.invalidateQueries({ queryKey: ['opportunities'] })
+      toast.success('Lead moved to trash')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useRestoreLead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase()
+        .from('leads')
+        .update({ deleted_at: null })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['leads'] })
+      toast.success('Lead restored')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function usePermanentDeleteLead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase()
+        .from('leads')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['leads'] })
+      toast.success('Lead permanently deleted')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
 // ─── Opportunities ──────────────────────────────────────────────────────────
 
 export function useOpportunities(filters?: { stage?: OpportunityStage; owner_user_id?: string }) {
@@ -154,7 +231,8 @@ export function useOpportunities(filters?: { stage?: OpportunityStage; owner_use
 
       const { data, error } = await query
       if (error) throw error
-      return data as OpportunityWithLead[]
+      // Filter out opportunities whose lead is soft-deleted
+      return (data as OpportunityWithLead[]).filter((o) => !(o.lead as any)?.deleted_at)
     },
   })
 }
@@ -308,6 +386,24 @@ export function useBookingsByLead(leadId: string) {
       return data as Booking[]
     },
     enabled: !!leadId,
+  })
+}
+
+export function useRescheduleBooking() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, scheduled_at }: { id: string; scheduled_at: string }) => {
+      const res = await fetch('/api/crm/bookings/reschedule', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: id, scheduled_at }),
+      })
+      if (!res.ok) throw new Error('Failed to reschedule')
+      return (await res.json()) as Booking
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bookings'] })
+    },
   })
 }
 
@@ -521,6 +617,215 @@ export function useMessageLogs(leadId: string) {
   })
 }
 
+// ─── Send Message ────────────────────────────────────────────────────────────
+
+export function useSendMessage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { lead_id: string; channel: MessageChannel; subject?: string; body: string }) => {
+      const res = await fetch('/api/crm/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to send message')
+      }
+      return res.json()
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['message_logs', variables.lead_id] })
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+// ─── Google Integration Status ───────────────────────────────────────────────
+
+export interface GoogleStatus {
+  connected: boolean
+  email?: string
+  email_active?: boolean
+  calendar_active?: boolean
+  needs_reauth?: boolean
+  connected_at?: string
+  connected_by_name?: string
+  stats?: {
+    sent_this_week: number
+    opens_this_week: number
+    clicks_this_week: number
+  }
+  calendar_stats?: {
+    synced_upcoming: number
+  }
+}
+
+export function useGoogleStatus() {
+  return useQuery<GoogleStatus>({
+    queryKey: ['google_status'],
+    queryFn: async () => {
+      const res = await fetch('/api/crm/google/status')
+      if (!res.ok) throw new Error('Failed to fetch Google status')
+      return res.json()
+    },
+    staleTime: 60 * 1000,
+    retry: 1,
+  })
+}
+
+export function useGoogleConnect() {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/crm/google/auth-url')
+      if (!res.ok) throw new Error('Failed to get auth URL')
+      const { url } = await res.json()
+      window.location.href = url
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useGoogleDisconnect() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/crm/google/disconnect', { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to disconnect')
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['google_status'] })
+      toast.success('Google account disconnected')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useGoogleToggle() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { email_active?: boolean; calendar_active?: boolean }) => {
+      const sb = supabase()
+      const { error } = await sb
+        .from('google_config')
+        .update(payload)
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['google_status'] })
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+// ─── Email Threads & Messages ────────────────────────────────────────────────
+
+export function useEmailThreadsByLead(leadId: string) {
+  return useQuery({
+    queryKey: ['email_threads', leadId],
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from('email_threads')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('last_message_at', { ascending: false })
+      if (error) throw error
+      return data as EmailThread[]
+    },
+    enabled: !!leadId,
+  })
+}
+
+export function useEmailMessagesByLead(leadId: string) {
+  return useQuery({
+    queryKey: ['email_messages', leadId],
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from('email_messages')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('received_at', { ascending: true })
+      if (error) throw error
+      return data as EmailMessage[]
+    },
+    enabled: !!leadId,
+  })
+}
+
+export function useEmailEventsByLead(leadId: string) {
+  return useQuery({
+    queryKey: ['email_events', leadId],
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from('email_events')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data as EmailEvent[]
+    },
+    enabled: !!leadId,
+  })
+}
+
+// ─── Message Templates ───────────────────────────────────────────────────────
+
+export function useMessageTemplates() {
+  return useQuery({
+    queryKey: ['message_templates'],
+    queryFn: async () => {
+      const res = await fetch('/api/crm/templates')
+      if (!res.ok) throw new Error('Failed to fetch templates')
+      return (await res.json()) as MessageTemplate[]
+    },
+  })
+}
+
+export function useCreateTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: Partial<MessageTemplate>) => {
+      const res = await fetch('/api/crm/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to create')
+      return (await res.json()) as MessageTemplate
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['message_templates'] }),
+  })
+}
+
+export function useUpdateTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...data }: Partial<MessageTemplate> & { id: string }) => {
+      const res = await fetch(`/api/crm/templates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to update')
+      return (await res.json()) as MessageTemplate
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['message_templates'] }),
+  })
+}
+
+export function useDeleteTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/crm/templates/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['message_templates'] }),
+  })
+}
+
 // ─── Stage Log ───────────────────────────────────────────────────────────────
 
 export function useStageLog(opportunityId: string) {
@@ -585,6 +890,74 @@ export function useUpdateServiceRegion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['service_regions'] })
       toast.success('Region updated')
+    },
+    onError: (err: Error) => {
+      toast.error(err.message)
+    },
+  })
+}
+
+// ─── Channel Status ──────────────────────────────────────────────────────────
+
+export interface ChannelStatus {
+  email: { configured: boolean; provider: 'gmail' | 'resend' | 'none'; detail: string }
+  sms: { configured: boolean; detail: string }
+  whatsapp: { configured: boolean; detail: string }
+}
+
+export function useChannelStatus() {
+  return useQuery<ChannelStatus>({
+    queryKey: ['channel-status'],
+    queryFn: async () => {
+      const res = await fetch('/api/crm/channels/status')
+      if (!res.ok) throw new Error('Failed to fetch channel status')
+      return res.json()
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ─── Email Signature ─────────────────────────────────────────────────────────
+
+export interface SignatureConfig {
+  name: string
+  role: string
+  phone: string
+  email: string
+  tagline: string
+  logo_url: string
+  website_url: string
+}
+
+export function useSignature() {
+  return useQuery<SignatureConfig>({
+    queryKey: ['email-signature'],
+    queryFn: async () => {
+      const res = await fetch('/api/crm/signature')
+      const data = await res.json()
+      return data.signature
+    },
+  })
+}
+
+export function useUpdateSignature() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (sig: Partial<SignatureConfig>) => {
+      const res = await fetch('/api/crm/signature', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sig),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? 'Failed to update signature')
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['email-signature'] })
+      toast.success('Signature updated')
     },
     onError: (err: Error) => {
       toast.error(err.message)

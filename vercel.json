@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/messages",
+      "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/meetings",
+      "schedule": "*/5 * * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    }
+  ]
+}

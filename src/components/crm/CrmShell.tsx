@@ -7,9 +7,11 @@ import Topbar from './Topbar'
 import MobileSidebar from './MobileSidebar'
 import MobileBottomNav from './MobileBottomNav'
 import KeyboardShortcuts from './KeyboardShortcuts'
-import PageProgress from './PageProgress'
+import NavigationProgress from './NavigationProgress'
+import PageTransition from './PageTransition'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/crm/types'
+import { AIPreferencesProvider } from '@/lib/crm/ai-preferences'
 
 interface CrmShellProps {
   profile: Profile
@@ -27,30 +29,32 @@ export default function CrmShell({ profile, children }: CrmShellProps) {
   }, [supabase, router])
 
   return (
-    <div className="flex h-screen bg-[var(--warm-white)] overflow-hidden">
-      <PageProgress />
-      <KeyboardShortcuts />
-      <Sidebar profile={profile} onSignOut={handleSignOut} />
-      <MobileSidebar
-        profile={profile}
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        onSignOut={handleSignOut}
-      />
-
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Topbar
+    <AIPreferencesProvider profile={profile}>
+      <div className="flex h-screen bg-[var(--warm-white)] overflow-hidden">
+        <NavigationProgress />
+        <KeyboardShortcuts />
+        <Sidebar profile={profile} onSignOut={handleSignOut} />
+        <MobileSidebar
           profile={profile}
-          onMenuToggle={() => setMobileMenuOpen(true)}
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          onSignOut={handleSignOut}
         />
-        <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6">
-          <div className="animate-page-enter">
-            {children}
-          </div>
-        </main>
-      </div>
 
-      <MobileBottomNav />
-    </div>
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <Topbar
+            profile={profile}
+            onMenuToggle={() => setMobileMenuOpen(true)}
+          />
+          <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6 scrollbar-fade">
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </main>
+        </div>
+
+        <MobileBottomNav />
+      </div>
+    </AIPreferencesProvider>
   )
 }

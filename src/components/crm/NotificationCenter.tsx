@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Bell, X, User, CreditCard, ArrowRight, Clock } from 'lucide-react'
+import { Bell, X, User, CreditCard, ArrowRight, Clock, Mail, CheckSquare } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
 interface Notification {
   id: string
-  type: 'new_lead' | 'payment' | 'stage_change'
+  type: 'new_lead' | 'payment' | 'stage_change' | 'email_reply' | 'task_due'
   title: string
   body: string
   link: string
@@ -72,6 +72,34 @@ export default function NotificationCenter() {
           })
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'email_messages', filter: 'direction=eq.inbound' },
+        (payload) => {
+          const msg = payload.new as { id: string; lead_id: string; from_address: string; subject?: string; snippet?: string }
+          addNotification({
+            type: 'email_reply',
+            title: 'Email Reply',
+            body: msg.subject ?? msg.snippet?.slice(0, 60) ?? `Reply from ${msg.from_address}`,
+            link: msg.lead_id ? `/crm/leads/${msg.lead_id}` : '/crm/leads',
+          })
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tasks' },
+        (payload) => {
+          const task = payload.new as { id: string; description?: string; status: string; due_at?: string; opportunity_id?: string }
+          if (task.due_at && new Date(task.due_at) <= new Date() && task.status === 'open') {
+            addNotification({
+              type: 'task_due',
+              title: 'Task Overdue',
+              body: task.description ?? 'A task is overdue',
+              link: '/crm/tasks',
+            })
+          }
+        }
+      )
       .subscribe()
 
     return () => {
@@ -99,10 +127,12 @@ export default function NotificationCenter() {
     if (popupTimer.current) clearTimeout(popupTimer.current)
   }
 
-  const typeConfig = {
+  const typeConfig: Record<Notification['type'], { icon: React.ReactNode; color: string; ring: string }> = {
     new_lead: { icon: <User size={14} />, color: 'bg-[var(--green-50)] text-[var(--green-700)]', ring: 'ring-[var(--green-200)]' },
     payment: { icon: <CreditCard size={14} />, color: 'bg-emerald-50 text-emerald-700', ring: 'ring-emerald-200' },
     stage_change: { icon: <ArrowRight size={14} />, color: 'bg-blue-50 text-blue-700', ring: 'ring-blue-200' },
+    email_reply: { icon: <Mail size={14} />, color: 'bg-orange-50 text-orange-700', ring: 'ring-orange-200' },
+    task_due: { icon: <CheckSquare size={14} />, color: 'bg-red-50 text-red-700', ring: 'ring-red-200' },
   }
 
   return (
@@ -115,7 +145,7 @@ export default function NotificationCenter() {
         >
           <Bell size={16} />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full ring-2 ring-white px-1">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full ring-2 ring-white px-1 animate-badge-pulse">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}

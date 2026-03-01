@@ -63,7 +63,7 @@ export default function OverviewTab({ metrics, priorMetrics }: Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Funnel */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--warm-100)] shadow-sm p-5">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--warm-100)] shadow-sm p-5 card-hover-border">
           <h3 className="text-sm font-semibold text-[var(--warm-700)] mb-4">Conversion Funnel</h3>
           <FunnelChart metrics={metrics} />
         </div>
@@ -122,14 +122,14 @@ function KpiCard({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--warm-100)] shadow-sm p-4">
+    <div className="bg-white rounded-xl border border-[var(--warm-100)] shadow-sm p-4 card-hover-border">
       <div className="flex items-center justify-between mb-2">
         <div className={`inline-flex items-center justify-center w-7 h-7 rounded-lg ${bgMap[color] ?? bgMap.blue}`}>
           {icon}
         </div>
         {change !== null && <ChangeIndicator value={change} />}
       </div>
-      <p className="text-lg font-bold text-[var(--warm-900)] font-heading">{value}</p>
+      <p className="text-lg font-bold text-[var(--warm-900)] font-heading animate-number-pop">{value}</p>
       {subtext && <p className="text-[10px] text-[var(--warm-400)] mt-0.5">{subtext}</p>}
       <p className="text-[11px] text-[var(--warm-500)] mt-1">{label}</p>
     </div>

@@ -61,7 +61,8 @@ export default function MobileSidebar({ profile, open, onClose, onSignOut }: Mob
                 href={item.href}
                 onClick={onClose}
                 className={`
-                  relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                  relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150
+                  active:scale-[0.96] active:opacity-80
                   ${isActive
                     ? 'bg-white/15 text-white shadow-sm'
                     : 'text-white/60 hover:bg-white/8 hover:text-white'

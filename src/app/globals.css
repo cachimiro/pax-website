@@ -262,6 +262,15 @@ h1, h2, h3, h4, h5, h6 {
   animation: successFlash 0.6s ease-out;
 }
 
+/* Button ripple */
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(20); opacity: 0; }
+}
+.animate-ripple {
+  animation: ripple 0.6s ease-out forwards;
+}
+
 /* Notification auto-dismiss bar */
 @keyframes shrinkBar {
   from { width: 100%; }
@@ -269,6 +278,77 @@ h1, h2, h3, h4, h5, h6 {
 }
 .animate-shrink-bar {
   animation: shrinkBar 8s linear forwards;
+}
+
+/* Pipeline drag overlay */
+.pipeline-drag-overlay {
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.12)) drop-shadow(0 4px 8px rgba(0,0,0,0.06));
+  cursor: grabbing;
+}
+
+/* Notification badge pulse */
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.animate-badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+/* Card hover border shift */
+.card-hover-border {
+  border-color: var(--warm-100);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover-border:hover {
+  border-color: var(--green-100);
+  box-shadow: 0 2px 8px rgba(10, 92, 66, 0.06);
+}
+
+/* Avatar hover glow */
+.avatar-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.avatar-hover:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 3px rgba(16, 148, 100, 0.15);
+}
+
+/* Scrollbar fade — only visible on hover of scrollable container */
+.scrollbar-fade::-webkit-scrollbar-thumb {
+  background: transparent;
+  transition: background 0.3s ease;
+}
+.scrollbar-fade:hover::-webkit-scrollbar-thumb {
+  background: var(--warm-300);
+}
+
+/* Number count-up animation */
+@keyframes numberPop {
+  0% { transform: translateY(4px); opacity: 0; }
+  60% { transform: translateY(-1px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.animate-number-pop {
+  animation: numberPop 0.35s ease-out forwards;
+}
+
+/* Sonner toast branded styles */
+.crm-toast-success {
+  border-left: 3px solid var(--green-600) !important;
+  background: #f0faf6 !important;
+}
+.crm-toast-error {
+  border-left: 3px solid #dc2626 !important;
+  background: #fef2f2 !important;
+}
+.crm-toast-warning {
+  border-left: 3px solid #d97706 !important;
+  background: #fffbeb !important;
+}
+.crm-toast-info {
+  border-left: 3px solid #2563eb !important;
+  background: #eff6ff !important;
 }
 
 input:focus, select:focus, textarea:focus {

@@ -2,13 +2,13 @@
 
 import { useMemo } from 'react'
 import { format } from 'date-fns'
-import { ArrowRight, Mail, Phone, Calendar, CheckSquare, CreditCard, AlertTriangle, User } from 'lucide-react'
-import type { StageLog, MessageLog, Task, Booking, Payment } from '@/lib/crm/types'
+import { ArrowRight, Mail, Phone, Calendar, CheckSquare, CreditCard, AlertTriangle, User, Inbox } from 'lucide-react'
+import type { StageLog, MessageLog, Task, Booking, Payment, EmailMessage } from '@/lib/crm/types'
 import { STAGES } from '@/lib/crm/stages'
 
 interface TimelineEvent {
   id: string
-  type: 'stage' | 'message' | 'task' | 'booking' | 'payment' | 'created'
+  type: 'stage' | 'message' | 'task' | 'booking' | 'payment' | 'created' | 'email_reply'
   title: string
   description?: string
   timestamp: Date
@@ -23,9 +23,10 @@ interface Props {
   bookings: Booking[]
   payments: Payment[]
   leadCreatedAt: string
+  emailMessages?: EmailMessage[]
 }
 
-export default function ActivityTimeline({ stageLog, messages, tasks, bookings, payments, leadCreatedAt }: Props) {
+export default function ActivityTimeline({ stageLog, messages, tasks, bookings, payments, leadCreatedAt, emailMessages = [] }: Props) {
   const events = useMemo(() => {
     const all: TimelineEvent[] = []
 
@@ -107,8 +108,21 @@ export default function ActivityTimeline({ stageLog, messages, tasks, bookings, 
       })
     }
 
+    // Inbound email replies
+    for (const em of emailMessages.filter((e) => e.direction === 'inbound')) {
+      all.push({
+        id: `email-reply-${em.id}`,
+        type: 'email_reply',
+        title: 'Email reply received',
+        description: em.subject ?? em.snippet?.slice(0, 60) ?? 'Reply from lead',
+        timestamp: new Date(em.received_at),
+        icon: <Inbox size={12} />,
+        color: 'bg-orange-50 text-orange-600',
+      })
+    }
+
     return all.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-  }, [stageLog, messages, tasks, bookings, payments, leadCreatedAt])
+  }, [stageLog, messages, tasks, bookings, payments, leadCreatedAt, emailMessages])
 
   if (events.length === 0) {
     return (

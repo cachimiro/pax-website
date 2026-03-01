@@ -1,11 +1,11 @@
 'use client'
 
 import { Search, Menu, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import type { Profile } from '@/lib/crm/types'
 import NotificationCenter from './NotificationCenter'
+import CommandPalette from './CommandPalette'
 
 interface TopbarProps {
   profile: Profile
@@ -29,7 +29,6 @@ function getGreeting(): string {
 }
 
 export default function Topbar({ profile, onMenuToggle }: TopbarProps) {
-  const [searchQuery, setSearchQuery] = useState('')
   const pathname = usePathname()
 
   // Build breadcrumbs
@@ -81,23 +80,11 @@ export default function Topbar({ profile, onMenuToggle }: TopbarProps) {
         </div>
       </div>
 
-      {/* Center: search */}
+      {/* Center: command palette trigger */}
       <div className="flex-1 max-w-md mx-4">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--warm-300)]" />
-          <input
-            type="text"
-            placeholder="Search leads, opportunities..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-[var(--warm-50)] border border-transparent rounded-xl
-              focus:bg-white focus:border-[var(--green-500)] focus:outline-none focus:shadow-sm
-              placeholder:text-[var(--warm-300)] text-[var(--warm-800)]
-              transition-all duration-200"
-          />
-          <kbd className="hidden sm:inline-flex absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-[var(--warm-300)] bg-white border border-[var(--warm-100)] rounded px-1.5 py-0.5 font-mono">
-            /
-          </kbd>
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--warm-300)] pointer-events-none z-10" />
+          <CommandPalette />
         </div>
       </div>
 

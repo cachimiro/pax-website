@@ -1,8 +1,10 @@
 'use client'
 
 import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { STAGES } from '@/lib/crm/stages'
 import type { OpportunityStage, OpportunityWithLead } from '@/lib/crm/types'
+import type { RiskLevel } from '@/lib/crm/risk'
 import OpportunityCard from './OpportunityCard'
 
 interface PipelineColumnProps {
@@ -11,9 +13,11 @@ interface PipelineColumnProps {
   isLoading: boolean
   totalPipelineValue: number
   onQuickMove: (opp: OpportunityWithLead) => void
+  justMovedId: string | null
+  riskMap?: Record<string, { level: RiskLevel; reason: string }>
 }
 
-export default function PipelineColumn({ stage, opportunities, isLoading, totalPipelineValue, onQuickMove }: PipelineColumnProps) {
+export default function PipelineColumn({ stage, opportunities, isLoading, totalPipelineValue, onQuickMove, justMovedId, riskMap = {} }: PipelineColumnProps) {
   const config = STAGES[stage]
   const { setNodeRef, isOver } = useDroppable({ id: stage })
 
@@ -22,10 +26,20 @@ export default function PipelineColumn({ stage, opportunities, isLoading, totalP
 
   return (
     <div className="flex-shrink-0 w-[280px]" ref={setNodeRef}>
-      <div className={`relative px-3.5 py-3 rounded-t-2xl ${config.color} border border-b-0 border-[var(--warm-100)]`}>
+      {/* Column header — glows when drag is over */}
+      <div
+        className={`
+          relative px-3.5 py-3 rounded-t-2xl ${config.color} border border-b-0
+          transition-all duration-300
+          ${isOver
+            ? 'border-[var(--green-500)]/40 shadow-[0_0_16px_rgba(16,148,100,0.12)]'
+            : 'border-[var(--warm-100)]'
+          }
+        `}
+      >
         <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${config.dotColor}`} />
+          <div className="flex items-center gap-2" title={config.description}>
+            <span className={`w-2 h-2 rounded-full ${config.dotColor} ${isOver ? 'animate-pulse' : ''}`} />
             <span className={`text-xs font-semibold ${config.textColor}`}>{config.label}</span>
           </div>
           <span className={`text-xs font-bold ${config.textColor} bg-white/60 rounded-full w-6 h-6 flex items-center justify-center`}>
@@ -49,38 +63,55 @@ export default function PipelineColumn({ stage, opportunities, isLoading, totalP
         </div>
       </div>
 
+      {/* Drop zone body */}
       <div
         className={`
           rounded-b-2xl border border-t-0 p-2 space-y-2 min-h-[200px]
           transition-all duration-300
           ${isOver
-            ? 'bg-[var(--green-50)] border-[var(--green-500)]/30 shadow-inner'
+            ? 'bg-[var(--green-50)] border-[var(--green-500)]/30 shadow-[inset_0_2px_8px_rgba(16,148,100,0.06)]'
             : 'bg-[var(--warm-50)]/50 border-[var(--warm-100)]'
           }
         `}
       >
-        {isOver && opportunities.length === 0 && (
-          <div className="flex items-center justify-center h-20 border-2 border-dashed border-[var(--green-400)]/40 rounded-xl">
-            <span className="text-xs text-[var(--green-500)] font-medium">Drop here</span>
+        {/* Drop insertion indicator */}
+        {isOver && (
+          <div className="flex items-center gap-2 py-1 animate-fade-in">
+            <div className="flex-1 h-[2px] bg-[var(--green-400)]/50 rounded-full" />
+            <span className="text-[10px] text-[var(--green-500)] font-medium whitespace-nowrap">
+              {opportunities.length === 0 ? 'Drop here' : 'Move here'}
+            </span>
+            <div className="flex-1 h-[2px] bg-[var(--green-400)]/50 rounded-full" />
           </div>
         )}
 
-        {isLoading ? (
-          <>
-            <CardSkeleton />
-            <CardSkeleton />
-          </>
-        ) : opportunities.length === 0 && !isOver ? (
-          <div className="flex items-center justify-center h-24 text-xs text-[var(--warm-300)]">
-            No opportunities
-          </div>
-        ) : (
-          opportunities.map((opp, i) => (
-            <div key={opp.id} className="animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
-              <OpportunityCard opportunity={opp} onQuickMove={() => onQuickMove(opp)} />
+        <SortableContext items={opportunities.map(o => o.id)} strategy={verticalListSortingStrategy}>
+          {isLoading ? (
+            <>
+              <CardSkeleton />
+              <CardSkeleton />
+            </>
+          ) : opportunities.length === 0 && !isOver ? (
+            <div className="flex items-center justify-center h-24 text-xs text-[var(--warm-300)]">
+              No opportunities
             </div>
-          ))
-        )}
+          ) : (
+            opportunities.map((opp, i) => (
+              <div
+                key={opp.id}
+                className={`animate-fade-in ${justMovedId === opp.id ? 'animate-success-flash' : ''}`}
+                style={{ animationDelay: `${i * 30}ms` }}
+              >
+                <OpportunityCard
+                  opportunity={opp}
+                  onQuickMove={() => onQuickMove(opp)}
+                  riskLevel={riskMap[opp.id]?.level}
+                  riskReason={riskMap[opp.id]?.reason}
+                />
+              </div>
+            ))
+          )}
+        </SortableContext>
       </div>
     </div>
   )

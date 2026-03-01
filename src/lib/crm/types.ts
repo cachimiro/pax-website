@@ -1,3 +1,53 @@
+// ─── Email (Gmail Integration) ───────────────────────────────────────
+
+export interface EmailThread {
+  id: string
+  gmail_thread_id: string
+  lead_id: string | null
+  subject: string | null
+  last_message_at: string | null
+  message_count: number
+  created_at: string
+}
+
+export interface EmailMessage {
+  id: string
+  gmail_message_id: string
+  thread_id: string | null
+  lead_id: string | null
+  direction: 'inbound' | 'outbound'
+  from_address: string
+  to_address: string
+  subject: string | null
+  body_text: string | null
+  body_html: string | null
+  snippet: string | null
+  gmail_label_ids: string[] | null
+  received_at: string
+  created_at: string
+}
+
+export interface EmailEvent {
+  id: string
+  message_log_id: string | null
+  lead_id: string | null
+  event_type: 'open' | 'click'
+  url: string | null
+  created_at: string
+}
+
+// ─── AI Preferences ──────────────────────────────────────────────────
+
+export interface AIPreferences {
+  suggestions_enabled?: boolean    // default true
+  compose_enabled?: boolean        // default true
+  briefing_enabled?: boolean       // default true
+  health_check_enabled?: boolean   // default true
+  notification_level?: 'quiet' | 'normal' | 'active'  // default 'normal'
+  compose_tone?: 'formal' | 'friendly' | 'brief'      // default 'friendly'
+  snooze_weekends?: boolean        // default true
+}
+
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 export type OpportunityStage =
@@ -17,13 +67,34 @@ export type OpportunityStage =
 
 export type BookingType = 'call1' | 'call2' | 'onboarding'
 
-export type BookingOutcome = 'pending' | 'completed' | 'no_show' | 'rescheduled'
+export type BookingOutcome = 'pending' | 'completed' | 'no_show' | 'rescheduled' | 'owner_no_show' | 'technical_issue' | 'partial' | 'cancelled'
+
+export type TrackingStatus = 'pending' | 'checked' | 'manual'
 
 export type OnboardingStatus = 'pending' | 'scheduled' | 'completed' | 'verified'
 
 export type InvoiceStatus = 'sent' | 'paid' | 'overdue'
 
 export type MessageChannel = 'email' | 'sms' | 'whatsapp'
+
+export type DelayRule = 'immediate' | 'minutes_before_booking' | 'minutes_after_stage' | 'minutes_after_enquiry'
+
+export interface MessageTemplate {
+  id: string
+  slug: string
+  name: string
+  subject: string
+  body: string
+  channels: MessageChannel[]
+  active: boolean
+  delay_rule: DelayRule
+  delay_minutes: number
+  trigger_stage: string | null
+  trigger_event: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
 
 export type LostReason =
   | 'not_qualified'
@@ -61,6 +132,7 @@ export interface Profile {
   active_opportunities: number
   last_assigned_at: string | null
   avatar_url: string | null
+  ai_preferences: AIPreferences
   created_at: string
 }
 
@@ -89,6 +161,11 @@ export interface Lead {
   device_type: string | null
   first_visit_at: string | null
   visitor_id: string | null
+  // AI fields
+  opted_out: boolean
+  preferred_channel: 'email' | 'sms' | 'whatsapp' | null
+  snoozed_until: string | null
+  deleted_at: string | null
 }
 
 export interface SiteSession {
@@ -126,6 +203,39 @@ export interface Booking {
   duration_min: number
   owner_user_id: string | null
   outcome: BookingOutcome
+  google_event_id: string | null
+  meet_link: string | null
+  actual_start: string | null
+  actual_end: string | null
+  attendee_count: number
+  customer_joined: boolean
+  owner_joined: boolean
+  post_call_notes: string | null
+  ai_suggestion: AISuggestion | null
+  tracking_status: TrackingStatus
+  created_at: string
+}
+
+export interface AISuggestion {
+  stage: string
+  confidence: number
+  reasoning: string
+  sentiment: 'positive' | 'negative' | 'mixed'
+  objections: string[]
+  follow_up_actions: string[]
+}
+
+export interface PostCallAction {
+  id: string
+  booking_id: string
+  opportunity_id: string
+  action_type: 'ai_suggestion' | 'owner_confirm' | 'owner_override' | 'auto_move' | 'auto_no_show' | 'reminder_sent'
+  suggested_stage: string | null
+  actual_stage: string | null
+  confidence: number | null
+  reasoning: string | null
+  ai_response: Record<string, unknown> | null
+  acted_by: string | null
   created_at: string
 }
 
@@ -155,6 +265,7 @@ export interface Invoice {
   amount: number
   deposit_amount: number | null
   status: InvoiceStatus
+  stripe_session_id: string | null
   created_at: string
 }
 

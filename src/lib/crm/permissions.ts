@@ -63,6 +63,7 @@ const ALL_NAV: NavItem[] = [
   { label: 'Leads',     href: '/crm/leads',      icon: 'Users' },
   { label: 'Calendar',  href: '/crm/calendar',   icon: 'Calendar' },
   { label: 'Tasks',     href: '/crm/tasks',      icon: 'CheckSquare' },
+  { label: 'Reports',   href: '/crm/reports',    icon: 'BarChart3' },
   { label: 'Settings',  href: '/crm/settings',   icon: 'Settings' },
 ]
 

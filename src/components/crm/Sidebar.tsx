@@ -12,10 +12,14 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  BarChart3,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
+import { Loader2 } from 'lucide-react'
 import type { Profile } from '@/lib/crm/types'
 import { getNavItems } from '@/lib/crm/permissions'
+import SidebarTooltip from './SidebarTooltip'
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
   LayoutDashboard,
@@ -23,6 +27,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
   Users,
   Calendar,
   CheckSquare,
+  BarChart3,
   Settings,
 }
 
@@ -34,18 +39,28 @@ interface SidebarProps {
 export default function Sidebar({ profile, onSignOut }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
+  const prevPathname = useRef(pathname)
+
+  // Clear navigating state when pathname changes
+  useEffect(() => {
+    if (pathname !== prevPathname.current) {
+      prevPathname.current = pathname
+      setNavigatingTo(null)
+    }
+  }, [pathname])
   const navItems = getNavItems(profile.role)
 
   return (
     <>
-      <aside
+      <motion.aside
+        animate={{ width: collapsed ? 64 : 256 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className={`
           fixed left-0 top-0 bottom-0 z-40
           flex flex-col
           bg-gradient-to-b from-[var(--green-900)] to-[#073D2E]
           text-white
-          transition-all duration-300 ease-in-out
-          ${collapsed ? 'w-16' : 'w-64'}
           hidden md:flex
         `}
       >
@@ -74,28 +89,42 @@ export default function Sidebar({ profile, onSignOut }: SidebarProps) {
             const isActive = pathname === item.href || (item.href !== '/crm' && pathname.startsWith(item.href + '/'))
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`
-                  relative flex items-center gap-3 px-3 py-2.5 rounded-xl
-                  transition-all duration-200
-                  ${isActive
-                    ? 'bg-white/15 text-white shadow-sm shadow-black/10'
-                    : 'text-white/60 hover:bg-white/8 hover:text-white'
-                  }
-                  ${collapsed ? 'justify-center' : ''}
-                `}
-                title={collapsed ? item.label : undefined}
-              >
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[var(--orange-400)] rounded-r-full" />
-                )}
-                <Icon size={18} />
-                {!collapsed && (
-                  <span className="text-[13px] font-medium">{item.label}</span>
-                )}
-              </Link>
+              <SidebarTooltip key={item.href} label={item.label} show={collapsed}>
+                <Link
+                  href={item.href}
+                  onClick={() => {
+                    if (!isActive) setNavigatingTo(item.href)
+                  }}
+                  className={`
+                    relative flex items-center gap-3 px-3 py-2.5 rounded-xl
+                    transition-all duration-150
+                    active:scale-[0.96] active:opacity-80
+                    ${isActive
+                      ? 'bg-white/15 text-white shadow-sm shadow-black/10'
+                      : navigatingTo === item.href
+                        ? 'bg-white/10 text-white'
+                        : 'text-white/60 hover:bg-white/8 hover:text-white'
+                    }
+                    ${collapsed ? 'justify-center' : ''}
+                  `}
+                >
+                  {(isActive || navigatingTo === item.href) && (
+                    <motion.span
+                      layoutId="sidebar-active-indicator"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[var(--orange-400)] rounded-r-full"
+                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                  {navigatingTo === item.href ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Icon size={18} />
+                  )}
+                  {!collapsed && (
+                    <span className="text-[13px] font-medium">{item.label}</span>
+                  )}
+                </Link>
+              </SidebarTooltip>
             )
           })}
         </nav>
@@ -104,7 +133,7 @@ export default function Sidebar({ profile, onSignOut }: SidebarProps) {
         <div className={`border-t border-white/10 p-3 ${collapsed ? 'px-2' : ''}`}>
           <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
             <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--green-500)] to-[var(--green-700)] flex items-center justify-center text-sm font-semibold shrink-0 ring-2 ring-white/20">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--green-500)] to-[var(--green-700)] flex items-center justify-center text-sm font-semibold shrink-0 ring-2 ring-white/20 avatar-hover cursor-default">
                 {profile.full_name.charAt(0).toUpperCase()}
               </div>
               {/* Online dot */}
@@ -137,10 +166,14 @@ export default function Sidebar({ profile, onSignOut }: SidebarProps) {
         >
           {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
         </button>
-      </aside>
+      </motion.aside>
 
       {/* Spacer */}
-      <div className={`hidden md:block shrink-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`} />
+      <motion.div
+        animate={{ width: collapsed ? 64 : 256 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="hidden md:block shrink-0"
+      />
     </>
   )
 }

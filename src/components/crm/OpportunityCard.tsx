@@ -1,9 +1,11 @@
 'use client'
 
-import { useDraggable } from '@dnd-kit/core'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { formatDistanceToNow, differenceInDays } from 'date-fns'
-import { GripVertical, Phone, Mail, MessageSquare, ChevronRight } from 'lucide-react'
+import { GripVertical, Phone, Mail, MessageSquare, ChevronRight, AlertCircle } from 'lucide-react'
 import type { OpportunityWithLead } from '@/lib/crm/types'
+import type { RiskLevel } from '@/lib/crm/risk'
 import { STAGES, STAGE_ORDER } from '@/lib/crm/stages'
 import Link from 'next/link'
 
@@ -11,16 +13,30 @@ interface OpportunityCardProps {
   opportunity: OpportunityWithLead
   isDragging?: boolean
   onQuickMove?: () => void
+  riskLevel?: RiskLevel
+  riskReason?: string
 }
 
-export default function OpportunityCard({ opportunity, isDragging, onQuickMove }: OpportunityCardProps) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+export default function OpportunityCard({ opportunity, isDragging: isDraggingOverlay, onQuickMove, riskLevel, riskReason }: OpportunityCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging: isSortableDragging,
+  } = useSortable({
     id: opportunity.id,
+    data: { stage: opportunity.stage },
   })
 
-  const style = transform
-    ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
-    : undefined
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isSortableDragging ? 0.4 : 1,
+  }
+
+  const isDragging = isDraggingOverlay || isSortableDragging
 
   const daysInStage = differenceInDays(new Date(), new Date(opportunity.updated_at))
   const timeLabel = formatDistanceToNow(new Date(opportunity.updated_at), { addSuffix: false })
@@ -39,11 +55,11 @@ export default function OpportunityCard({ opportunity, isDragging, onQuickMove }
       ref={setNodeRef}
       style={style}
       className={`
-        relative bg-white rounded-xl border border-[var(--warm-100)] overflow-hidden
+        relative bg-white rounded-xl border overflow-hidden
         transition-all duration-200 group
         ${isDragging
-          ? 'shadow-xl ring-2 ring-[var(--green-500)]/30 rotate-[2deg] scale-105 z-50'
-          : 'shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-md hover:-translate-y-[1px]'
+          ? 'border-[var(--green-500)]/40 shadow-2xl ring-2 ring-[var(--green-500)]/20 rotate-[1.5deg] scale-[1.03] z-50 backdrop-blur-sm'
+          : 'border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-md hover:-translate-y-[1px] card-hover-border'
         }
       `}
     >
@@ -54,7 +70,7 @@ export default function OpportunityCard({ opportunity, isDragging, onQuickMove }
           <button
             {...listeners}
             {...attributes}
-            className="mt-0.5 p-0.5 text-[var(--warm-200)] hover:text-[var(--warm-400)] cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            className="mt-0.5 p-1 -ml-0.5 text-[var(--warm-200)] hover:text-[var(--warm-400)] hover:bg-[var(--warm-50)] rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-all shrink-0"
           >
             <GripVertical size={14} />
           </button>
@@ -76,7 +92,16 @@ export default function OpportunityCard({ opportunity, isDragging, onQuickMove }
               </p>
             )}
           </div>
-          <div className="shrink-0 flex items-center gap-1" title={`${daysInStage}d in stage`}>
+          <div className="shrink-0 flex items-center gap-1.5" title={`${daysInStage}d in stage`}>
+            {riskLevel && riskLevel !== 'none' && (
+              <div
+                className={`relative flex items-center justify-center ${riskLevel === 'high' ? 'text-red-500' : 'text-amber-500'}`}
+                title={riskReason}
+              >
+                <AlertCircle size={13} />
+                <span className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${riskLevel === 'high' ? 'bg-red-500' : 'bg-amber-400'} animate-pulse`} />
+              </div>
+            )}
             <div className={`w-1.5 h-1.5 rounded-full ${heatColors[heat]}`} />
           </div>
         </div>
@@ -125,7 +150,7 @@ export default function OpportunityCard({ opportunity, isDragging, onQuickMove }
           </div>
           {opportunity.owner && (
             <div
-              className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--green-100)] to-[var(--green-50)] flex items-center justify-center text-[10px] font-semibold text-[var(--green-700)] ring-2 ring-white shrink-0"
+              className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--green-100)] to-[var(--green-50)] flex items-center justify-center text-[10px] font-semibold text-[var(--green-700)] ring-2 ring-white shrink-0 avatar-hover cursor-default"
               title={opportunity.owner.full_name}
             >
               {opportunity.owner.full_name.charAt(0).toUpperCase()}

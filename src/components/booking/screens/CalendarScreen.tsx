@@ -1,16 +1,21 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Clock, Users, Zap, MessageCircle, Phone, CalendarCheck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Users, Zap, MessageCircle, Phone, CalendarCheck, Loader2 } from 'lucide-react';
 
 interface CalendarScreenProps {
   onNext: (date: string, time: string) => void;
 }
 
+interface BusyInterval {
+  start: string;
+  end: string;
+}
+
 // Generate next 14 days of available dates (skip Sundays)
-function getAvailableDates(): Array<{ date: Date; label: string; dayName: string; dayNum: number; monthShort: string; isNextAvailable?: boolean }> {
-  const dates: Array<{ date: Date; label: string; dayName: string; dayNum: number; monthShort: string; isNextAvailable?: boolean }> = [];
+function getAvailableDates(): Array<{ date: Date; label: string; dayName: string; dayNum: number; monthShort: string; iso: string; isNextAvailable?: boolean }> {
+  const dates: Array<{ date: Date; label: string; dayName: string; dayNum: number; monthShort: string; iso: string; isNextAvailable?: boolean }> = [];
   const now = new Date();
   let d = new Date(now);
   d.setDate(d.getDate() + 1); // Start from tomorrow
@@ -24,6 +29,7 @@ function getAvailableDates(): Array<{ date: Date; label: string; dayName: string
         dayName: d.toLocaleDateString('en-GB', { weekday: 'short' }),
         dayNum: d.getDate(),
         monthShort: d.toLocaleDateString('en-GB', { month: 'short' }),
+        iso: d.toISOString().split('T')[0],
         isNextAvailable: false,
       };
       if (!foundFirst) {
@@ -43,29 +49,73 @@ const timeSlots = [
   { group: 'Evening', slots: ['16:00', '16:30', '17:00', '17:30', '18:00'] },
 ];
 
+// Check if a 30-min slot overlaps any busy interval
+function isSlotBusy(slotStart: Date, busyIntervals: BusyInterval[]): boolean {
+  const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
+  return busyIntervals.some((b) => {
+    const bStart = new Date(b.start);
+    const bEnd = new Date(b.end);
+    return slotStart < bEnd && slotEnd > bStart;
+  });
+}
+
 export default function CalendarScreen({ onNext }: CalendarScreenProps) {
   const dates = useMemo(() => getAvailableDates(), []);
   const [dateOffset, setDateOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [busyIntervals, setBusyIntervals] = useState<BusyInterval[]>([]);
+  const [loadingBusy, setLoadingBusy] = useState(true);
+  const [freebusyError, setFreebusyError] = useState(false);
 
   const visibleDates = dates.slice(dateOffset, dateOffset + 7);
   const canGoBack = dateOffset > 0;
   const canGoForward = dateOffset + 7 < dates.length;
 
-  // Simulate some slots being "taken" for realism
+  // Fetch busy intervals for the full 14-day window on mount
+  useEffect(() => {
+    const firstDate = dates[0]?.date;
+    const lastDate = dates[dates.length - 1]?.date;
+    if (!firstDate || !lastDate) return;
+
+    const timeMin = new Date(firstDate);
+    timeMin.setHours(0, 0, 0, 0);
+
+    const timeMax = new Date(lastDate);
+    timeMax.setHours(23, 59, 59, 999);
+
+    fetch(`/api/crm/calendar/freebusy?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setBusyIntervals(data.busy ?? []);
+        setLoadingBusy(false);
+      })
+      .catch(() => {
+        // If freebusy fails (no Google connected), all slots show as available
+        setFreebusyError(true);
+        setLoadingBusy(false);
+      });
+  }, [dates]);
+
+  // Build a set of unavailable slot keys from real busy data
   const takenSlots = useMemo(() => {
     const taken = new Set<string>();
+    if (busyIntervals.length === 0) return taken;
+
     dates.forEach((d) => {
-      const seed = d.dayNum * 7;
       timeSlots.forEach((group) => {
-        group.slots.forEach((slot, i) => {
-          if ((seed + i) % 5 === 0) taken.add(`${d.label}-${slot}`);
+        group.slots.forEach((slot) => {
+          const [h, m] = slot.split(':').map(Number);
+          const slotDate = new Date(d.date);
+          slotDate.setHours(h, m, 0, 0);
+          if (isSlotBusy(slotDate, busyIntervals)) {
+            taken.add(`${d.label}-${slot}`);
+          }
         });
       });
     });
     return taken;
-  }, [dates]);
+  }, [dates, busyIntervals]);
 
   const isSlotAvailable = (dateLabel: string, time: string) => !takenSlots.has(`${dateLabel}-${time}`);
 
@@ -150,8 +200,16 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
         </div>
       </div>
 
+      {/* Loading indicator while fetching availability */}
+      {loadingBusy && selectedDate && (
+        <div className="flex items-center gap-2 mb-4 text-xs text-warm-400">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <span>Checking availability...</span>
+        </div>
+      )}
+
       {/* Slot availability hint */}
-      {selectedDate && (
+      {selectedDate && !loadingBusy && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -159,13 +217,13 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
         >
           <CalendarCheck className="w-3.5 h-3.5 text-[#0C6B4E]" />
           <span className="text-xs text-warm-500">
-            {availableSlotCount} slots available · Popular times fill up fast
+            {availableSlotCount} slots available{freebusyError ? '' : ' · Live availability'} · Popular times fill up fast
           </span>
         </motion.div>
       )}
 
       {/* Time slots */}
-      {selectedDate && (
+      {selectedDate && !loadingBusy && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}

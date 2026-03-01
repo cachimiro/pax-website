@@ -3,7 +3,20 @@
 import { useState } from 'react'
 import { useTasks, useUpdateTask } from '@/lib/crm/hooks'
 import { format, isPast, isToday } from 'date-fns'
-import { CheckSquare, Check, Filter, ChevronDown, Clock, AlertTriangle } from 'lucide-react'
+import { CheckSquare, Check, Filter, ChevronDown, Clock, AlertTriangle, GripVertical } from 'lucide-react'
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import EmptyState from '@/components/crm/EmptyState'
 
 export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState<string>('open')
@@ -56,77 +69,158 @@ export default function TasksPage() {
           ))}
         </div>
       ) : tasks.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-16 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-            <CheckSquare size={24} className="text-emerald-400" />
-          </div>
-          <p className="text-sm font-medium text-[var(--warm-600)]">
-            {statusFilter === 'open' ? "You're all caught up" : 'No tasks'}
-          </p>
-          <p className="text-xs text-[var(--warm-400)] mt-1">
-            {statusFilter === 'open' ? 'No open tasks right now' : 'Tasks will appear as opportunities progress'}
-          </p>
+        <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          <EmptyState
+            icon={<CheckSquare size={24} />}
+            title={statusFilter === 'open' ? "You're all caught up" : 'No tasks'}
+            description={statusFilter === 'open' ? 'No open tasks right now — nice work!' : 'Tasks will appear as opportunities progress through the pipeline'}
+            tip="Press G then T from anywhere to jump to tasks"
+          />
         </div>
       ) : (
-        <div className="space-y-6">
-          {sections.map((section) => (
-            <div key={section.label}>
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`w-2 h-2 rounded-full ${section.accent}`} />
-                <h3 className={`text-xs font-semibold uppercase tracking-wider ${section.color}`}>
-                  {section.label}
-                </h3>
-                <span className="text-[10px] text-[var(--warm-300)] bg-[var(--warm-50)] px-1.5 py-0.5 rounded-full">
-                  {section.tasks.length}
-                </span>
-              </div>
-              <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] divide-y divide-[var(--warm-50)] overflow-hidden">
-                {section.tasks.map((task) => {
-                  const isOverdue = task.status === 'open' && task.due_at && isPast(new Date(task.due_at)) && !isToday(new Date(task.due_at))
-                  const isDone = task.status === 'done'
-
-                  return (
-                    <div key={task.id} className="relative flex items-center gap-3 px-5 py-3.5 group hover:bg-[var(--warm-50)]/50 transition-colors">
-                      {/* Priority accent bar */}
-                      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${isOverdue ? 'bg-red-400' : isDone ? 'bg-emerald-400' : 'bg-transparent'}`} />
-
-                      {/* Checkbox */}
-                      <button
-                        onClick={() => updateTask.mutate({ id: task.id, status: task.status === 'open' ? 'done' : 'open' })}
-                        className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                          isDone
-                            ? 'bg-[var(--green-600)] border-[var(--green-600)] text-white animate-check'
-                            : 'border-[var(--warm-300)] hover:border-[var(--green-500)] hover:bg-[var(--green-50)]'
-                        }`}
-                      >
-                        {isDone && <Check size={10} strokeWidth={3} />}
-                      </button>
-
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${isDone ? 'text-[var(--warm-400)] line-through' : 'text-[var(--warm-800)]'}`}>
-                          {task.type.replace(/_/g, ' ')}
-                        </p>
-                        {task.description && (
-                          <p className="text-xs text-[var(--warm-400)] truncate mt-0.5">{task.description}</p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {isOverdue && <AlertTriangle size={12} className="text-red-400" />}
-                        {task.due_at && (
-                          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-[var(--warm-400)]'}`}>
-                            {format(new Date(task.due_at), 'dd MMM')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+        <TaskSections sections={sections} updateTask={updateTask} />
       )}
+    </div>
+  )
+}
+
+// ─── Sortable task sections ──────────────────────────────────────────────────
+
+interface TaskSection {
+  label: string
+  tasks: ReturnType<typeof useTasks>['data'] extends (infer T)[] | undefined ? T[] : never
+  color: string
+  accent: string
+}
+
+function TaskSections({ sections, updateTask }: { sections: TaskSection[]; updateTask: ReturnType<typeof useUpdateTask> }) {
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  const allTasks = sections.flatMap(s => s.tasks)
+  const activeTask = activeId ? allTasks.find(t => t.id === activeId) : null
+
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string)
+  }
+
+  function handleDragEnd(_event: DragEndEvent) {
+    setActiveId(null)
+    // Visual reorder only — no backend persistence for task order
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="space-y-6">
+        {sections.map((section) => (
+          <div key={section.label}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-2 h-2 rounded-full ${section.accent}`} />
+              <h3 className={`text-xs font-semibold uppercase tracking-wider ${section.color}`}>
+                {section.label}
+              </h3>
+              <span className="text-[10px] text-[var(--warm-300)] bg-[var(--warm-50)] px-1.5 py-0.5 rounded-full">
+                {section.tasks.length}
+              </span>
+            </div>
+            <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] divide-y divide-[var(--warm-50)] overflow-hidden card-hover-border">
+              <SortableContext items={section.tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                {section.tasks.map((task) => (
+                  <SortableTaskRow key={task.id} task={task} updateTask={updateTask} />
+                ))}
+              </SortableContext>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <DragOverlay>
+        {activeTask ? (
+          <div className="pipeline-drag-overlay bg-white rounded-xl border border-[var(--green-500)]/30 px-5 py-3.5 shadow-xl">
+            <div className="flex items-center gap-3">
+              <GripVertical size={14} className="text-[var(--warm-300)]" />
+              <p className="text-sm text-[var(--warm-800)]">{activeTask.type.replace(/_/g, ' ')}</p>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  )
+}
+
+function SortableTaskRow({ task, updateTask }: { task: { id: string; type: string; description: string | null; status: string; due_at: string | null }; updateTask: ReturnType<typeof useUpdateTask> }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+
+  const isOverdue = task.status === 'open' && task.due_at && isPast(new Date(task.due_at)) && !isToday(new Date(task.due_at))
+  const isDone = task.status === 'done'
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative flex items-center gap-3 px-5 py-3.5 group hover:bg-[var(--warm-50)]/50 transition-colors"
+    >
+      {/* Priority accent bar */}
+      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${isOverdue ? 'bg-red-400' : isDone ? 'bg-emerald-400' : 'bg-transparent'}`} />
+
+      {/* Drag handle */}
+      <button
+        {...listeners}
+        {...attributes}
+        className="p-0.5 text-[var(--warm-200)] hover:text-[var(--warm-400)] cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+      >
+        <GripVertical size={14} />
+      </button>
+
+      {/* Checkbox */}
+      <button
+        onClick={() => updateTask.mutate({ id: task.id, status: task.status === 'open' ? 'done' : 'open' })}
+        className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+          isDone
+            ? 'bg-[var(--green-600)] border-[var(--green-600)] text-white animate-check'
+            : 'border-[var(--warm-300)] hover:border-[var(--green-500)] hover:bg-[var(--green-50)]'
+        }`}
+      >
+        {isDone && <Check size={10} strokeWidth={3} />}
+      </button>
+
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm ${isDone ? 'text-[var(--warm-400)] line-through' : 'text-[var(--warm-800)]'}`}>
+          {task.type.replace(/_/g, ' ')}
+        </p>
+        {task.description && (
+          <p className="text-xs text-[var(--warm-400)] truncate mt-0.5">{task.description}</p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        {isOverdue && <AlertTriangle size={12} className="text-red-400" />}
+        {task.due_at && (
+          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-[var(--warm-400)]'}`}>
+            {format(new Date(task.due_at), 'dd MMM')}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { LOST_REASONS } from '@/lib/crm/stages'
 import type { OpportunityWithLead, LostReason } from '@/lib/crm/types'
 import { X, AlertTriangle } from 'lucide-react'
+import Button from '@/components/crm/Button'
+import ModalWrapper from '@/components/crm/ModalWrapper'
 
 interface LostReasonModalProps {
   opportunity: OpportunityWithLead
@@ -21,10 +23,8 @@ export default function LostReasonModal({
   const [reason, setReason] = useState<LostReason | ''>('')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onCancel} />
-
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-scale-in">
+    <ModalWrapper open={true} onClose={onCancel}>
+      <div className="p-6">
         <button
           onClick={onCancel}
           className="absolute top-4 right-4 p-1.5 text-[var(--warm-300)] hover:text-[var(--warm-500)] hover:bg-[var(--warm-50)] rounded-lg transition-all"
@@ -77,21 +77,20 @@ export default function LostReasonModal({
         </div>
 
         <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-2.5 text-sm font-medium text-[var(--warm-600)] bg-[var(--warm-50)] hover:bg-[var(--warm-100)] rounded-xl transition-colors"
-          >
+          <Button variant="secondary" onClick={onCancel} className="flex-1">
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="danger"
             onClick={() => reason && onConfirm(reason as LostReason)}
-            disabled={!reason || isLoading}
-            className="flex-1 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all disabled:opacity-50 active:scale-[0.98]"
+            disabled={!reason}
+            loading={isLoading}
+            className="flex-1"
           >
-            {isLoading ? 'Saving...' : 'Mark as Lost'}
-          </button>
+            Mark as Lost
+          </Button>
         </div>
       </div>
-    </div>
+    </ModalWrapper>
   )
 }

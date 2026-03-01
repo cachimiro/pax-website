@@ -22,6 +22,8 @@ import LostReasonModal from './LostReasonModal'
 import { PIPELINE_STAGES, STAGE_ORDER } from '@/lib/crm/stages'
 import { useOpportunities, useMoveOpportunityStage } from '@/lib/crm/hooks'
 import type { OpportunityStage, OpportunityWithLead, LostReason } from '@/lib/crm/types'
+import { assessOpportunityRisk, type RiskLevel } from '@/lib/crm/risk'
+import { useAIPreferences } from '@/lib/crm/ai-preferences'
 import { TrendingUp, Users, AlertTriangle, PoundSterling } from 'lucide-react'
 
 function isAdjacentForward(from: OpportunityStage, to: OpportunityStage): boolean {
@@ -43,6 +45,7 @@ export default function PipelineBoard() {
   const qc = useQueryClient()
 
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [justMovedId, setJustMovedId] = useState<string | null>(null)
   const [pendingMove, setPendingMove] = useState<{
     opportunity: OpportunityWithLead
     toStage: OpportunityStage
@@ -64,6 +67,21 @@ export default function PipelineBoard() {
     return map
   }, [opportunities])
 
+  const { prefs } = useAIPreferences()
+
+  // Compute risk for each opportunity (lightweight — stage-based only)
+  const riskMap = useMemo(() => {
+    if (!prefs.suggestions_enabled) return {}
+    const map: Record<string, { level: RiskLevel; reason: string }> = {}
+    for (const opp of opportunities) {
+      const risk = assessOpportunityRisk(opp, prefs.snooze_weekends)
+      if (risk.level !== 'none') {
+        map[opp.id] = risk
+      }
+    }
+    return map
+  }, [opportunities, prefs.suggestions_enabled, prefs.snooze_weekends])
+
   const activeOpportunity = activeId ? opportunities.find((o) => o.id === activeId) ?? null : null
   const activeOpps = opportunities.filter((o) => o.stage !== 'lost' && o.stage !== 'complete')
   const totalPipelineValue = activeOpps.reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
@@ -83,6 +101,10 @@ export default function PipelineBoard() {
 
     const leadName = opp.lead?.name ?? 'Opportunity'
     toast.success(`${leadName} moved to ${toStage.replace(/_/g, ' ')}`)
+
+    // Trigger success flash on the card
+    setJustMovedId(oppId)
+    setTimeout(() => setJustMovedId(null), 800)
 
     moveStage.mutate(
       { id: oppId, stage: toStage, lost_reason: lostReason },
@@ -113,9 +135,25 @@ export default function PipelineBoard() {
     if (!over) return
 
     const oppId = active.id as string
-    const toStage = over.id as OpportunityStage
     const opp = opportunities.find((o) => o.id === oppId)
-    if (!opp || opp.stage === toStage) return
+    if (!opp) return
+
+    // Determine target stage: could be a column (droppable) or another card (sortable)
+    const overData = over.data?.current as { stage?: OpportunityStage } | undefined
+    let toStage: OpportunityStage
+
+    if (overData?.stage) {
+      // Dropped on another card — use that card's stage
+      toStage = overData.stage
+    } else if (PIPELINE_STAGES.includes(over.id as OpportunityStage)) {
+      // Dropped on a column droppable
+      toStage = over.id as OpportunityStage
+    } else {
+      return
+    }
+
+    // Same stage — within-column reorder (visual only, no backend call)
+    if (opp.stage === toStage) return
 
     if (toStage === 'lost') {
       setShowLostModal(opp)
@@ -147,14 +185,14 @@ export default function PipelineBoard() {
   return (
     <>
       {/* Stats header */}
-      <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 mb-5">
+      <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 mb-5 card-hover-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-[var(--warm-400)] font-semibold mb-1">Pipeline Value</p>
               <div className="flex items-baseline gap-1">
                 <PoundSterling size={18} className="text-[var(--green-600)]" />
-                <span className="text-2xl font-bold text-[var(--warm-900)] font-heading">
+                <span className="text-2xl font-bold text-[var(--warm-900)] font-heading animate-number-pop">
                   {totalPipelineValue.toLocaleString('en-GB')}
                 </span>
               </div>
@@ -200,7 +238,7 @@ export default function PipelineBoard() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1" style={{ minHeight: 'calc(100vh - 300px)' }}>
+        <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-fade" style={{ minHeight: 'calc(100vh - 300px)' }}>
           {PIPELINE_STAGES.map((stage) => (
             <PipelineColumn
               key={stage}
@@ -209,13 +247,20 @@ export default function PipelineBoard() {
               isLoading={isLoading}
               totalPipelineValue={totalPipelineValue}
               onQuickMove={quickMove}
+              justMovedId={justMovedId}
+              riskMap={riskMap}
             />
           ))}
         </div>
 
-        <DragOverlay>
+        <DragOverlay dropAnimation={{
+          duration: 250,
+          easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+        }}>
           {activeOpportunity ? (
-            <OpportunityCard opportunity={activeOpportunity} isDragging />
+            <div className="pipeline-drag-overlay">
+              <OpportunityCard opportunity={activeOpportunity} isDragging />
+            </div>
           ) : null}
         </DragOverlay>
       </DndContext>

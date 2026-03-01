@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 /**
  * Global keyboard shortcuts for the CRM.
- * / — Focus search
+ * / or Cmd+K — Open command palette
  * g then p — Go to pipeline
  * g then l — Go to leads
  * g then c — Go to calendar
@@ -26,11 +26,10 @@ export default function KeyboardShortcuts() {
         return
       }
 
-      // / to focus search
+      // / to open command palette (simulates Cmd+K)
       if (e.key === '/') {
         e.preventDefault()
-        const searchInput = document.querySelector<HTMLInputElement>('input[placeholder*="Search"]')
-        searchInput?.focus()
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
         return
       }
 
