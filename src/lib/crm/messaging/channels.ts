@@ -269,20 +269,79 @@ export async function sendSms(
 
 // Map CRM template slugs to Twilio Content Template SIDs
 // These get approved by Meta and can initiate conversations outside the 24h window
+//
+// Approved Twilio templates:
+//   paxbespoke_enquiry_ack     HXdc7f381c5718beb112684aa65dae23ed  — vars: {{1}} name
+//   paxbespoke_call_reminder   HX78a52eb6145ebb48ef8863df1af4d953  — vars: {{1}} name, {{2}} date/time
+//   paxbespoke_followup        HX35888bc9c4e71f7ea22e761ca3f22e71  — vars: {{1}} name
+//   paxbespoke_deposit_request HX620a61ab3e65b37188bcc9570200960f  — vars: {{1}} name
+//   pax_bespoke (generic)      HX6cdaaee240a20fedead934d2a4685a81  — vars: {{1}} name
+
+const SID = {
+  ENQUIRY_ACK:    'HXdc7f381c5718beb112684aa65dae23ed',
+  CALL_REMINDER:  'HX78a52eb6145ebb48ef8863df1af4d953',
+  FOLLOWUP:       'HX35888bc9c4e71f7ea22e761ca3f22e71',
+  DEPOSIT:        'HX620a61ab3e65b37188bcc9570200960f',
+  GENERIC:        'HX6cdaaee240a20fedead934d2a4685a81',
+} as const
+
+const withDateTime = (sid: string) => ({
+  sid,
+  vars: (n: string, dt?: string) => ({ '1': n, '2': dt ?? 'your scheduled time' }),
+})
+const withName = (sid: string) => ({
+  sid,
+  vars: (n: string) => ({ '1': n }),
+})
+
 const WA_CONTENT_TEMPLATES: Record<string, { sid: string; vars: (name: string, extra?: string) => Record<string, string> }> = {
-  enquiry_ack:          { sid: 'HXdc7f381c5718beb112684aa65dae23ed', vars: (n) => ({ '1': n }) },
-  call1_confirmed:      { sid: 'HXfb8b563ae7468005a7b3cfc0da9d7c6f', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
-  call1_reminder:       { sid: 'HX78a52eb6145ebb48ef8863df1af4d953', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
-  call1_reminder_2h:    { sid: 'HX78a52eb6145ebb48ef8863df1af4d953', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
-  call2_confirmed:      { sid: 'HXfb8b563ae7468005a7b3cfc0da9d7c6f', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
-  call2_invite:         { sid: 'HX78a52eb6145ebb48ef8863df1af4d953', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
-  call2_reminder:       { sid: 'HX78a52eb6145ebb48ef8863df1af4d953', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
-  call2_reminder_2h:    { sid: 'HX78a52eb6145ebb48ef8863df1af4d953', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
-  qualified_followup:   { sid: 'HX35888bc9c4e71f7ea22e761ca3f22e71', vars: (n) => ({ '1': n }) },
-  deposit_request:      { sid: 'HX620a61ab3e65b37188bcc9570200960f', vars: (n) => ({ '1': n }) },
-  onboarding_confirmed: { sid: 'HXfb8b563ae7468005a7b3cfc0da9d7c6f', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
-  onboarding_reminder:  { sid: 'HX78a52eb6145ebb48ef8863df1af4d953', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
-  onboarding_reminder_2h: { sid: 'HX78a52eb6145ebb48ef8863df1af4d953', vars: (n, dt) => ({ '1': n, '2': dt ?? 'your scheduled time' }) },
+  // Enquiry acknowledgement
+  enquiry_ack:              withName(SID.ENQUIRY_ACK),
+  confirmation_enquiry:     withName(SID.ENQUIRY_ACK),
+
+  // Call/meeting confirmations & reminders (all use call_reminder template with name + date)
+  call1_confirmed:          withDateTime(SID.CALL_REMINDER),
+  call1_reminder:           withDateTime(SID.CALL_REMINDER),
+  call1_reminder_2h:        withDateTime(SID.CALL_REMINDER),
+  call2_confirmed:          withDateTime(SID.CALL_REMINDER),
+  call2_invite:             withDateTime(SID.CALL_REMINDER),
+  call2_reminder:           withDateTime(SID.CALL_REMINDER),
+  call2_reminder_2h:        withDateTime(SID.CALL_REMINDER),
+  onboarding_confirmed:     withDateTime(SID.CALL_REMINDER),
+  onboarding_reminder:      withDateTime(SID.CALL_REMINDER),
+  onboarding_reminder_2h:   withDateTime(SID.CALL_REMINDER),
+
+  // Visit confirmations & reminders
+  visit_confirmed:          withDateTime(SID.CALL_REMINDER),
+  visit_reminder_24h:       withDateTime(SID.CALL_REMINDER),
+
+  // Follow-ups (general purpose)
+  qualified_followup:       withName(SID.FOLLOWUP),
+  meet1_thanks:             withName(SID.FOLLOWUP),
+  visit_invite:             withName(SID.FOLLOWUP),
+  visit_invite_followup:    withName(SID.FOLLOWUP),
+  visit_thanks:             withName(SID.FOLLOWUP),
+  quote_sent_main:          withName(SID.FOLLOWUP),
+  quote_followup_48h:       withName(SID.FOLLOWUP),
+  quote_followup_5d:        withName(SID.FOLLOWUP),
+  fitting_proposed_main:    withName(SID.FOLLOWUP),
+  fitting_followup_48h:     withName(SID.FOLLOWUP),
+  fitting_confirmed_email:  withName(SID.FOLLOWUP),
+  fitting_reminder_48h:     withName(SID.FOLLOWUP),
+  review_request:           withName(SID.FOLLOWUP),
+  nurture_1:                withName(SID.FOLLOWUP),
+  nurture_2:                withName(SID.FOLLOWUP),
+  nurture_3:                withName(SID.FOLLOWUP),
+  onboarding_invite:        withName(SID.FOLLOWUP),
+
+  // Deposit
+  deposit_request:          withName(SID.DEPOSIT),
+
+  // Form abandonment (use followup)
+  form_abandoned_1h:        withName(SID.FOLLOWUP),
+  form_abandoned_24h:       withName(SID.FOLLOWUP),
+  form_abandoned_72h:       withName(SID.FOLLOWUP),
+  form_abandoned_7d:        withName(SID.FOLLOWUP),
 }
 
 export async function sendWhatsApp(

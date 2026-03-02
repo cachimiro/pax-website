@@ -183,7 +183,12 @@ Generate the weekly pipeline health report.`
     })
 
     const raw = completion.choices[0]?.message?.content ?? '{}'
-    const result = JSON.parse(raw)
+    // Extract JSON from response — AI sometimes wraps it in markdown code blocks
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      return NextResponse.json({ error: 'AI returned non-JSON response', raw: raw.substring(0, 200) }, { status: 502 })
+    }
+    const result = JSON.parse(jsonMatch[0])
     result.period_start = weekAgo.toISOString()
     result.period_end = now.toISOString()
     result.generated_at = now.toISOString()
