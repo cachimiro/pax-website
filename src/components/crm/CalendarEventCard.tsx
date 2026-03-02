@@ -3,6 +3,7 @@
 import { format, parseISO } from 'date-fns'
 import { Phone, Video, Home, MapPin, Wrench, CheckCircle2 } from 'lucide-react'
 import type { CalendarEvent } from './CalendarTypes'
+import { EVENT_LABELS } from './CalendarTypes'
 
 const typeIcons: Record<string, typeof Phone> = {
   call1: Phone, call2: Video, onboarding: Home,
