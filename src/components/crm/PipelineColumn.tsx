@@ -9,6 +9,12 @@ import OpportunityCard from './OpportunityCard'
 
 interface PipelineColumnProps {
   stage: OpportunityStage
+  /** Display label for grouped columns (overrides stage label) */
+  groupLabel?: string
+  /** All stages in this group (for sub-stage badges on cards) */
+  groupStages?: OpportunityStage[]
+  /** Color class for the group header dot */
+  groupColor?: string
   opportunities: OpportunityWithLead[]
   isLoading: boolean
   totalPipelineValue: number
@@ -17,8 +23,11 @@ interface PipelineColumnProps {
   riskMap?: Record<string, { level: RiskLevel; reason: string }>
 }
 
-export default function PipelineColumn({ stage, opportunities, isLoading, totalPipelineValue, onQuickMove, justMovedId, riskMap = {} }: PipelineColumnProps) {
+export default function PipelineColumn({ stage, groupLabel, groupStages, groupColor, opportunities, isLoading, totalPipelineValue, onQuickMove, justMovedId, riskMap = {} }: PipelineColumnProps) {
   const config = STAGES[stage]
+  const displayLabel = groupLabel || config.label
+  const dotColorClass = groupColor || config.dotColor
+  const hasMultipleStages = groupStages && groupStages.length > 1
   const { setNodeRef, isOver } = useDroppable({ id: stage })
 
   const totalValue = opportunities.reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
@@ -39,8 +48,8 @@ export default function PipelineColumn({ stage, opportunities, isLoading, totalP
       >
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2" title={config.description}>
-            <span className={`w-2 h-2 rounded-full ${config.dotColor} ${isOver ? 'animate-pulse' : ''}`} />
-            <span className={`text-xs font-semibold ${config.textColor}`}>{config.label}</span>
+            <span className={`w-2 h-2 rounded-full ${dotColorClass} ${isOver ? 'animate-pulse' : ''}`} />
+            <span className={`text-xs font-semibold ${config.textColor}`}>{displayLabel}</span>
           </div>
           <span className={`text-xs font-bold ${config.textColor} bg-white/60 rounded-full w-6 h-6 flex items-center justify-center`}>
             {opportunities.length}

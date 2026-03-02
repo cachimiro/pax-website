@@ -23,11 +23,21 @@ const STAGE_URGENCY: Record<string, number> = {
   new_enquiry: 2,
   call1_scheduled: 3,
   qualified: 5,
+  meet1_completed: 3,
+  design_created: 3,
+  quote_sent: 5,
+  visit_required: 5,
+  visit_scheduled: 3,
+  visit_completed: 3,
   call2_scheduled: 3,
+  meet2_completed: 3,
+  fitting_proposed: 7,
   proposal_agreed: 7,
   awaiting_deposit: 5,
   deposit_paid: 3,
+  fitting_confirmed: 2,
   onboarding_scheduled: 2,
+  on_hold: 45,
 }
 
 /**
@@ -195,8 +205,8 @@ export function assessOpportunityRisk(
   const now = new Date()
   const stage = opportunity.stage
 
-  // Completed or lost — no risk
-  if (stage === 'complete' || stage === 'lost') {
+  // Completed, lost, or closed — no risk
+  if (stage === 'complete' || stage === 'lost' || stage === 'closed_not_interested') {
     return { level: 'none', reason: '' }
   }
 
@@ -231,11 +241,21 @@ function getStageAction(stage: string): string {
     new_enquiry: 'Make first contact',
     call1_scheduled: 'Confirm call appointment',
     qualified: 'Schedule design consultation',
-    call2_scheduled: 'Prepare proposal',
+    meet1_completed: 'Create 3D design',
+    design_created: 'Send quote to client',
+    quote_sent: 'Follow up on quote',
+    visit_required: 'Schedule site visit',
+    visit_scheduled: 'Confirm visit details',
+    visit_completed: 'Revise design after visit',
+    call2_scheduled: 'Prepare for Meet 2',
+    meet2_completed: 'Update quote',
+    fitting_proposed: 'Follow up on fitting selection',
     proposal_agreed: 'Send deposit request',
     awaiting_deposit: 'Follow up on deposit',
-    deposit_paid: 'Schedule onboarding',
+    deposit_paid: 'Confirm fitting slot',
+    fitting_confirmed: 'Prepare materials',
     onboarding_scheduled: 'Prepare onboarding materials',
+    on_hold: 'Check if client is ready to resume',
   }
   return actions[stage] ?? 'Follow up'
 }

@@ -54,16 +54,30 @@ export type OpportunityStage =
   | 'new_enquiry'
   | 'call1_scheduled'
   | 'qualified'
+  | 'meet1_completed'
+  | 'design_created'
+  | 'quote_sent'
+  | 'visit_required'
+  | 'visit_scheduled'
+  | 'visit_completed'
   | 'call2_scheduled'
+  | 'meet2_completed'
+  | 'fitting_proposed'
   | 'proposal_agreed'
   | 'awaiting_deposit'
   | 'deposit_paid'
+  | 'fitting_confirmed'
   | 'onboarding_scheduled'
   | 'onboarding_complete'
   | 'production'
   | 'installation'
   | 'complete'
+  | 'on_hold'
   | 'lost'
+  | 'closed_not_interested'
+
+export type EntryRoute = 'online_consultation' | 'video_call' | 'direct_visit'
+export type PackageComplexity = 'budget' | 'standard' | 'select'
 
 export type BookingType = 'call1' | 'call2' | 'onboarding'
 
@@ -193,6 +207,69 @@ export interface Opportunity {
   deposit_paid_at: string | null
   onboarding_completed_at: string | null
   completed_at: string | null
+  // Sales process fields
+  entry_route: EntryRoute | null
+  package_complexity: PackageComplexity | null
+  visit_required: boolean
+  next_action: string | null
+  next_action_date: string | null
+  on_hold_at: string | null
+  closed_reason: string | null
+}
+
+// ─── Sales Process Entities ──────────────────────────────────────────────────
+
+export interface Visit {
+  id: string
+  opportunity_id: string
+  scheduled_at: string | null
+  completed_at: string | null
+  google_event_id: string | null
+  address: string | null
+  notes: string | null
+  outcome: 'pending' | 'completed' | 'cancelled' | 'no_show'
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Design {
+  id: string
+  opportunity_id: string
+  version: number
+  file_url: string | null
+  planner_link: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export interface Quote {
+  id: string
+  opportunity_id: string
+  design_id: string | null
+  amount: number
+  deposit_amount: number | null
+  items: unknown[]
+  pdf_url: string | null
+  sent_at: string | null
+  status: 'draft' | 'sent' | 'accepted' | 'revised' | 'rejected'
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface FittingSlot {
+  id: string
+  opportunity_id: string
+  proposed_dates: string[]
+  confirmed_date: string | null
+  confirmed_at: string | null
+  google_event_id: string | null
+  status: 'proposed' | 'confirmed' | 'cancelled'
+  notes: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface Booking {

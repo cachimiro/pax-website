@@ -1,15 +1,22 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OpportunityStage, MessageChannel } from './types'
 import { getTemplatesForStage, interpolate } from './messaging/templates'
+import { generateAllCTAUrls } from './cta-tokens'
 
 /**
- * Operational tasks to create on stage transitions.
- * Messaging is handled separately by DB-driven templates.
+ * Operational tasks auto-created on stage transitions.
+ * Each entry maps a stage to a task for the deal owner.
  */
 const stageTasks: Partial<Record<OpportunityStage, { type: string; description: (name: string) => string }>> = {
-  new_enquiry: { type: 'call1_attempt', description: (n) => `First call attempt for ${n}` },
-  qualified: { type: 'schedule_call2', description: (n) => `Schedule Call 2 with ${n}` },
-  deposit_paid: { type: 'schedule_onboarding', description: (n) => `Schedule onboarding for ${n}` },
+  new_enquiry:       { type: 'call1_attempt',    description: (n) => `First call attempt for ${n}` },
+  meet1_completed:   { type: 'create_design',    description: (n) => `Create 3D design for ${n}` },
+  design_created:    { type: 'send_quote',        description: (n) => `Send quote to ${n}` },
+  visit_required:    { type: 'schedule_visit',    description: (n) => `Schedule site visit for ${n}` },
+  visit_completed:   { type: 'revise_design',     description: (n) => `Revise design after visit for ${n}` },
+  meet2_completed:   { type: 'update_quote',      description: (n) => `Update quote after Meet 2 for ${n}` },
+  deposit_paid:      { type: 'confirm_fitting',   description: (n) => `Confirm fitting slot for ${n}` },
+  fitting_confirmed: { type: 'prepare_materials', description: (n) => `Prepare materials for ${n}` },
+  on_hold:           { type: 'nurture_checkin',    description: (n) => `Nurture check-in for ${n} (2 weeks)` },
 }
 
 /**
@@ -27,7 +34,7 @@ export async function runStageAutomations(
   // Fetch context
   const { data: opp } = await supabase
     .from('opportunities')
-    .select('lead_id, owner_user_id, value_estimate')
+    .select('lead_id, owner_user_id, value_estimate, entry_route, package_complexity, visit_required')
     .eq('id', opportunityId)
     .single()
 
@@ -45,10 +52,14 @@ export async function runStageAutomations(
   const taskDef = stageTasks[stage]
   if (taskDef) {
     try {
+      const dueAt = stage === 'on_hold'
+        ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+        : new Date().toISOString()
+
       await supabase.from('tasks').insert({
         opportunity_id: opportunityId,
         type: taskDef.type,
-        due_at: new Date().toISOString(),
+        due_at: dueAt,
         owner_user_id: opp.owner_user_id,
         status: 'open',
         description: taskDef.description(lead.name ?? 'Unknown'),
@@ -116,6 +127,80 @@ export async function runStageAutomations(
     bookingLink = `${baseUrl}/book?${params.toString()}`
   }
 
+  // Get latest quote info
+  let quoteAmount = ''
+  let depositAmountStr = ''
+  let designLink = ''
+  const { data: latestQuote } = await supabase
+    .from('quotes')
+    .select('amount, deposit_amount, design_id')
+    .eq('opportunity_id', opportunityId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (latestQuote) {
+    quoteAmount = `£${Number(latestQuote.amount).toLocaleString('en-GB')}`
+    depositAmountStr = latestQuote.deposit_amount
+      ? `£${Number(latestQuote.deposit_amount).toLocaleString('en-GB')}`
+      : opp.value_estimate
+        ? `£${Math.round(opp.value_estimate * 0.3).toLocaleString('en-GB')}`
+        : ''
+    if (latestQuote.design_id) {
+      const { data: design } = await supabase
+        .from('designs')
+        .select('file_url, planner_link')
+        .eq('id', latestQuote.design_id)
+        .single()
+      designLink = design?.file_url || design?.planner_link || ''
+    }
+  }
+
+  // Get fitting dates
+  let fittingDates = ''
+  let confirmedFittingDate = ''
+  const { data: fitting } = await supabase
+    .from('fitting_slots')
+    .select('proposed_dates, confirmed_date')
+    .eq('opportunity_id', opportunityId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (fitting) {
+    if (fitting.proposed_dates && Array.isArray(fitting.proposed_dates)) {
+      fittingDates = (fitting.proposed_dates as string[])
+        .map((d: string) => new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }))
+        .join(', ')
+    }
+    if (fitting.confirmed_date) {
+      confirmedFittingDate = new Date(fitting.confirmed_date).toLocaleDateString('en-GB', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      })
+    }
+  }
+
+  // Get visit info
+  let visitDate = ''
+  let visitTime = ''
+  if (stage === 'visit_scheduled' || stage === 'visit_completed') {
+    const { data: visit } = await supabase
+      .from('visits')
+      .select('scheduled_at')
+      .eq('opportunity_id', opportunityId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+    if (visit?.scheduled_at) {
+      const vt = new Date(visit.scheduled_at)
+      visitDate = vt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+      visitTime = vt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    }
+  }
+
+  // Generate CTA URLs for email action links
+  const ctaUrls = generateAllCTAUrls(opportunityId)
+
   const variables: Record<string, string> = {
     name: lead.name ?? '',
     first_name: (lead.name ?? '').split(' ')[0],
@@ -124,6 +209,18 @@ export async function runStageAutomations(
     amount: opp.value_estimate ? Math.round(opp.value_estimate * 0.3).toLocaleString('en-GB') : '',
     booking_link: bookingLink,
     meet_link: meetLink ?? '',
+    // Sales process variables
+    quote_amount: quoteAmount,
+    deposit_amount: depositAmountStr,
+    design_link: designLink,
+    fitting_dates: fittingDates,
+    confirmed_fitting_date: confirmedFittingDate,
+    visit_date: visitDate,
+    visit_time: visitTime,
+    entry_route: opp.entry_route ?? '',
+    package_type: opp.package_complexity ?? '',
+    // CTA URLs
+    ...ctaUrls,
   }
 
   if (bookingTime) {
@@ -285,4 +382,28 @@ export async function runStageAutomations(
       }
     }
   }
+}
+
+/**
+ * Cancel all queued messages for a lead/opportunity.
+ * Called when a client clicks "Not Interested" or "Need More Time".
+ */
+export async function cancelQueuedMessages(
+  supabase: SupabaseClient,
+  leadId: string,
+  opportunityId?: string
+): Promise<number> {
+  let query = supabase
+    .from('message_logs')
+    .update({ status: 'cancelled' })
+    .eq('lead_id', leadId)
+    .eq('status', 'queued')
+
+  if (opportunityId) {
+    query = query.eq('metadata->>opportunity_id', opportunityId)
+  }
+
+  const { count } = await query
+
+  return count ?? 0
 }

@@ -91,6 +91,31 @@ export default function OpportunityCard({ opportunity, isDragging: isDraggingOve
                 {opportunity.lead.project_type}
               </p>
             )}
+            {/* Sub-stage + route/package badges */}
+            <div className="flex items-center gap-1 mt-1 ml-8 flex-wrap">
+              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium ${stageConfig.color} ${stageConfig.textColor}`}>
+                {stageConfig.label}
+              </span>
+              {opportunity.entry_route && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-50 text-slate-500" title={`Entry: ${opportunity.entry_route.replace(/_/g, ' ')}`}>
+                  {opportunity.entry_route === 'online_consultation' ? '📹' : opportunity.entry_route === 'video_call' ? '💻' : '🏠'}
+                </span>
+              )}
+              {opportunity.package_complexity && (
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                  opportunity.package_complexity === 'budget' ? 'bg-green-50 text-green-600' :
+                  opportunity.package_complexity === 'standard' ? 'bg-blue-50 text-blue-600' :
+                  'bg-purple-50 text-purple-600'
+                }`}>
+                  {opportunity.package_complexity === 'budget' ? 'B' : opportunity.package_complexity === 'standard' ? 'S' : 'Se'}
+                </span>
+              )}
+              {opportunity.visit_required && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-violet-50 text-violet-500" title="Visit required">
+                  📍
+                </span>
+              )}
+            </div>
           </div>
           <div className="shrink-0 flex items-center gap-1.5" title={`${daysInStage}d in stage`}>
             {riskLevel && riskLevel !== 'none' && (

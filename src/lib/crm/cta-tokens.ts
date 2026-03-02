@@ -1,0 +1,124 @@
+import { createHmac, timingSafeEqual } from 'crypto'
+
+/**
+ * CTA (Call-To-Action) token system for email action links.
+ *
+ * Each follow-up email contains links like:
+ *   /action/<token>
+ *
+ * The token encodes the opportunity ID, action, and expiry.
+ * Signed with HMAC-SHA256 using CRM_WEBHOOK_SECRET to prevent tampering.
+ *
+ * Actions:
+ *   not-interested    → close deal, stop all sequences
+ *   need-more-time    → pause deal, switch to nurture cadence
+ *   book-visit        → redirect to visit booking
+ *   book-meet2        → redirect to Meet 2 booking
+ *   select-fitting    → redirect to fitting date selection
+ *   pay-deposit       → redirect to Stripe checkout
+ *   proceed           → create invoice, send deposit link
+ */
+
+export type CTAAction =
+  | 'not-interested'
+  | 'need-more-time'
+  | 'book-visit'
+  | 'book-meet2'
+  | 'select-fitting'
+  | 'pay-deposit'
+  | 'proceed'
+
+interface CTAPayload {
+  opportunity_id: string
+  action: CTAAction
+  exp: number // Unix timestamp
+}
+
+const SECRET = () => process.env.CRM_WEBHOOK_SECRET || process.env.CRON_SECRET || 'dev-secret'
+
+function sign(data: string): string {
+  return createHmac('sha256', SECRET()).update(data).digest('hex')
+}
+
+/**
+ * Generate a signed CTA token.
+ * @param opportunityId - The opportunity this action applies to
+ * @param action - The action to perform
+ * @param expiresInDays - Token validity (default 30 days)
+ * @returns Base64url-encoded signed token
+ */
+export function generateCTAToken(
+  opportunityId: string,
+  action: CTAAction,
+  expiresInDays = 30
+): string {
+  const payload: CTAPayload = {
+    opportunity_id: opportunityId,
+    action,
+    exp: Math.floor(Date.now() / 1000) + expiresInDays * 86400,
+  }
+
+  const data = Buffer.from(JSON.stringify(payload)).toString('base64url')
+  const signature = sign(data)
+  return `${data}.${signature}`
+}
+
+/**
+ * Verify and decode a CTA token.
+ * @returns The decoded payload, or null if invalid/expired
+ */
+export function verifyCTAToken(token: string): CTAPayload | null {
+  const parts = token.split('.')
+  if (parts.length !== 2) return null
+
+  const [data, signature] = parts
+  const expectedSig = sign(data)
+
+  // Timing-safe comparison
+  try {
+    const sigBuf = Buffer.from(signature, 'hex')
+    const expectedBuf = Buffer.from(expectedSig, 'hex')
+    if (sigBuf.length !== expectedBuf.length) return null
+    if (!timingSafeEqual(sigBuf, expectedBuf)) return null
+  } catch {
+    return null
+  }
+
+  try {
+    const payload = JSON.parse(Buffer.from(data, 'base64url').toString()) as CTAPayload
+    if (payload.exp < Math.floor(Date.now() / 1000)) return null // Expired
+    if (!payload.opportunity_id || !payload.action) return null
+    return payload
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Generate a full CTA URL for use in email templates.
+ */
+export function generateCTAUrl(
+  opportunityId: string,
+  action: CTAAction,
+  expiresInDays = 30
+): string {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://paxbespoke.uk'
+  const token = generateCTAToken(opportunityId, action, expiresInDays)
+  return `${baseUrl}/action/${token}`
+}
+
+/**
+ * Generate all standard CTA URLs for an opportunity.
+ * Used by the automation engine when building template variables.
+ */
+export function generateAllCTAUrls(opportunityId: string): Record<string, string> {
+  return {
+    cta_not_interested: generateCTAUrl(opportunityId, 'not-interested'),
+    cta_need_more_time: generateCTAUrl(opportunityId, 'need-more-time'),
+    cta_book_visit: generateCTAUrl(opportunityId, 'book-visit'),
+    cta_book_meet2: generateCTAUrl(opportunityId, 'book-meet2'),
+    cta_select_fitting: generateCTAUrl(opportunityId, 'select-fitting'),
+    cta_pay_deposit: generateCTAUrl(opportunityId, 'pay-deposit'),
+    cta_proceed: generateCTAUrl(opportunityId, 'proceed'),
+  }
+}

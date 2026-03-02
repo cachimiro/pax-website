@@ -28,6 +28,10 @@ export interface EmailOptions {
   ctaText?: string
   ctaUrl?: string
   preheader?: string
+  /** If true, appends opt-out CTA links to the email footer */
+  autoTriggered?: boolean
+  ctaNotInterestedUrl?: string
+  ctaNeedMoreTimeUrl?: string
   tracking?: {
     messageLogId: string
     leadId: string
@@ -55,6 +59,9 @@ export async function sendViaGmail(
       ctaText: options.ctaText,
       ctaUrl: options.ctaUrl,
       preheader: options.preheader,
+      autoTriggered: options.autoTriggered,
+      ctaNotInterestedUrl: options.ctaNotInterestedUrl,
+      ctaNeedMoreTimeUrl: options.ctaNeedMoreTimeUrl,
       tracking: options.tracking ? {
         messageLogId: options.tracking.messageLogId,
         leadId: options.tracking.leadId,
@@ -94,7 +101,8 @@ export async function sendEmail(
   body: string,
   supabase?: SupabaseClient,
   senderContext?: { name?: string; role?: string; phone?: string; email?: string },
-  tracking?: { messageLogId: string; leadId: string }
+  tracking?: { messageLogId: string; leadId: string },
+  options?: { autoTriggered?: boolean; ctaNotInterestedUrl?: string; ctaNeedMoreTimeUrl?: string }
 ): Promise<SendResult> {
   // Load stored signature config as fallback when no senderContext provided
   let sender = senderContext
@@ -132,6 +140,9 @@ export async function sendEmail(
           senderRole: sender?.role,
           senderPhone: sender?.phone,
           senderEmail: sender?.email ?? config.email,
+          autoTriggered: options?.autoTriggered,
+          ctaNotInterestedUrl: options?.ctaNotInterestedUrl,
+          ctaNeedMoreTimeUrl: options?.ctaNeedMoreTimeUrl,
           tracking,
         })
         if (result.success) return result
@@ -158,6 +169,9 @@ export async function sendEmail(
     senderRole: sender?.role,
     senderPhone: sender?.phone,
     senderEmail: sender?.email,
+    autoTriggered: options?.autoTriggered,
+    ctaNotInterestedUrl: options?.ctaNotInterestedUrl,
+    ctaNeedMoreTimeUrl: options?.ctaNeedMoreTimeUrl,
     tracking: tracking ? { ...tracking, baseUrl } : undefined,
   })
 

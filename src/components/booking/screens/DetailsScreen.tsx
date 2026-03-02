@@ -37,10 +37,10 @@ export default function DetailsScreen({ name, email, phone, whatsappOptIn, onCha
         transition={{ delay: 0.1 }}
       >
         <h2 className="text-2xl md:text-3xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
-          Your details
+          Let&apos;s start with your details
         </h2>
         <p className="text-warm-500 mb-6">
-          So we can send your confirmation and video call link.
+          So we can save your progress and send your consultation details.
         </p>
       </motion.div>
 

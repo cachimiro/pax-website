@@ -255,12 +255,17 @@ export async function processQueuedMessages(supabase: SupabaseClient): Promise<n
     let status = 'failed'
 
     const tracking = msg.lead_id ? { messageLogId: msg.id, leadId: msg.lead_id } : undefined
+    const isAutoTriggered = meta?.auto_triggered === true
 
     try {
       switch (msg.channel) {
         case 'email':
           if (lead.email) {
-            const r = await sendEmail(lead.email, subject, body, supabase, undefined, tracking)
+            const r = await sendEmail(lead.email, subject, body, supabase, undefined, tracking, {
+              autoTriggered: isAutoTriggered,
+              ctaNotInterestedUrl: typeof meta?.cta_not_interested === 'string' ? meta.cta_not_interested : undefined,
+              ctaNeedMoreTimeUrl: typeof meta?.cta_need_more_time === 'string' ? meta.cta_need_more_time : undefined,
+            })
             status = r.success ? 'sent' : 'failed'
           }
           break

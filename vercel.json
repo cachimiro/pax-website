@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/meetings",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/abandonments",
+      "schedule": "*/10 * * * *"
     }
   ],
   "headers": [

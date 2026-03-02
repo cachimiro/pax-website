@@ -34,6 +34,14 @@ export function scoreLead(lead: Lead, opportunity?: Opportunity | null): LeadSco
   const engagementScore = scoreEngagement(lead)
   factors.push({ label: 'Engagement', score: engagementScore, max: 15 })
 
+  // 6. Sales process signals (bonus up to 25 pts, can push above base 100)
+  if (opportunity) {
+    const processScore = scoreSalesProcess(opportunity)
+    if (processScore > 0) {
+      factors.push({ label: 'Sales Progress', score: processScore, max: 25 })
+    }
+  }
+
   const total = Math.min(100, factors.reduce((sum, f) => sum + f.score, 0))
   const tier = total >= 70 ? 'hot' : total >= 40 ? 'warm' : 'cold'
 
@@ -89,6 +97,30 @@ function scoreEngagement(lead: Lead): number {
   if (lead.project_type) score += 3
   if (lead.budget_band) score += 2
   return Math.min(15, score)
+}
+
+function scoreSalesProcess(opp: Opportunity): number {
+  let score = 0
+  // Entry route: direct visit = highest intent
+  if (opp.entry_route === 'direct_visit') score += 5
+  else if (opp.entry_route === 'video_call') score += 3
+  // Package: Select = highest value
+  if (opp.package_complexity === 'select') score += 5
+  else if (opp.package_complexity === 'standard') score += 3
+  // Stage progression signals
+  const stageBonus: Partial<Record<string, number>> = {
+    meet1_completed: 3,
+    design_created: 5,
+    quote_sent: 7,
+    visit_completed: 10,
+    fitting_proposed: 12,
+    proposal_agreed: 15,
+    awaiting_deposit: 18,
+    deposit_paid: 22,
+    fitting_confirmed: 25,
+  }
+  score += stageBonus[opp.stage] ?? 0
+  return Math.min(25, score)
 }
 
 export function getScoreColor(tier: LeadScore['tier']): string {

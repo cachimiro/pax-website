@@ -19,7 +19,7 @@ import PipelineColumn from './PipelineColumn'
 import OpportunityCard from './OpportunityCard'
 import StageTransitionModal from './StageTransitionModal'
 import LostReasonModal from './LostReasonModal'
-import { PIPELINE_STAGES, STAGE_ORDER } from '@/lib/crm/stages'
+import { PIPELINE_STAGES, PIPELINE_GROUPS, STAGE_ORDER } from '@/lib/crm/stages'
 import { useOpportunities, useMoveOpportunityStage } from '@/lib/crm/hooks'
 import type { OpportunityStage, OpportunityWithLead, LostReason } from '@/lib/crm/types'
 import { assessOpportunityRisk, type RiskLevel } from '@/lib/crm/risk'
@@ -59,8 +59,7 @@ export default function PipelineBoard() {
 
   const grouped = useMemo(() => {
     const map: Record<OpportunityStage, OpportunityWithLead[]> = {} as Record<OpportunityStage, OpportunityWithLead[]>
-    for (const stage of PIPELINE_STAGES) map[stage] = []
-    map['lost'] = []
+    for (const stage of STAGE_ORDER) map[stage] = []
     for (const opp of opportunities) {
       if (map[opp.stage]) map[opp.stage].push(opp)
     }
@@ -83,9 +82,9 @@ export default function PipelineBoard() {
   }, [opportunities, prefs.suggestions_enabled, prefs.snooze_weekends])
 
   const activeOpportunity = activeId ? opportunities.find((o) => o.id === activeId) ?? null : null
-  const activeOpps = opportunities.filter((o) => o.stage !== 'lost' && o.stage !== 'complete')
+  const activeOpps = opportunities.filter((o) => o.stage !== 'lost' && o.stage !== 'closed_not_interested' && o.stage !== 'complete')
   const totalPipelineValue = activeOpps.reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
-  const lostCount = grouped['lost']?.length ?? 0
+  const lostCount = (grouped['lost']?.length ?? 0) + (grouped['closed_not_interested']?.length ?? 0)
   const completedCount = opportunities.filter((o) => o.stage === 'complete').length
 
   // Optimistic move — update cache immediately, revert on error
@@ -239,18 +238,27 @@ export default function PipelineBoard() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-fade" style={{ minHeight: 'calc(100vh - 300px)' }}>
-          {PIPELINE_STAGES.map((stage) => (
-            <PipelineColumn
-              key={stage}
-              stage={stage}
-              opportunities={grouped[stage] ?? []}
-              isLoading={isLoading}
-              totalPipelineValue={totalPipelineValue}
-              onQuickMove={quickMove}
-              justMovedId={justMovedId}
-              riskMap={riskMap}
-            />
-          ))}
+          {PIPELINE_GROUPS.map((group) => {
+            // Collect all opportunities in this group's stages
+            const groupOpps = group.stages.flatMap((stage) => grouped[stage] ?? [])
+            // Use the first stage as the droppable ID for the column
+            const primaryStage = group.stages[0]
+            return (
+              <PipelineColumn
+                key={group.key}
+                stage={primaryStage}
+                groupLabel={group.label}
+                groupStages={group.stages}
+                groupColor={group.color}
+                opportunities={groupOpps}
+                isLoading={isLoading}
+                totalPipelineValue={totalPipelineValue}
+                onQuickMove={quickMove}
+                justMovedId={justMovedId}
+                riskMap={riskMap}
+              />
+            )
+          })}
         </div>
 
         <DragOverlay dropAnimation={{

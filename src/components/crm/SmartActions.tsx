@@ -50,7 +50,7 @@ export default function SmartActions({
 
   const activeOpp = useMemo(() => {
     return opportunities
-      .filter((o) => o.stage !== 'lost' && o.stage !== 'complete')
+      .filter((o) => o.stage !== 'lost' && o.stage !== 'closed_not_interested' && o.stage !== 'complete')
       .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0]
   }, [opportunities])
 
@@ -178,6 +178,105 @@ export default function SmartActions({
           priority: 2,
         })
       }
+    }
+
+    // ── Meet 1 completed — create design ──
+    if (stage === 'meet1_completed') {
+      result.push({
+        id: 'create-design',
+        label: 'Create 3D design',
+        description: 'Design the wardrobe layout for this client',
+        icon: <ClipboardList size={15} />,
+        color: 'bg-indigo-50',
+        iconColor: 'text-indigo-600',
+        onClick: () => {
+          document.querySelector('[data-tab="designs"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        },
+        priority: 1,
+      })
+    }
+
+    // ── Design created — send quote ──
+    if (stage === 'design_created') {
+      result.push({
+        id: 'send-quote',
+        label: 'Send quote',
+        description: 'Create and send the quote to the client',
+        icon: <Send size={15} />,
+        color: 'bg-indigo-50',
+        iconColor: 'text-indigo-600',
+        onClick: () => {
+          document.querySelector('[data-tab="quotes"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        },
+        priority: 1,
+      })
+    }
+
+    // ── Quote sent — follow up or mark visit required ──
+    if (stage === 'quote_sent') {
+      if (activeOpp?.visit_required || activeOpp?.package_complexity === 'standard' || activeOpp?.package_complexity === 'select') {
+        result.push({
+          id: 'schedule-visit',
+          label: 'Schedule site visit',
+          description: 'Standard/Select package — visit recommended',
+          icon: <Calendar size={15} />,
+          color: 'bg-violet-50',
+          iconColor: 'text-violet-600',
+          onClick: () => {
+            document.querySelector('[data-tab="visits"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+          },
+          priority: 1,
+        })
+      }
+    }
+
+    // ── Visit completed — revise design ──
+    if (stage === 'visit_completed') {
+      result.push({
+        id: 'revise-design',
+        label: 'Revise design',
+        description: 'Update the design based on the site visit',
+        icon: <ClipboardList size={15} />,
+        color: 'bg-indigo-50',
+        iconColor: 'text-indigo-600',
+        onClick: () => {
+          document.querySelector('[data-tab="designs"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        },
+        priority: 1,
+      })
+    }
+
+    // ── Fitting proposed — waiting for client ──
+    if (stage === 'fitting_proposed') {
+      if (lastMessageAge > 48 && !isOptedOut && hasEmail) {
+        result.push({
+          id: 'fitting-followup',
+          label: 'Follow up on fitting',
+          description: 'Client hasn\'t selected a fitting date yet',
+          icon: <Send size={15} />,
+          color: 'bg-amber-50',
+          iconColor: 'text-amber-600',
+          onClick: () => onCompose('email', 'fitting_followup_48h'),
+          priority: 1,
+        })
+      }
+    }
+
+    // ── On hold — resume or close ──
+    if (stage === 'on_hold') {
+      result.push({
+        id: 'resume-deal',
+        label: 'Resume deal',
+        description: 'Client is ready to proceed again',
+        icon: <Sparkles size={15} />,
+        color: 'bg-emerald-50',
+        iconColor: 'text-emerald-600',
+        onClick: () => {
+          // Navigate to pipeline to drag the card
+          window.location.href = '/crm/pipeline'
+        },
+        priority: 1,
+      })
     }
 
     // ── Overdue tasks (any stage) ──

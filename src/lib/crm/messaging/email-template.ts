@@ -13,6 +13,11 @@ interface EmailTemplateOptions {
   ctaText?: string
   ctaUrl?: string
   preheader?: string
+  /** If true, appends "Not Interested" / "Need More Time" links at the bottom */
+  autoTriggered?: boolean
+  /** CTA URLs for opt-out links (required if autoTriggered is true) */
+  ctaNotInterestedUrl?: string
+  ctaNeedMoreTimeUrl?: string
   tracking?: {
     messageLogId: string
     leadId: string
@@ -35,6 +40,10 @@ const BRAND = {
   white: '#FFFFFF',
   logoUrl: 'https://smrzqxrfluzuhlynmsky.supabase.co/storage/v1/object/public/brand/logo-full.png',
   siteUrl: 'https://paxbespoke.uk',
+}
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 /**
@@ -169,6 +178,25 @@ export function buildBrandedEmail(options: EmailTemplateOptions): { html: string
             </td>
           </tr>
 
+          ${options.autoTriggered && (options.ctaNotInterestedUrl || options.ctaNeedMoreTimeUrl) ? `
+          <!-- Opt-out CTAs -->
+          <tr>
+            <td style="padding:0 28px 8px 28px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="border-top:1px solid ${BRAND.warm100};padding-top:16px;">
+                    <p style="margin:0;font-size:12px;color:${BRAND.warm300};line-height:1.8;">
+                      Changed your mind?
+                      ${options.ctaNotInterestedUrl ? `<a href="${escapeHtml(options.ctaNotInterestedUrl)}" style="color:${BRAND.warm300};text-decoration:underline;">I'm no longer interested</a>` : ''}
+                      ${options.ctaNotInterestedUrl && options.ctaNeedMoreTimeUrl ? ' &middot; ' : ''}
+                      ${options.ctaNeedMoreTimeUrl ? `<a href="${escapeHtml(options.ctaNeedMoreTimeUrl)}" style="color:${BRAND.warm300};text-decoration:underline;">I need more time</a>` : ''}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>` : ''}
+
           <!-- Footer -->
           <tr>
             <td style="padding:16px 28px 32px 28px;">
@@ -268,12 +296,4 @@ export function buildMimeMessage(options: {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '')
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
 }
