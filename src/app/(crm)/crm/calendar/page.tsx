@@ -621,7 +621,7 @@ function DroppableSlot({
     <div
       ref={setNodeRef}
       className={`
-        border-l border-[var(--warm-50)] p-1 min-h-[64px] relative transition-colors duration-200
+        border-l border-[var(--warm-50)] p-1 min-h-[64px] min-w-0 relative transition-colors duration-200 overflow-hidden
         ${isNowRow ? 'bg-[var(--green-50)]/30' : ''}
         ${isOver ? 'bg-[var(--green-50)] ring-1 ring-inset ring-[var(--green-300)]/40' : ''}
       `}

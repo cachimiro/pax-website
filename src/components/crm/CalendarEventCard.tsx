@@ -3,7 +3,6 @@
 import { format, parseISO } from 'date-fns'
 import { Phone, Video, Home, MapPin, Wrench, CheckCircle2 } from 'lucide-react'
 import type { CalendarEvent } from './CalendarTypes'
-import { EVENT_LABELS } from './CalendarTypes'
 
 const typeIcons: Record<string, typeof Phone> = {
   call1: Phone, call2: Video, onboarding: Home,
@@ -30,7 +29,7 @@ export default function CalendarEventCard({ event, isOverlay, compact, onClick }
       onClick={onClick}
       className={`
         ${event.color.bg} border-l-[3px] ${event.color.border} ${event.color.text}
-        rounded-lg px-2 py-1.5 text-[10px] font-medium mb-1
+        rounded-lg px-2 py-1.5 text-[10px] font-medium mb-1 w-full max-w-full overflow-hidden
         transition-all group relative select-none cursor-pointer
         ${isDone ? 'opacity-50' : isNoShow || isCancelled ? 'opacity-35' : ''}
         ${isOverlay ? 'shadow-xl ring-1 ring-[var(--green-500)]/20 rotate-[1deg] scale-105' : 'hover:shadow-md hover:brightness-[0.97]'}
@@ -62,23 +61,7 @@ export default function CalendarEventCard({ event, isOverlay, compact, onClick }
         </div>
       )}
 
-      {/* Hover tooltip */}
-      {!isOverlay && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-20 pointer-events-none">
-          <div className="bg-[var(--warm-900)] text-white text-[9px] px-3 py-2 rounded-lg whitespace-nowrap shadow-lg space-y-0.5">
-            <div className="font-semibold">{label} — {event.title}</div>
-            <div className="opacity-70">
-              {format(parseISO(event.startTime), 'HH:mm')}
-              {event.durationMin && ` (${event.durationMin}min)`}
-            </div>
-            {event.stage && <div className="opacity-50">{event.stage.replace(/_/g, ' ')}</div>}
-            {event.value && <div className="opacity-70">£{Number(event.value).toLocaleString('en-GB')}</div>}
-            {event.outcome !== 'pending' && event.outcome !== 'open' && (
-              <div className="opacity-50">{event.outcome}</div>
-            )}
-          </div>
-        </div>
-      )}
+
     </div>
   )
 }
