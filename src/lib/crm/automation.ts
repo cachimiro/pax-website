@@ -76,7 +76,7 @@ export async function runStageAutomations(
       .from('profiles')
       .select('full_name')
       .eq('id', opp.owner_user_id)
-      .single()
+      .maybeSingle()
     if (owner?.full_name) ownerName = owner.full_name
   }
 
@@ -96,7 +96,7 @@ export async function runStageAutomations(
       .eq('type', bookingType)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (booking?.scheduled_at) {
       bookingTime = new Date(booking.scheduled_at)
@@ -137,7 +137,7 @@ export async function runStageAutomations(
     .eq('opportunity_id', opportunityId)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   if (latestQuote) {
     quoteAmount = `£${Number(latestQuote.amount).toLocaleString('en-GB')}`
@@ -151,7 +151,7 @@ export async function runStageAutomations(
         .from('designs')
         .select('file_url, planner_link')
         .eq('id', latestQuote.design_id)
-        .single()
+        .maybeSingle()
       designLink = design?.file_url || design?.planner_link || ''
     }
   }
@@ -165,7 +165,7 @@ export async function runStageAutomations(
     .eq('opportunity_id', opportunityId)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   if (fitting) {
     if (fitting.proposed_dates && Array.isArray(fitting.proposed_dates)) {
@@ -190,7 +190,7 @@ export async function runStageAutomations(
       .eq('opportunity_id', opportunityId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
     if (visit?.scheduled_at) {
       const vt = new Date(visit.scheduled_at)
       visitDate = vt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
@@ -239,7 +239,7 @@ export async function runStageAutomations(
       .select('id')
       .eq('opportunity_id', opportunityId)
       .limit(1)
-      .single()
+      .maybeSingle()
 
     let invoiceId = existingInvoice?.id
 
@@ -253,7 +253,7 @@ export async function runStageAutomations(
           status: 'sent',
         })
         .select('id')
-        .single()
+        .maybeSingle()
 
       invoiceId = newInvoice?.id
     }

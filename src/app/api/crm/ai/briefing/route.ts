@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOpenAI, MODEL } from '@/lib/crm/openai'
 import { createClient } from '@/lib/supabase/server'
+import { BUSINESS_CONTEXT, PIPELINE_STAGES, safeParseAIJson } from '@/lib/crm/ai-context'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
   const twoDaysOut = new Date(now.getTime() + 48 * 60 * 60 * 1000)
 
-  const [oppsRes, tasksRes, bookingsRes, stageLogRes, leadsRes] = await Promise.all([
+  const [oppsRes, tasksRes, bookingsRes, stageLogRes, leadsRes, designsRes, quotesRes, visitsRes, fittingsRes] = await Promise.all([
     supabase
       .from('opportunities')
       .select('*, lead:leads(id, name, project_type, budget_band, status)')
@@ -47,6 +48,23 @@ export async function POST(request: NextRequest) {
       .gte('created_at', yesterday.toISOString())
       .order('created_at', { ascending: false })
       .limit(10),
+    supabase
+      .from('designs')
+      .select('id, opportunity_id, created_at')
+      .gte('created_at', yesterday.toISOString()),
+    supabase
+      .from('quotes')
+      .select('id, amount, status, created_at')
+      .gte('created_at', yesterday.toISOString()),
+    supabase
+      .from('visits')
+      .select('id, scheduled_at, status')
+      .gte('scheduled_at', now.toISOString())
+      .lte('scheduled_at', twoDaysOut.toISOString()),
+    supabase
+      .from('fitting_slots')
+      .select('id, confirmed_date, status')
+      .gte('created_at', yesterday.toISOString()),
   ])
 
   const opportunities = oppsRes.data ?? []
@@ -68,9 +86,18 @@ export async function POST(request: NextRequest) {
 
   const openai = getOpenAI()
 
-  const systemPrompt = `You are a sales assistant for PaxBespoke, a premium bespoke IKEA Pax wardrobe company in the UK. Generate a concise daily briefing for a sales rep.
+  const recentDesigns = designsRes.data ?? []
+  const recentQuotes = quotesRes.data ?? []
+  const upcomingVisits = visitsRes.data ?? []
+  const recentFittings = fittingsRes.data ?? []
 
-Respond with ONLY valid JSON, no markdown:
+  const systemPrompt = `You are a sales assistant for PaxBespoke. Generate a concise daily briefing.
+
+${BUSINESS_CONTEXT}
+
+${PIPELINE_STAGES}
+
+Respond with ONLY valid JSON:
 {
   "greeting": "<time-appropriate greeting using the rep's name>",
   "summary": "<1-2 sentence overview of today's pipeline state>",
@@ -108,6 +135,11 @@ Stage changes (last 24h): ${stageLog.length > 0 ? stageLog.map((s: any) => `${(s
 
 New leads (last 24h): ${newLeads.length > 0 ? newLeads.map((l: any) => l.name).join(', ') : 'None'}
 
+Designs created (24h): ${recentDesigns.length}
+Quotes sent (24h): ${recentQuotes.length}${recentQuotes.length > 0 ? `, total £${recentQuotes.reduce((s: number, q: any) => s + (q.amount ?? 0), 0).toLocaleString('en-GB')}` : ''}
+Upcoming visits (48h): ${upcomingVisits.length}
+Fittings confirmed (24h): ${recentFittings.filter((f: any) => f.confirmed_date).length}
+
 Generate the daily briefing.`
 
   try {
@@ -122,7 +154,8 @@ Generate the daily briefing.`
     })
 
     const raw = completion.choices[0]?.message?.content ?? '{}'
-    const result = JSON.parse(raw)
+    const result = safeParseAIJson(raw)
+    if (!result) return NextResponse.json({ error: 'AI returned invalid response' }, { status: 502 })
     result.generated_at = now.toISOString()
 
     return NextResponse.json(result)

@@ -58,9 +58,19 @@ export function generateCTAToken(
     exp: Math.floor(Date.now() / 1000) + expiresInDays * 86400,
   }
 
-  const data = Buffer.from(JSON.stringify(payload)).toString('base64url')
+  const data = toBase64Url(JSON.stringify(payload))
   const signature = sign(data)
   return `${data}.${signature}`
+}
+
+// base64url helpers — avoid Buffer.toString('base64url') which isn't supported in browser polyfills
+function toBase64Url(str: string): string {
+  return Buffer.from(str).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function fromBase64Url(b64: string): string {
+  const padded = b64.replace(/-/g, '+').replace(/_/g, '/') + '=='.slice(0, (4 - (b64.length % 4)) % 4)
+  return Buffer.from(padded, 'base64').toString()
 }
 
 /**
@@ -85,7 +95,7 @@ export function verifyCTAToken(token: string): CTAPayload | null {
   }
 
   try {
-    const payload = JSON.parse(Buffer.from(data, 'base64url').toString()) as CTAPayload
+    const payload = JSON.parse(fromBase64Url(data)) as CTAPayload
     if (payload.exp < Math.floor(Date.now() / 1000)) return null // Expired
     if (!payload.opportunity_id || !payload.action) return null
     return payload

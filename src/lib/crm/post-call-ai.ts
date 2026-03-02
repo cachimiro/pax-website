@@ -1,10 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getOpenAI, MODEL } from './openai'
 import type { AISuggestion, OpportunityStage } from './types'
+import { BUSINESS_CONTEXT, PIPELINE_STAGES } from './ai-context'
 
 const STAGE_TRANSITIONS: Record<string, OpportunityStage[]> = {
-  call1: ['qualified', 'lost'],
-  call2: ['proposal_agreed', 'qualified', 'lost'],
+  call1: ['qualified', 'meet1_completed', 'lost'],
+  meet1: ['meet1_completed', 'design_created', 'visit_required', 'lost'],
+  call2: ['meet2_completed', 'fitting_proposed', 'proposal_agreed', 'lost'],
+  meet2: ['meet2_completed', 'fitting_proposed', 'proposal_agreed', 'lost'],
+  visit: ['visit_completed', 'lost'],
   onboarding: ['onboarding_complete', 'lost'],
 }
 
@@ -56,7 +60,11 @@ export async function analysePostCallNotes(
       messages: [
         {
           role: 'system',
-          content: `You are a CRM assistant for PaxBespoke, a bespoke IKEA Pax wardrobe company. Analyse post-call notes and suggest the next pipeline stage.
+          content: `You are a CRM assistant for PaxBespoke. Analyse post-call/visit notes and suggest the next pipeline stage.
+
+${BUSINESS_CONTEXT}
+
+${PIPELINE_STAGES}
 
 You MUST respond with valid JSON matching this exact schema:
 {
@@ -79,7 +87,13 @@ Rules:
         },
         {
           role: 'user',
-          content: `Call type: ${booking.type === 'call1' ? 'Discovery Call' : booking.type === 'call2' ? 'Design Call' : 'Onboarding Visit'}
+          content: `Call type: ${
+            booking.type === 'call1' ? 'Discovery Call (Meet 1)' :
+            booking.type === 'call2' ? 'Design Review Call (Meet 2)' :
+            booking.type === 'visit' ? 'Site Visit' :
+            booking.type === 'onboarding' ? 'Onboarding Visit' :
+            booking.type
+          }
 Customer: ${lead?.name ?? 'Unknown'}
 Project: ${lead?.project_type ?? 'wardrobe'}
 Budget: ${lead?.budget_band ?? 'not specified'}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOpenAI, MODEL } from '@/lib/crm/openai'
 import { createClient } from '@/lib/supabase/server'
+import { BUSINESS_CONTEXT, PIPELINE_STAGES, STAGE_TARGETS, safeParseAIJson } from '@/lib/crm/ai-context'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -105,7 +106,13 @@ export async function POST(request: NextRequest) {
 
   const openai = getOpenAI()
 
-  const systemPrompt = `You are a pipeline analyst for PaxBespoke, a premium bespoke IKEA Pax wardrobe company in the UK. Produce a weekly pipeline health report.
+  const systemPrompt = `You are a pipeline analyst for PaxBespoke. Produce a weekly pipeline health report.
+
+${BUSINESS_CONTEXT}
+
+${PIPELINE_STAGES}
+
+${STAGE_TARGETS}
 
 Respond with ONLY valid JSON, no markdown:
 {
@@ -183,12 +190,8 @@ Generate the weekly pipeline health report.`
     })
 
     const raw = completion.choices[0]?.message?.content ?? '{}'
-    // Extract JSON from response — AI sometimes wraps it in markdown code blocks
-    const jsonMatch = raw.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return NextResponse.json({ error: 'AI returned non-JSON response', raw: raw.substring(0, 200) }, { status: 502 })
-    }
-    const result = JSON.parse(jsonMatch[0])
+    const result = safeParseAIJson(raw)
+    if (!result) return NextResponse.json({ error: 'AI returned invalid response' }, { status: 502 })
     result.period_start = weekAgo.toISOString()
     result.period_end = now.toISOString()
     result.generated_at = now.toISOString()

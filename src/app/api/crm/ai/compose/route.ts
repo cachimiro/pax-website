@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOpenAI, MODEL } from '@/lib/crm/openai'
 import { createClient } from '@/lib/supabase/server'
+import { BUSINESS_CONTEXT, buildEnrichedContext, formatContextForPrompt } from '@/lib/crm/ai-context'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -15,8 +16,19 @@ export async function POST(request: NextRequest) {
   const openai = getOpenAI()
   const firstName = lead.name?.split(' ')[0] ?? 'there'
 
+  // Fetch enriched context if lead has an ID
+  let contextBlock = ''
+  if (lead.id) {
+    try {
+      const ctx = await buildEnrichedContext(supabase, lead.id, opportunity?.id)
+      contextBlock = formatContextForPrompt(ctx)
+    } catch {
+      // Fall back to basic context
+    }
+  }
+
   const toneGuide: Record<string, string> = {
-    formal: 'Use a professional, structured tone. Full sentences, proper greetings and sign-offs. Suitable for formal business correspondence.',
+    formal: 'Use a professional, structured tone. Full sentences, proper greetings and sign-offs.',
     friendly: 'Use a warm, approachable tone. Conversational but still professional. Use the lead\'s first name naturally.',
     brief: 'Be concise and direct. Short sentences, no filler. Get to the point quickly while remaining polite.',
   }
@@ -31,19 +43,23 @@ export async function POST(request: NextRequest) {
     welcome: 'Welcome/introduction message after a new enquiry',
     follow_up: 'General follow-up to check in',
     call1_followup: 'Follow-up after the first consultation call — recap and next steps',
+    design_ready: 'Notify client their 3D design is ready to view',
+    quote_followup: 'Follow-up on a quote that hasn\'t received a response — mention the amount and design',
+    visit_invite: 'Invite client to book a site visit for measurements',
+    post_visit_followup: 'Follow-up after a site visit — recap what was discussed and next steps',
+    fitting_proposal: 'Propose fitting dates for the client to choose from',
+    fitting_confirmation: 'Confirm the selected fitting date',
     proposal_followup: 'Follow-up on a proposal that hasn\'t received a response',
-    deposit_reminder: 'Reminder to pay the deposit to secure the project',
-    deposit_confirmation: 'Confirmation that the deposit has been received',
+    deposit_reminder: 'Reminder to pay the deposit to secure the fitting slot — mention the amount',
+    deposit_confirmation: 'Confirmation that the deposit has been received and fitting is secured',
     booking_confirm: 'Confirmation of an upcoming appointment',
+    on_hold_checkin: 'Nurture check-in for a lead that\'s on hold — gentle, no pressure',
     payment_reminder: 'Reminder about an outstanding payment',
   }
 
-  const systemPrompt = `You are a message composer for PaxBespoke, a premium bespoke IKEA Pax wardrobe company operating UK-wide. You draft messages that sales reps send to leads.
+  const systemPrompt = `You are a message composer for PaxBespoke. You draft messages that sales reps send to leads.
 
-BRAND CONTEXT:
-- PaxBespoke designs, builds, and installs custom wardrobes using IKEA Pax frames
-- Premium service with free consultation calls, professional onboarding visits, and full installation
-- Typical project value: £1,500–£8,000+
+${BUSINESS_CONTEXT}
 
 TONE: ${toneGuide[tone] ?? toneGuide.friendly}
 
@@ -60,29 +76,11 @@ RULES:
 Respond with ONLY the message text. No JSON wrapping, no markdown, no explanations.
 ${channel === 'email' ? 'Start with "Subject: ..." on the first line, then a blank line, then the body.' : ''}`
 
-  const contextParts: string[] = []
-  contextParts.push(`Lead: ${lead.name}`)
-  if (lead.project_type) contextParts.push(`Project: ${lead.project_type}`)
-  if (lead.budget_band) contextParts.push(`Budget: ${lead.budget_band}`)
-  if (lead.postcode) contextParts.push(`Location: ${lead.postcode}`)
-  if (lead.source) contextParts.push(`Source: ${lead.source}`)
-  if (opportunity) {
-    contextParts.push(`Pipeline stage: ${opportunity.stage?.replace(/_/g, ' ')}`)
-    if (opportunity.value_estimate) contextParts.push(`Value: £${opportunity.value_estimate}`)
-  }
-  if (recentMessages?.length) {
-    const recent = recentMessages.slice(0, 3).map((m: { channel: string; template: string; sent_at: string }) =>
-      `${m.channel} — ${m.template ?? 'custom'} (${new Date(m.sent_at).toLocaleDateString('en-GB')})`
-    ).join('; ')
-    contextParts.push(`Recent messages: ${recent}`)
-  }
-
   const intentDesc = intentLabels[intent] ?? intent ?? 'General message'
 
   const userPrompt = `Draft a ${channel} message for this intent: ${intentDesc}
 
-Context:
-${contextParts.join('\n')}
+${contextBlock || `Lead: ${lead.name}\nProject: ${lead.project_type ?? 'wardrobe'}\nBudget: ${lead.budget_band ?? 'unknown'}\nStage: ${opportunity?.stage ?? 'unknown'}`}
 ${customInstructions ? `\nAdditional instructions: ${customInstructions}` : ''}`
 
   // Token limits by channel

@@ -1,73 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOpenAI, MODEL } from '@/lib/crm/openai'
 import { createClient } from '@/lib/supabase/server'
+import { BUSINESS_CONTEXT, PIPELINE_STAGES, STAGE_TARGETS, buildEnrichedContext, formatContextForPrompt, safeParseAIJson } from '@/lib/crm/ai-context'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { lead, opportunity, tasks, bookings, messages } = await request.json()
-  if (!lead) return NextResponse.json({ error: 'lead is required' }, { status: 400 })
+  const { lead, opportunity } = await request.json()
+  if (!lead?.id) return NextResponse.json({ error: 'lead is required' }, { status: 400 })
 
-  const openai = getOpenAI()
+  try {
+    const ctx = await buildEnrichedContext(supabase, lead.id, opportunity?.id)
+    const openai = getOpenAI()
 
-  const systemPrompt = `You are an AI sales coach for PaxBespoke, a premium bespoke IKEA Pax wardrobe company in NW England. Analyse the lead's current state and suggest the single best next action.
+    const systemPrompt = `You are an AI sales coach for PaxBespoke. Analyse the lead's current state and suggest the single best next action.
 
-Pipeline stages in order:
-new_enquiry → call1_scheduled → qualified → call2_scheduled → proposal_agreed → awaiting_deposit → deposit_paid → onboarding_scheduled → onboarding_complete → production → installation → completed
+${BUSINESS_CONTEXT}
 
-Target timelines per stage:
-- new_enquiry: respond within 1 day
-- call1_scheduled: complete within 3 days
-- qualified: schedule call 2 within 5 days
-- call2_scheduled: complete within 3 days
-- proposal_agreed: send deposit request within 7 days
-- awaiting_deposit: follow up within 5 days
-- deposit_paid: schedule onboarding within 3 days
+${PIPELINE_STAGES}
 
-Respond with ONLY valid JSON, no markdown:
+${STAGE_TARGETS}
+
+RULES:
+- Be specific: use the lead's name, mention actual dates, amounts, stages
+- Consider the entry route and package when suggesting actions
+- If a design hasn't been created yet after Meet 1, that's the priority
+- If a quote was sent but no response, suggest follow-up with specific timing
+- If visit is required but not scheduled, that's urgent for Standard/Select
+- If deposit is pending, suggest a specific follow-up approach
+- If lead is on_hold, suggest a nurture approach based on their history
+
+Respond with ONLY valid JSON:
 {
-  "action": "<specific action to take, e.g. 'Call Sarah to confirm her Call 1 appointment for Thursday'>",
-  "reason": "<why this is the priority right now>",
+  "action": "<specific action, e.g. 'Call Sarah to confirm her site visit for Thursday'>",
+  "reason": "<why this is the priority>",
   "urgency": "high" | "medium" | "low",
-  "script_hint": "<optional 1-2 sentence talking point or email opener>",
+  "script_hint": "<1-2 sentence talking point or email opener>",
   "risk": "<what happens if this isn't done soon>"
 }`
 
-  const daysInStage = opportunity
-    ? Math.round((Date.now() - new Date(opportunity.updated_at).getTime()) / 86400000)
-    : 0
-
-  const userPrompt = `Lead: ${lead.name}
-Stage: ${opportunity?.stage ?? 'No opportunity'}
-Days in current stage: ${daysInStage}
-Value estimate: ${opportunity?.value_estimate ? '£' + opportunity.value_estimate : 'Not set'}
-Budget band: ${lead.budget_band ?? 'Unknown'}
-Postcode: ${lead.postcode ?? 'Unknown'}
-Project type: ${lead.project_type ?? 'Unknown'}
-Source: ${lead.source ?? 'Unknown'}
-Notes: ${lead.notes ?? 'None'}
-
-Recent tasks: ${tasks?.length ? tasks.map((t: { type: string; status: string }) => `${t.type} (${t.status})`).join(', ') : 'None'}
-Bookings: ${bookings?.length ? bookings.map((b: { type: string; outcome: string }) => `${b.type} (${b.outcome})`).join(', ') : 'None'}
-Messages sent: ${messages?.length ?? 0}
-
-What should the sales rep do next?`
-
-  try {
     const completion = await openai.chat.completions.create({
       model: MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        { role: 'user', content: `What should the sales rep do next?\n\n${formatContextForPrompt(ctx)}` },
       ],
       temperature: 0.4,
       max_tokens: 400,
     })
 
     const raw = completion.choices[0]?.message?.content ?? '{}'
-    const result = JSON.parse(raw)
+    const result = safeParseAIJson(raw)
+    if (!result) return NextResponse.json({ error: 'AI returned invalid response' }, { status: 502 })
 
     return NextResponse.json(result)
   } catch (err: unknown) {
