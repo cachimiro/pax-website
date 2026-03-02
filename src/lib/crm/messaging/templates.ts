@@ -180,7 +180,45 @@ Thanks for choosing PaxBespoke!`,
  * Interpolate placeholders in a template string.
  */
 export function interpolate(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`)
+  // Replace variables, using empty string for missing/empty values
+  let result = template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '')
+
+  // Remove lines whose only dynamic content was a variable that resolved to empty.
+  // Patterns: "Join here: " (trailing empty), "→ Pay now: " (CTA with no link),
+  // or standalone lines that were just a variable (now blank).
+  const lines = result.split('\n')
+  const cleaned: string[] = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+
+    // Skip lines that end with a colon/colon-space and the next line is empty
+    // (e.g., "Join your video call here:" followed by empty — the link was missing)
+    if (trimmed.endsWith(':') && i + 1 < lines.length && lines[i + 1].trim() === '') {
+      // Check if this looks like a link-label line (contains words like "here", "Join", "link", "→")
+      const isLinkLabel = /(?:here|join|link|→|view|pay|book|select|proceed)/i.test(trimmed)
+      if (isLinkLabel) {
+        i++ // skip the empty line after it too
+        continue
+      }
+    }
+
+    // Skip lines that are just punctuation/arrows after variable removal
+    // e.g., "→ " or "• " with nothing after
+    if (/^[\s→•\-]+$/.test(line) && trimmed.length > 0) {
+      continue
+    }
+
+    cleaned.push(line)
+  }
+
+  result = cleaned.join('\n')
+
+  // Collapse 3+ consecutive blank lines into 2
+  result = result.replace(/\n{3,}/g, '\n\n')
+
+  return result.trim()
 }
 
 /**

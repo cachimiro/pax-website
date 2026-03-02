@@ -202,17 +202,24 @@ export async function POST(request: NextRequest) {
       console.error('Booking creation error:', bookingError)
     }
 
-    // Sync to Google Calendar with Meet link
+    // Sync to Google Calendar with Meet link (retry once on failure)
     let meetLink: string | undefined
     if (booking) {
-      try {
-        const calResult = await syncBookingToCalendar(supabase, booking, data.name, data.email)
-        meetLink = calResult?.meetLink
-        if (meetLink) {
-          console.log(`[BOOKING] Meet link created: ${meetLink}`)
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const calResult = await syncBookingToCalendar(supabase, booking, data.name, data.email)
+          meetLink = calResult?.meetLink
+          if (meetLink) {
+            console.log(`[BOOKING] Meet link created: ${meetLink}`)
+            break
+          }
+        } catch (err) {
+          console.error(`Calendar sync error (attempt ${attempt}):`, err)
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 2000))
         }
-      } catch (err) {
-        console.error('Calendar sync error:', err)
+      }
+      if (!meetLink) {
+        console.warn('[BOOKING] No Meet link after 2 attempts — emails will omit video link')
       }
     }
 
