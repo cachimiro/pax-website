@@ -53,7 +53,17 @@ export default function SlotPicker({ onSelect, selected }: SlotPickerProps) {
   const [busy, setBusy] = useState<BusyInterval[]>([])
   const [loading, setLoading] = useState(true)
 
-  const visible = dates.slice(offset, offset + 5)
+  // Show fewer dates on small screens
+  const [cols, setCols] = useState(5)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 380px)')
+    const update = () => setCols(mq.matches ? 4 : 5)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  const visible = dates.slice(offset, offset + cols)
 
   useEffect(() => {
     const first = dates[0]?.date
@@ -106,14 +116,14 @@ export default function SlotPicker({ onSelect, selected }: SlotPickerProps) {
     <div className="space-y-4">
       {/* Date selector */}
       <div className="flex items-center gap-2">
-        <button onClick={() => setOffset(Math.max(0, offset - 5))} disabled={offset === 0}
+        <button onClick={() => setOffset(Math.max(0, offset - cols))} disabled={offset === 0}
           className="p-1.5 rounded-lg hover:bg-[var(--warm-50)] disabled:opacity-30 transition-colors">
           <ChevronLeft size={16} />
         </button>
-        <div className="flex-1 grid grid-cols-5 gap-1.5">
+        <div className={`flex-1 grid gap-1.5 ${cols === 4 ? 'grid-cols-4' : 'grid-cols-5'}`}>
           {visible.map(d => (
             <button key={d.iso} onClick={() => handleDateClick(d.iso)}
-              className={`flex flex-col items-center py-2 px-1 rounded-xl text-xs transition-all ${
+              className={`flex flex-col items-center py-2.5 sm:py-2 px-1 rounded-xl text-xs transition-all ${
                 selectedDate === d.iso
                   ? 'bg-[var(--green-600)] text-white shadow-md'
                   : 'bg-white border border-[var(--warm-100)] hover:border-[var(--green-300)] text-[var(--warm-700)]'
@@ -124,7 +134,7 @@ export default function SlotPicker({ onSelect, selected }: SlotPickerProps) {
             </button>
           ))}
         </div>
-        <button onClick={() => setOffset(Math.min(dates.length - 5, offset + 5))} disabled={offset + 5 >= dates.length}
+        <button onClick={() => setOffset(Math.min(dates.length - cols, offset + cols))} disabled={offset + cols >= dates.length}
           className="p-1.5 rounded-lg hover:bg-[var(--warm-50)] disabled:opacity-30 transition-colors">
           <ChevronRight size={16} />
         </button>
@@ -145,7 +155,7 @@ export default function SlotPicker({ onSelect, selected }: SlotPickerProps) {
                     const isSelected = selectedTime === slot
                     return (
                       <button key={slot} disabled={taken} onClick={() => handleTimeClick(slot)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        className={`px-3 py-2 sm:py-1.5 rounded-lg text-sm font-medium transition-all ${
                           taken ? 'bg-gray-50 text-gray-300 cursor-not-allowed line-through' :
                           isSelected ? 'bg-[var(--green-600)] text-white shadow-md' :
                           'bg-white border border-[var(--warm-100)] hover:border-[var(--green-300)] text-[var(--warm-700)]'

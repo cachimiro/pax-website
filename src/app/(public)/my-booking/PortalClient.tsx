@@ -230,7 +230,7 @@ export default function PortalClient() {
   return (
     <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[var(--green-700)] to-[var(--green-600)] px-6 py-5 text-white">
+      <div className="bg-gradient-to-r from-[var(--green-700)] to-[var(--green-600)] px-4 sm:px-6 py-4 sm:py-5 text-white">
         <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold">
           {step === 'lookup' || step === 'code' ? 'Manage My Booking' :
            step === 'reschedule' ? 'Reschedule Booking' :
@@ -243,7 +243,7 @@ export default function PortalClient() {
         )}
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {error && step !== 'success' && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
             <AlertTriangle size={16} className="mt-0.5 shrink-0" />
@@ -286,7 +286,7 @@ export default function PortalClient() {
             <div>
               <input type="text" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000" maxLength={6} autoFocus
-                className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-[0.5em] border rounded-xl focus:outline-none ${
+                className={`w-full px-4 py-3 text-center text-xl sm:text-2xl font-mono tracking-[0.3em] sm:tracking-[0.5em] border rounded-xl focus:outline-none ${
                   codeError ? 'border-red-300 focus:border-red-500' : 'border-[var(--warm-100)] focus:border-[var(--green-500)]'
                 }`} />
               {codeError && <p className="text-xs text-red-500 mt-1">{codeError}</p>}
@@ -316,7 +316,7 @@ export default function PortalClient() {
               const Icon = TYPE_ICONS[b.type] ?? Calendar
               const dt = new Date(b.scheduled_at)
               return (
-                <div key={b.id} className="border border-[var(--warm-100)] rounded-xl p-4 space-y-3">
+                <div key={b.id} className="border border-[var(--warm-100)] rounded-xl p-3 sm:p-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[var(--green-50)] flex items-center justify-center shrink-0">
                       <Icon size={18} className="text-[var(--green-600)]" />
@@ -356,11 +356,11 @@ export default function PortalClient() {
                   <div className="flex gap-2">
                     <button onClick={() => { setSelectedBooking(b); setRescheduleDateTime(''); setError(''); setStep('reschedule') }}
                       disabled={b.reschedule_count >= 3}
-                      className="flex-1 py-2 text-sm font-medium bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5">
+                      className="flex-1 py-2.5 text-sm font-medium bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 whitespace-nowrap">
                       <RefreshCw size={14} /> Reschedule
                     </button>
                     <button onClick={() => { setSelectedBooking(b); setCancelReason(''); setError(''); setStep('cancel') }}
-                      className="flex-1 py-2 text-sm font-medium bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5">
+                      className="flex-1 py-2.5 text-sm font-medium bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap">
                       <XCircle size={14} /> Cancel
                     </button>
                   </div>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function MyBookingPage() {
   return (
     <div className="min-h-screen bg-[var(--warm-50)]">
-      <div className="max-w-lg mx-auto px-4 py-12">
+      <div className="max-w-lg mx-auto px-4 py-6 sm:py-12">
         <Suspense fallback={
           <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
             <div className="animate-pulse space-y-4">
