@@ -85,6 +85,8 @@ export async function POST(request: NextRequest) {
     .eq('lead_id', matchedLead.id)
     .not('stage', 'in', '("closed_won","closed_lost","closed_not_interested")')
 
+  console.log(`[PORTAL] Active opportunities for lead ${matchedLead.id}: ${opps?.length ?? 0}`)
+
   if (!opps?.length) {
     return NextResponse.json({ sent: true, verification_id: 'no-bookings' })
   }
@@ -120,32 +122,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
   }
 
+  console.log(`[PORTAL] Verification ${verification.id} created, sending code to ${normalizedEmail}`)
+
   // Send code via email
   const firstName = (matchedLead.name ?? '').split(' ')[0] || 'there'
-  const emailResult = await sendEmail(
-    matchedLead.email!,
-    'Your PaxBespoke verification code',
-    `Hi ${firstName},\n\nYour verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request this, please ignore this message.\n\nPaxBespoke`,
-    admin,
-  )
-
-  if (!emailResult.success) {
-    console.error('[PORTAL] Failed to send verification email:', emailResult.error)
-    return NextResponse.json({ error: 'Failed to send verification code. Please try again.' }, { status: 500 })
+  let emailResult: { success: boolean; error?: string; sentVia?: string }
+  try {
+    emailResult = await sendEmail(
+      matchedLead.email!,
+      'Your PaxBespoke verification code',
+      `Hi ${firstName},\n\nYour verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request this, please ignore this message.\n\nPaxBespoke`,
+      admin,
+    )
+    console.log(`[PORTAL] sendEmail result: success=${emailResult.success}, sentVia=${emailResult.sentVia}, error=${emailResult.error ?? 'none'}`)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error(`[PORTAL] sendEmail threw exception: ${msg}`)
+    emailResult = { success: false, error: msg }
   }
 
-  // In dev/dry-run mode, log the code so it's accessible
-  if (emailResult.sentVia === 'dry-run') {
-    console.log(`[PORTAL] Verification code for ${normalizedEmail}: ${code} (dry-run — no email credentials configured)`)
-  } else {
+  // If email failed or went to dry-run, return the code directly so the user isn't stuck
+  const emailFailed = !emailResult.success
+  const isDryRun = emailResult.sentVia === 'dry-run'
+
+  if (emailFailed) {
+    console.error(`[PORTAL] Email delivery failed: ${emailResult.error}`)
+  }
+  if (isDryRun) {
+    console.log(`[PORTAL] Verification code for ${normalizedEmail}: ${code} (dry-run)`)
+  }
+  if (emailResult.success && !isDryRun) {
     console.log(`[PORTAL] Verification code sent to ${normalizedEmail} via ${emailResult.sentVia}`)
   }
 
   return NextResponse.json({
     sent: true,
     verification_id: verification.id,
-    // In dev mode, include the code so it can be tested without email
-    ...(emailResult.sentVia === 'dry-run' ? { _dev_code: code } : {}),
+    // Return code when email delivery is unreliable (dry-run or failed)
+    ...(isDryRun || emailFailed ? { _dev_code: code } : {}),
+    // Tell the frontend which channel was used
+    _sent_via: emailResult.sentVia ?? 'none',
   })
 }
 

@@ -287,10 +287,9 @@ export default function PortalClient() {
               We&apos;ve sent a 6-digit code to <strong className="text-[var(--warm-700)]">{email}</strong>. Enter it below.
             </p>
             {devCode && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
-                <p className="font-medium text-xs uppercase tracking-wider mb-1">Dev Mode</p>
-                <p>Your code is: <strong className="font-mono text-lg">{devCode}</strong></p>
-                <p className="text-xs mt-1 text-amber-500">Email sending is not configured in this environment.</p>
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700">
+                <p className="font-medium text-xs uppercase tracking-wider mb-1">Your Code</p>
+                <p>Enter this code below: <strong className="font-mono text-lg">{devCode}</strong></p>
               </div>
             )}
             <div>
