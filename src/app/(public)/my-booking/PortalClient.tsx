@@ -34,6 +34,7 @@ export default function PortalClient() {
   const [code, setCode] = useState('')
   const [codeError, setCodeError] = useState('')
   const [resendTimer, setResendTimer] = useState(0)
+  const [devCode, setDevCode] = useState('')  // dev mode only
 
   // Session state
   const [sessionToken, setSessionToken] = useState('')
@@ -85,6 +86,7 @@ export default function PortalClient() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Something went wrong')
       setVerificationId(data.verification_id)
+      if (data._dev_code) setDevCode(data._dev_code)
       setStep('code')
       setResendTimer(60)
     } catch (err: unknown) {
@@ -218,6 +220,7 @@ export default function PortalClient() {
       const data = await res.json()
       if (res.ok) {
         setVerificationId(data.verification_id)
+        if (data._dev_code) setDevCode(data._dev_code)
         setResendTimer(60)
         setCode('')
         setCodeError('')
@@ -283,6 +286,13 @@ export default function PortalClient() {
             <p className="text-sm text-[var(--warm-500)]">
               We&apos;ve sent a 6-digit code to <strong className="text-[var(--warm-700)]">{email}</strong>. Enter it below.
             </p>
+            {devCode && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+                <p className="font-medium text-xs uppercase tracking-wider mb-1">Dev Mode</p>
+                <p>Your code is: <strong className="font-mono text-lg">{devCode}</strong></p>
+                <p className="text-xs mt-1 text-amber-500">Email sending is not configured in this environment.</p>
+              </div>
+            )}
             <div>
               <input type="text" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000" maxLength={6} autoFocus
@@ -297,7 +307,7 @@ export default function PortalClient() {
               Verify Code
             </button>
             <div className="flex items-center justify-between text-xs">
-              <button onClick={() => { setStep('lookup'); setCode(''); setCodeError('') }}
+              <button onClick={() => { setStep('lookup'); setCode(''); setCodeError(''); setDevCode('') }}
                 className="text-[var(--warm-400)] hover:text-[var(--warm-600)] flex items-center gap-1">
                 <ArrowLeft size={12} /> Back
               </button>
@@ -306,6 +316,11 @@ export default function PortalClient() {
                 {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend code'}
               </button>
             </div>
+            {!devCode && (
+              <p className="text-[11px] text-[var(--warm-400)] text-center">
+                Didn&apos;t receive a code? Check your spam folder, or make sure you entered the same email and phone number you used when booking.
+              </p>
+            )}
           </div>
         )}
 

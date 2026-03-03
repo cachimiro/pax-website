@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
   const normalizedPhone = normalizePhone(phone.trim())
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
 
+  console.log(`[PORTAL] Verify request: email=${normalizedEmail}, phone=${normalizedPhone}, ip=${ip}`)
+
   // Rate limit: max 5 requests per IP per hour
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const { count: ipCount } = await admin
@@ -66,6 +68,11 @@ export async function POST(request: NextRequest) {
   // Find a lead whose phone matches (normalized)
   const matchedLead = leads?.find(l => normalizePhone(l.phone ?? '') === normalizedPhone)
 
+  console.log(`[PORTAL] Lead lookup: found ${leads?.length ?? 0} leads by email, phone match: ${!!matchedLead}`)
+  if (leads?.length && !matchedLead) {
+    console.log(`[PORTAL] Phone mismatch — stored phones: ${leads.map(l => normalizePhone(l.phone ?? '')).join(', ')}, input: ${normalizedPhone}`)
+  }
+
   if (!matchedLead) {
     // Generic response — don't reveal whether account exists
     return NextResponse.json({ sent: true, verification_id: 'no-match' })
@@ -96,7 +103,7 @@ export async function POST(request: NextRequest) {
 
   // Store verification
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
-  const { data: verification } = await admin
+  const { data: verification, error: insertError } = await admin
     .from('portal_verifications')
     .insert({
       lead_id: matchedLead.id,
@@ -108,22 +115,37 @@ export async function POST(request: NextRequest) {
     .select('id')
     .single()
 
-  if (!verification) {
-    return NextResponse.json({ error: 'Failed to create verification' }, { status: 500 })
+  if (insertError || !verification) {
+    console.error('[PORTAL] Failed to insert verification:', insertError?.message ?? 'no data returned')
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
   }
 
   // Send code via email
   const firstName = (matchedLead.name ?? '').split(' ')[0] || 'there'
-  await sendEmail(
+  const emailResult = await sendEmail(
     matchedLead.email!,
     'Your PaxBespoke verification code',
     `Hi ${firstName},\n\nYour verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request this, please ignore this message.\n\nPaxBespoke`,
     admin,
   )
 
+  if (!emailResult.success) {
+    console.error('[PORTAL] Failed to send verification email:', emailResult.error)
+    return NextResponse.json({ error: 'Failed to send verification code. Please try again.' }, { status: 500 })
+  }
+
+  // In dev/dry-run mode, log the code so it's accessible
+  if (emailResult.sentVia === 'dry-run') {
+    console.log(`[PORTAL] Verification code for ${normalizedEmail}: ${code} (dry-run — no email credentials configured)`)
+  } else {
+    console.log(`[PORTAL] Verification code sent to ${normalizedEmail} via ${emailResult.sentVia}`)
+  }
+
   return NextResponse.json({
     sent: true,
     verification_id: verification.id,
+    // In dev mode, include the code so it can be tested without email
+    ...(emailResult.sentVia === 'dry-run' ? { _dev_code: code } : {}),
   })
 }
 
