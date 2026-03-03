@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { useBookings, useProfiles, useRescheduleBooking, useUpdateTask } from '@/lib/crm/hooks'
+import { useBookings, useProfiles, useRescheduleBooking } from '@/lib/crm/hooks'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { format, startOfWeek, startOfMonth, addDays, addMonths, isSameDay, parseISO, isToday as checkIsToday, setHours, setMinutes } from 'date-fns'
@@ -46,7 +46,6 @@ export default function CalendarPage() {
   const { data: bookings = [], isLoading } = useBookings()
   const { data: profiles = [] } = useProfiles()
   const reschedule = useRescheduleBooking()
-  const updateTask = useUpdateTask()
   const qc = useQueryClient()
 
   // Fetch visits
@@ -303,63 +302,14 @@ export default function CalendarPage() {
     }
   }
 
-  // Panel actions
-  function handleMarkComplete(id: string, type: CalendarEvent['eventType']) {
-    if (type === 'task') {
-      updateTask.mutate({ id, status: 'done' }, {
-        onSuccess: () => { toast.success('Task completed'); qc.invalidateQueries({ queryKey: ['calendar-tasks'] }); setSelectedEvent(null) },
-      })
-    } else if (['call1', 'call2', 'onboarding'].includes(type)) {
-      supabase().from('bookings').update({ outcome: 'completed' }).eq('id', id).then(() => {
-        toast.success('Marked as completed'); qc.invalidateQueries({ queryKey: ['bookings'] }); setSelectedEvent(null)
-      })
-    } else if (type === 'visit') {
-      supabase().from('visits').update({ outcome: 'completed', completed_at: new Date().toISOString() }).eq('id', id).then(() => {
-        toast.success('Visit completed'); qc.invalidateQueries({ queryKey: ['calendar-visits'] }); setSelectedEvent(null)
-      })
-    }
-  }
-
-  function handleMarkNoShow(id: string, type: CalendarEvent['eventType']) {
-    if (['call1', 'call2', 'onboarding'].includes(type)) {
-      supabase().from('bookings').update({ outcome: 'no_show' }).eq('id', id).then(() => {
-        toast.success('Marked as no-show'); qc.invalidateQueries({ queryKey: ['bookings'] }); setSelectedEvent(null)
-      })
-    } else if (type === 'visit') {
-      supabase().from('visits').update({ outcome: 'no_show' }).eq('id', id).then(() => {
-        toast.success('Marked as no-show'); qc.invalidateQueries({ queryKey: ['calendar-visits'] }); setSelectedEvent(null)
-      })
-    }
-  }
-
-  function handleCancel(id: string, type: CalendarEvent['eventType']) {
-    if (['call1', 'call2', 'onboarding'].includes(type)) {
-      supabase().from('bookings').update({ outcome: 'cancelled' }).eq('id', id).then(() => {
-        toast.success('Cancelled'); qc.invalidateQueries({ queryKey: ['bookings'] }); setSelectedEvent(null)
-      })
-    } else if (type === 'visit') {
-      supabase().from('visits').update({ outcome: 'cancelled' }).eq('id', id).then(() => {
-        toast.success('Cancelled'); qc.invalidateQueries({ queryKey: ['calendar-visits'] }); setSelectedEvent(null)
-      })
-    } else if (type === 'fitting') {
-      supabase().from('fitting_slots').update({ status: 'cancelled' }).eq('id', id).then(() => {
-        toast.success('Cancelled'); qc.invalidateQueries({ queryKey: ['calendar-fittings'] }); setSelectedEvent(null)
-      })
-    }
-  }
-
-  function handleSaveNotes(id: string, notes: string) {
-    // Save to the appropriate table
-    const event = allEvents.find(e => e.id === id)
-    if (!event) return
-    if (['call1', 'call2', 'onboarding'].includes(event.eventType)) {
-      supabase().from('bookings').update({ post_call_notes: notes }).eq('id', id)
-    } else if (event.eventType === 'visit') {
-      supabase().from('visits').update({ notes }).eq('id', id)
-    } else if (event.eventType === 'fitting') {
-      supabase().from('fitting_slots').update({ notes }).eq('id', id)
-    }
-  }
+  // Refresh all calendar data after an action
+  const refreshAll = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['bookings'] })
+    qc.invalidateQueries({ queryKey: ['calendar-visits'] })
+    qc.invalidateQueries({ queryKey: ['calendar-fittings'] })
+    qc.invalidateQueries({ queryKey: ['calendar-tasks'] })
+    qc.invalidateQueries({ queryKey: ['calendar-opp-leads'] })
+  }, [qc])
 
   function goToday() {
     setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))
@@ -584,7 +534,6 @@ export default function CalendarPage() {
           <CalendarAgenda
             events={allEvents}
             onEventClick={(e) => setSelectedEvent(e)}
-            onMarkComplete={handleMarkComplete}
           />
         </div>
       </div>
@@ -593,10 +542,7 @@ export default function CalendarPage() {
       <CalendarEventPanel
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
-        onMarkComplete={handleMarkComplete}
-        onMarkNoShow={handleMarkNoShow}
-        onCancel={handleCancel}
-        onSaveNotes={handleSaveNotes}
+        onActionComplete={refreshAll}
       />
     </div>
   )

@@ -9,7 +9,6 @@ import { EVENT_LABELS } from './CalendarTypes'
 interface CalendarAgendaProps {
   events: CalendarEvent[]
   onEventClick: (event: CalendarEvent) => void
-  onMarkComplete: (id: string, type: CalendarEvent['eventType']) => void
 }
 
 const typeIcons: Record<string, typeof Phone> = {
@@ -21,7 +20,7 @@ const typeIcons: Record<string, typeof Phone> = {
   task: CheckCircle2,
 }
 
-export default function CalendarAgenda({ events, onEventClick, onMarkComplete }: CalendarAgendaProps) {
+export default function CalendarAgenda({ events, onEventClick }: CalendarAgendaProps) {
   const now = new Date()
   const todayStart = startOfDay(now)
   const threeDaysOut = addDays(todayStart, 3)
@@ -60,7 +59,6 @@ export default function CalendarAgenda({ events, onEventClick, onMarkComplete }:
               key={event.id}
               event={event}
               onClick={() => onEventClick(event)}
-              onComplete={() => onMarkComplete(event.id, event.eventType)}
             />
           ))}
         </div>

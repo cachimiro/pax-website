@@ -19,6 +19,10 @@ export interface CalendarEvent {
   value?: number
   entryRoute?: string
   aiSuggestion?: AISuggestion | null
+  // Action context
+  rescheduleCount?: number
+  noShowCount?: number
+  depositPaid?: boolean
   // Styling
   color: {
     bg: string
