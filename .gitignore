@@ -44,3 +44,4 @@ next-env.d.ts
 # Ona agent
 .ona/
 *.pdf
+core

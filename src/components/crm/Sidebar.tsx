@@ -13,6 +13,7 @@ import {
   ChevronRight,
   LogOut,
   BarChart3,
+  Wrench,
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
@@ -28,6 +29,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
   Calendar,
   CheckSquare,
   BarChart3,
+  Wrench,
   Settings,
 }
 

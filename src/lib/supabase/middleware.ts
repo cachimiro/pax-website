@@ -32,7 +32,31 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
 
-  // Only protect /crm/* routes (except login, mfa-setup, mfa-verify)
+  // --- Fitter portal routes ---
+  const isFitterRoute = pathname.startsWith('/fitter')
+  if (isFitterRoute) {
+    const isFitterPublic = pathname === '/fitter/login' || pathname.startsWith('/fitter/activate')
+    if (!isFitterPublic && !user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/fitter/login'
+      return NextResponse.redirect(url)
+    }
+    if (!isFitterPublic && user && user.user_metadata?.role !== 'fitter') {
+      // Non-fitter user trying to access fitter routes
+      const url = request.nextUrl.clone()
+      url.pathname = '/fitter/login'
+      return NextResponse.redirect(url)
+    }
+    // Logged-in fitter on login page → redirect to dashboard
+    if (user && user.user_metadata?.role === 'fitter' && pathname === '/fitter/login') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/fitter'
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
+  }
+
+  // --- CRM routes ---
   const isCrmRoute = pathname.startsWith('/crm')
   const isAuthRoute = ['/crm/login', '/crm/mfa-setup', '/crm/mfa-verify'].some(
     (route) => pathname === route

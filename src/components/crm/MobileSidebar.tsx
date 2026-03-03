@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { X, LayoutDashboard, Columns3 as Kanban, Users, Calendar, CheckSquare, Settings, LogOut } from 'lucide-react'
+import { X, LayoutDashboard, Columns3 as Kanban, Users, Calendar, CheckSquare, Wrench, Settings, LogOut } from 'lucide-react'
 import type { Profile } from '@/lib/crm/types'
 import { getNavItems } from '@/lib/crm/permissions'
 
@@ -12,6 +12,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
   Users,
   Calendar,
   CheckSquare,
+  Wrench,
   Settings,
 }
 
