@@ -78,16 +78,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ sent: true, verification_id: 'no-match' })
   }
 
-  // Check they have active bookings
+  // Check they have opportunities (any stage — even closed ones may have pending bookings)
   const { data: opps } = await admin
     .from('opportunities')
     .select('id')
     .eq('lead_id', matchedLead.id)
-    .not('stage', 'in', '("closed_won","closed_lost","closed_not_interested")')
 
-  console.log(`[PORTAL] Active opportunities for lead ${matchedLead.id}: ${opps?.length ?? 0}`)
+  console.log(`[PORTAL] Opportunities for lead ${matchedLead.id}: ${opps?.length ?? 0}`)
 
   if (!opps?.length) {
+    return NextResponse.json({ sent: true, verification_id: 'no-bookings' })
+  }
+
+  // Check if there are any pending bookings across all opportunities
+  const oppIds = opps.map(o => o.id)
+  const { count: pendingBookings } = await admin
+    .from('bookings')
+    .select('id', { count: 'exact', head: true })
+    .in('opportunity_id', oppIds)
+    .eq('outcome', 'pending')
+
+  const { count: pendingVisits } = await admin
+    .from('visits')
+    .select('id', { count: 'exact', head: true })
+    .in('opportunity_id', oppIds)
+    .in('outcome', ['pending', 'scheduled'])
+
+  const { count: pendingFittings } = await admin
+    .from('fitting_slots')
+    .select('id', { count: 'exact', head: true })
+    .in('opportunity_id', oppIds)
+    .eq('status', 'confirmed')
+
+  const totalPending = (pendingBookings ?? 0) + (pendingVisits ?? 0) + (pendingFittings ?? 0)
+  console.log(`[PORTAL] Pending items: bookings=${pendingBookings ?? 0}, visits=${pendingVisits ?? 0}, fittings=${pendingFittings ?? 0}`)
+
+  if (totalPending === 0) {
     return NextResponse.json({ sent: true, verification_id: 'no-bookings' })
   }
 

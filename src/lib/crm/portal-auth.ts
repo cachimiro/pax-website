@@ -22,12 +22,11 @@ export async function resolvePortalAuth(
 
     if (!opp) return null
 
-    // Also fetch all opportunities for this lead (they may have multiple)
+    // Fetch all opportunities for this lead (any stage — bookings API filters by pending)
     const { data: allOpps } = await admin
       .from('opportunities')
       .select('id')
       .eq('lead_id', opp.lead_id)
-      .not('stage', 'in', '("closed_won","closed_lost","closed_not_interested")')
 
     return {
       leadId: opp.lead_id,
@@ -51,7 +50,6 @@ export async function resolvePortalAuth(
       .from('opportunities')
       .select('id')
       .eq('lead_id', verification.lead_id)
-      .not('stage', 'in', '("closed_won","closed_lost","closed_not_interested")')
 
     return {
       leadId: verification.lead_id,
