@@ -27,7 +27,8 @@ What to have ready (optional):
 • Any inspiration images you like
 • Rough dimensions if you have them
 
-Need to reschedule? Just reply to this message.
+Need to reschedule or cancel? Manage your booking:
+{{cta_manage_booking}}
 
 See you soon!
 PaxBespoke`,
@@ -45,6 +46,9 @@ Join your video call here:
 {{meet_link}}
 
 Please have a few photos of your space ready if possible — it helps us give you the best advice.
+
+Need to reschedule? Manage your booking:
+{{cta_manage_booking}}
 
 See you soon!
 PaxBespoke`,
@@ -90,6 +94,9 @@ Join your video call here:
 {{meet_link}}
 
 We've prepared some options for your {{project_type}} project and can't wait to show you.
+
+Need to reschedule or cancel? Manage your booking:
+{{cta_manage_booking}}
 
 See you then!
 {{owner_name}}`,
@@ -155,6 +162,9 @@ During the visit we'll:
 • Confirm materials and finishes
 
 Please make sure the wardrobe area is accessible.
+
+Need to reschedule? Manage your booking:
+{{cta_manage_booking}}
 
 See you then!
 {{owner_name}}`,

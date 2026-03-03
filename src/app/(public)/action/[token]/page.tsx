@@ -78,6 +78,12 @@ export default async function CTAActionPage({ params }: PageProps) {
 
   const firstName = (lead?.name || '').split(' ')[0] || 'there'
 
+  // manage-booking redirects to the portal page with the original token
+  if (action === 'manage-booking') {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://paxbespoke.uk'
+    redirect(`${baseUrl}/my-booking?token=${token}`)
+  }
+
   // Execute the action
   const result = await executeAction(supabase, opp, action)
 
@@ -120,7 +126,7 @@ export default async function CTAActionPage({ params }: PageProps) {
   )
 }
 
-const ACTION_CONFIGS: Record<CTAAction, {
+const ACTION_CONFIGS: Record<Exclude<CTAAction, 'manage-booking'>, {
   icon: string
   iconBg: string
   title: string

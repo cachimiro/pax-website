@@ -27,6 +27,7 @@ export type CTAAction =
   | 'select-fitting'
   | 'pay-deposit'
   | 'proceed'
+  | 'manage-booking'
 
 interface CTAPayload {
   opportunity_id: string
@@ -122,6 +123,8 @@ export function generateCTAUrl(
  * Used by the automation engine when building template variables.
  */
 export function generateAllCTAUrls(opportunityId: string): Record<string, string> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://paxbespoke.uk'
+  const manageToken = generateCTAToken(opportunityId, 'manage-booking')
   return {
     cta_not_interested: generateCTAUrl(opportunityId, 'not-interested'),
     cta_need_more_time: generateCTAUrl(opportunityId, 'need-more-time'),
@@ -130,5 +133,6 @@ export function generateAllCTAUrls(opportunityId: string): Record<string, string
     cta_select_fitting: generateCTAUrl(opportunityId, 'select-fitting'),
     cta_pay_deposit: generateCTAUrl(opportunityId, 'pay-deposit'),
     cta_proceed: generateCTAUrl(opportunityId, 'proceed'),
+    cta_manage_booking: `${baseUrl}/my-booking?token=${manageToken}`,
   }
 }
