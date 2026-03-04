@@ -5,7 +5,7 @@ import { useProfiles, useServiceRegions, useUpdateServiceRegion } from '@/lib/cr
 import { createClient } from '@/lib/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Users, Mail, MapPin, Edit3, Save, X, ChevronDown, ChevronUp, Copy, Check, Globe, Brain, Link2, AlertTriangle, Loader2, Plus, Trash2, Clock, Zap, PenTool } from 'lucide-react'
+import { Users, Mail, MapPin, Edit3, Save, X, ChevronDown, ChevronUp, Copy, Check, Globe, Brain, Link2, AlertTriangle, Loader2, Plus, Trash2, Clock, Zap, PenTool, Wrench, Send, UserPlus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSignature, useUpdateSignature, useChannelStatus } from '@/lib/crm/hooks'
 import type { SignatureConfig } from '@/lib/crm/hooks'
@@ -14,8 +14,9 @@ import { useGoogleStatus, useGoogleConnect, useGoogleDisconnect, useGoogleToggle
 import type { Profile, UserRole, RegionStatus, AIPreferences } from '@/lib/crm/types'
 import { formatDistanceToNow } from 'date-fns'
 import TemplatesSection from '@/components/crm/settings/TemplatesSection'
+import FittersSection from '@/components/crm/settings/FittersSection'
 
-type SettingsTab = 'users' | 'templates' | 'coverage' | 'ai' | 'signature' | 'integrations'
+type SettingsTab = 'users' | 'templates' | 'coverage' | 'ai' | 'signature' | 'fitters' | 'integrations'
 
 const BASE_TABS = [
   { key: 'users' as const, label: 'Users', icon: <Users size={14} /> },
@@ -23,6 +24,7 @@ const BASE_TABS = [
   { key: 'coverage' as const, label: 'Coverage', icon: <Globe size={14} /> },
   { key: 'ai' as const, label: 'AI', icon: <Brain size={14} /> },
   { key: 'signature' as const, label: 'Signature', icon: <PenTool size={14} /> },
+  { key: 'fitters' as const, label: 'Fitters', icon: <Wrench size={14} /> },
 ]
 
 export default function SettingsPage() {
@@ -115,6 +117,7 @@ export default function SettingsPage() {
           {tab === 'coverage' && <CoverageSection />}
           {tab === 'ai' && <AISection />}
           {tab === 'signature' && <SignatureSection />}
+          {tab === 'fitters' && <FittersSection />}
           {tab === 'integrations' && isAdmin && <IntegrationsSection />}
         </motion.div>
       </AnimatePresence>
@@ -933,3 +936,5 @@ function IntegrationsSection() {
     </div>
   )
 }
+
+
