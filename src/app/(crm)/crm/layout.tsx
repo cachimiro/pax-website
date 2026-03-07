@@ -24,12 +24,12 @@ export default async function CrmLayout({
     return <CrmProviders>{children}</CrmProviders>
   }
 
-  // Fetch profile for the shell
+  // Fetch profile for the shell — use maybeSingle to avoid throw on 0 rows
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   console.log('[CRM Layout] profile:', profile?.id, 'error:', profileError?.message)
 
