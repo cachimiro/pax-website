@@ -189,4 +189,69 @@ export async function loadGoogleConfig(supabase: SupabaseClient): Promise<Google
   return data as GoogleConfig | null
 }
 
+// ─── Per-user calendar client (multi-user) ───────────────────────────────────
+
+/**
+ * Get a valid access token for a specific user, refreshing if expired.
+ * Reads/writes tokens from the profiles table.
+ */
+export async function getValidAccessTokenForUser(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<string | null> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('google_access_token_enc, google_refresh_token_enc, google_token_expires_at, google_calendar_connected')
+    .eq('id', userId)
+    .single()
+
+  if (!profile?.google_calendar_connected || !profile.google_access_token_enc) return null
+
+  const expiresAt = new Date(profile.google_token_expires_at ?? 0)
+  const now = new Date()
+
+  if (expiresAt.getTime() - now.getTime() > 5 * 60 * 1000) {
+    return decryptToken(profile.google_access_token_enc)
+  }
+
+  // Refresh
+  const refreshToken = decryptToken(profile.google_refresh_token_enc)
+  const client = createOAuth2Client()
+  client.setCredentials({ refresh_token: refreshToken })
+
+  try {
+    const { credentials } = await client.refreshAccessToken()
+    const newAccessToken = credentials.access_token!
+    const newExpiry = new Date(credentials.expiry_date ?? Date.now() + 3600 * 1000)
+
+    await supabase
+      .from('profiles')
+      .update({
+        google_access_token_enc: encryptToken(newAccessToken),
+        google_token_expires_at: newExpiry.toISOString(),
+      })
+      .eq('id', userId)
+
+    return newAccessToken
+  } catch {
+    await supabase.from('profiles').update({ google_calendar_connected: false }).eq('id', userId)
+    return null
+  }
+}
+
+/**
+ * Get a Google Calendar API client for a specific user profile.
+ * Returns null if the user has not connected Google Calendar.
+ */
+export async function getCalendarClientForUser(
+  supabase: SupabaseClient,
+  userId: string
+) {
+  const accessToken = await getValidAccessTokenForUser(supabase, userId)
+  if (!accessToken) return null
+  const client = createOAuth2Client()
+  client.setCredentials({ access_token: accessToken })
+  return google.calendar({ version: 'v3', auth: client })
+}
+
 export { SCOPES }

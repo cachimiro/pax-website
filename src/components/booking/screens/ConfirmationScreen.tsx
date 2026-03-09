@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { CheckCircle, Calendar, Clock, MapPin, Package, Camera, ArrowRight, Star, MessageSquare, Ruler, Share2, CalendarPlus, ShoppingCart, Trash2, Wrench, ClipboardList } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, MapPin, Package, Camera, ArrowRight, Star, MessageSquare, Ruler, Share2, CalendarPlus, ShoppingCart, Trash2, Wrench, ClipboardList, User } from 'lucide-react';
 import Celebration from '../Celebration';
 
 interface ConfirmationScreenProps {
@@ -13,6 +13,7 @@ interface ConfirmationScreenProps {
     room: string;
     packageChoice: string;
     postcodeLocation: string;
+    designerName?: string;
   };
 }
 
@@ -95,6 +96,14 @@ export default function ConfirmationScreen({ data }: ConfirmationScreenProps) {
               {roomLabels[data.room] || data.room} · {packageLabels[data.packageChoice] || data.packageChoice}
             </span>
           </div>
+          {data.designerName && (
+            <div className="flex items-center gap-3 text-sm">
+              <User className="w-4 h-4 text-[#0C6B4E] flex-shrink-0" />
+              <span className="text-warm-700">
+                Your call is with <span className="font-semibold">{data.designerName}</span>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Quick actions */}

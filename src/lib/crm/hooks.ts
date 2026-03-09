@@ -347,16 +347,17 @@ export function useMoveOpportunityStage() {
 
 // ─── Bookings ────────────────────────────────────────────────────────────────
 
-export function useBookings(opportunityId?: string) {
+export function useBookings(filters?: { opportunityId?: string; owner_user_id?: string }) {
   return useQuery({
-    queryKey: ['bookings', { opportunityId }],
+    queryKey: ['bookings', filters],
     queryFn: async () => {
       let query = supabase()
         .from('bookings')
         .select('*')
         .order('scheduled_at', { ascending: false })
 
-      if (opportunityId) query = query.eq('opportunity_id', opportunityId)
+      if (filters?.opportunityId) query = query.eq('opportunity_id', filters.opportunityId)
+      if (filters?.owner_user_id) query = query.eq('owner_user_id', filters.owner_user_id)
 
       const { data, error } = await query
       if (error) throw error

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useLeads, useOpportunities, useSoftDeleteLead, useRestoreLead, usePermanentDeleteLead } from '@/lib/crm/hooks'
+import { useCurrentProfile } from '@/lib/crm/current-profile'
 import { formatDistanceToNow, differenceInHours } from 'date-fns'
 import { Search, Filter, Plus, ChevronDown, Mail, Phone, MapPin, Users, Zap, Trash2, RotateCcw, Upload } from 'lucide-react'
 import CsvImportModal from '@/components/crm/CsvImportModal'
@@ -27,16 +28,19 @@ export default function LeadsPage() {
   const [showTrash, setShowTrash] = useState(false)
   const [showImport, setShowImport] = useState(false)
 
+  const { profile, isAdmin } = useCurrentProfile()
+  const ownerFilter = isAdmin ? undefined : { owner_user_id: profile?.id }
+
   const { data: leads = [], isLoading } = useLeads(
     showTrash
-      ? { deleted: true }
-      : statusFilter ? { status: statusFilter } : undefined
+      ? { deleted: true, ...ownerFilter }
+      : { ...(statusFilter ? { status: statusFilter } : {}), ...ownerFilter }
   )
   const softDelete = useSoftDeleteLead()
   const restoreLead = useRestoreLead()
   const permanentDelete = usePermanentDeleteLead()
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
-  const { data: opportunities = [] } = useOpportunities()
+  const { data: opportunities = [] } = useOpportunities(isAdmin ? undefined : ownerFilter)
   const { suggestionsOn } = useAIPreferences()
 
   // Map lead_id → best suggestion from their active opportunities

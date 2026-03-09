@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useBookings, useProfiles, useRescheduleBooking } from '@/lib/crm/hooks'
+import { useCurrentProfile } from '@/lib/crm/current-profile'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { format, startOfWeek, startOfMonth, addDays, addMonths, isSameDay, parseISO, isToday as checkIsToday, setHours, setMinutes } from 'date-fns'
@@ -43,7 +44,10 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showAgenda, setShowAgenda] = useState(true)
 
-  const { data: bookings = [], isLoading } = useBookings()
+  const { profile, isAdmin } = useCurrentProfile()
+  const { data: bookings = [], isLoading } = useBookings(
+    isAdmin ? undefined : { owner_user_id: profile?.id }
+  )
   const { data: profiles = [] } = useProfiles()
   const reschedule = useRescheduleBooking()
   const qc = useQueryClient()

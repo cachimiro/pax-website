@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTasks, useUpdateTask } from '@/lib/crm/hooks'
+import { useCurrentProfile } from '@/lib/crm/current-profile'
 import { format, isPast, isToday } from 'date-fns'
 import { CheckSquare, Check, Filter, ChevronDown, Clock, AlertTriangle, GripVertical } from 'lucide-react'
 import {
@@ -20,7 +21,11 @@ import EmptyState from '@/components/crm/EmptyState'
 
 export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState<string>('open')
-  const { data: tasks = [], isLoading } = useTasks({ status: statusFilter || undefined })
+  const { profile, isAdmin } = useCurrentProfile()
+  const { data: tasks = [], isLoading } = useTasks({
+    status: statusFilter || undefined,
+    ...(isAdmin ? {} : { owner_user_id: profile?.id }),
+  })
   const updateTask = useUpdateTask()
 
   const overdue = tasks.filter((t) => t.status === 'open' && t.due_at && isPast(new Date(t.due_at)) && !isToday(new Date(t.due_at)))

@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Toaster } from 'sonner'
+import { CurrentProfileProvider } from '@/lib/crm/current-profile'
 
 export default function CrmProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -19,7 +20,9 @@ export default function CrmProviders({ children }: { children: React.ReactNode }
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <CurrentProfileProvider>
+        {children}
+      </CurrentProfileProvider>
       <Toaster
         position="bottom-right"
         gap={8}
@@ -48,3 +51,4 @@ export default function CrmProviders({ children }: { children: React.ReactNode }
     </QueryClientProvider>
   )
 }
+

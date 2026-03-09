@@ -17,6 +17,8 @@ interface OpportunityCardProps {
   riskLevel?: RiskLevel
   riskReason?: string
   fittingInfo?: FittingInfo
+  designerColor?: string
+  designerInitial?: string
 }
 
 const FITTING_STATUS_DISPLAY: Record<string, { label: string; className: string; icon: typeof Wrench }> = {
@@ -46,7 +48,7 @@ function FittingBadge({ info }: { info: FittingInfo }) {
   )
 }
 
-export default function OpportunityCard({ opportunity, isDragging: isDraggingOverlay, onQuickMove, riskLevel, riskReason, fittingInfo }: OpportunityCardProps) {
+export default function OpportunityCard({ opportunity, isDragging: isDraggingOverlay, onQuickMove, riskLevel, riskReason, fittingInfo, designerColor, designerInitial }: OpportunityCardProps) {
   const {
     attributes,
     listeners,
@@ -92,7 +94,11 @@ export default function OpportunityCard({ opportunity, isDragging: isDraggingOve
         }
       `}
     >
-      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${stageConfig.dotColor}`} />
+      {/* Designer colour stripe — replaces stage stripe when designer colour is set */}
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-[3px] ${!designerColor ? stageConfig.dotColor : ''}`}
+        style={designerColor ? { backgroundColor: designerColor } : undefined}
+      />
 
       <div className="p-3 pl-4">
         <div className="flex items-start gap-1.5">
@@ -108,6 +114,16 @@ export default function OpportunityCard({ opportunity, isDragging: isDraggingOve
               <div className="w-6 h-6 rounded-full bg-[var(--green-100)] flex items-center justify-center text-[10px] font-bold text-[var(--green-700)] shrink-0">
                 {opportunity.lead?.name?.charAt(0).toUpperCase() ?? '?'}
               </div>
+              {/* Designer avatar badge */}
+              {designerInitial && designerColor && (
+                <div
+                  className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0 -ml-1 ring-1 ring-white"
+                  style={{ backgroundColor: designerColor }}
+                  title={`Assigned to ${designerInitial}`}
+                >
+                  {designerInitial}
+                </div>
+              )}
               <Link
                 href={`/crm/leads/${opportunity.lead_id}`}
                 className="text-sm font-semibold text-[var(--warm-800)] hover:text-[var(--green-700)] transition-colors truncate"

@@ -20,9 +20,10 @@ interface PipelineColumnProps {
   justMovedId: string | null
   riskMap?: Record<string, { level: RiskLevel; reason: string }>
   fittingMap?: Record<string, FittingInfo>
+  designerMap?: Record<string, { color: string; initial: string }>
 }
 
-export default function PipelineColumn({ stage, groupLabel, groupStages, groupColor, opportunities, isLoading, totalPipelineValue, onQuickMove, justMovedId, riskMap = {}, fittingMap = {} }: PipelineColumnProps) {
+export default function PipelineColumn({ stage, groupLabel, groupStages, groupColor, opportunities, isLoading, totalPipelineValue, onQuickMove, justMovedId, riskMap = {}, fittingMap = {}, designerMap = {} }: PipelineColumnProps) {
   const config = STAGES[stage]
   const displayLabel = groupLabel || config.label
   const dotColorClass = groupColor || config.dotColor
@@ -116,6 +117,8 @@ export default function PipelineColumn({ stage, groupLabel, groupStages, groupCo
                   riskLevel={riskMap[opp.id]?.level}
                   riskReason={riskMap[opp.id]?.reason}
                   fittingInfo={fittingMap[opp.id]}
+                  designerColor={designerMap[opp.owner_user_id ?? '']?.color}
+                  designerInitial={designerMap[opp.owner_user_id ?? '']?.initial}
                 />
               </div>
             ))

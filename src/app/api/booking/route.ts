@@ -309,8 +309,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Fetch assigned designer name to return to the confirmation screen
+    let designerName: string | null = null
+    if (ownerId) {
+      const { data: designerProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', ownerId)
+        .single()
+      designerName = designerProfile?.full_name ?? null
+    }
+
     return NextResponse.json(
-      { lead_id: lead.id, opportunity_id: opportunity.id, success: true },
+      { lead_id: lead.id, opportunity_id: opportunity.id, success: true, designer_name: designerName },
       { status: 201 }
     )
   } catch (err) {

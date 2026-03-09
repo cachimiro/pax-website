@@ -20,12 +20,13 @@ import OpportunityCard from './OpportunityCard'
 import StageTransitionModal from './StageTransitionModal'
 import LostReasonModal from './LostReasonModal'
 import { PIPELINE_STAGES, PIPELINE_GROUPS, STAGE_ORDER } from '@/lib/crm/stages'
-import { useOpportunities, useMoveOpportunityStage } from '@/lib/crm/hooks'
+import { useOpportunities, useMoveOpportunityStage, useProfiles } from '@/lib/crm/hooks'
+import { useCurrentProfile } from '@/lib/crm/current-profile'
 import { createClient } from '@/lib/supabase/client'
 import type { OpportunityStage, OpportunityWithLead, LostReason } from '@/lib/crm/types'
 import { assessOpportunityRisk, type RiskLevel } from '@/lib/crm/risk'
 import { useAIPreferences } from '@/lib/crm/ai-preferences'
-import { TrendingUp, Users, AlertTriangle, PoundSterling } from 'lucide-react'
+import { TrendingUp, Users, AlertTriangle, PoundSterling, ChevronDown } from 'lucide-react'
 
 function isAdjacentForward(from: OpportunityStage, to: OpportunityStage): boolean {
   const fromIdx = STAGE_ORDER.indexOf(from)
@@ -48,9 +49,28 @@ export interface FittingInfo {
 }
 
 export default function PipelineBoard() {
-  const { data: opportunities = [], isLoading } = useOpportunities()
+  const { profile, isAdmin } = useCurrentProfile()
+  const { data: opportunities = [], isLoading } = useOpportunities(
+    isAdmin ? undefined : { owner_user_id: profile?.id }
+  )
   const moveStage = useMoveOpportunityStage()
   const qc = useQueryClient()
+
+  // Designer filter (admin only — non-admins only see their own)
+  const { data: allProfiles = [] } = useProfiles()
+  const [designerFilter, setDesignerFilter] = useState<string | null>(null)
+
+  // Build designer lookup map: userId → { color, initial }
+  const designerMap = useMemo(() => {
+    const map: Record<string, { color: string; initial: string }> = {}
+    allProfiles.forEach((p) => {
+      map[p.id] = {
+        color: p.color ?? '#6366f1',
+        initial: p.full_name.charAt(0).toUpperCase(),
+      }
+    })
+    return map
+  }, [allProfiles])
 
   // Fetch fitting job data for pipeline cards
   const [fittingMap, setFittingMap] = useState<Record<string, FittingInfo>>({})
@@ -93,11 +113,11 @@ export default function PipelineBoard() {
   const grouped = useMemo(() => {
     const map: Record<OpportunityStage, OpportunityWithLead[]> = {} as Record<OpportunityStage, OpportunityWithLead[]>
     for (const stage of STAGE_ORDER) map[stage] = []
-    for (const opp of opportunities) {
+    for (const opp of filteredOpportunities) {
       if (map[opp.stage]) map[opp.stage].push(opp)
     }
     return map
-  }, [opportunities])
+  }, [filteredOpportunities])
 
   const { prefs } = useAIPreferences()
 
@@ -105,7 +125,7 @@ export default function PipelineBoard() {
   const riskMap = useMemo(() => {
     if (!prefs.suggestions_enabled) return {}
     const map: Record<string, { level: RiskLevel; reason: string }> = {}
-    for (const opp of opportunities) {
+    for (const opp of filteredOpportunities) {
       const risk = assessOpportunityRisk(opp, prefs.snooze_weekends)
       if (risk.level !== 'none') {
         map[opp.id] = risk
@@ -115,10 +135,16 @@ export default function PipelineBoard() {
   }, [opportunities, prefs.suggestions_enabled, prefs.snooze_weekends])
 
   const activeOpportunity = activeId ? opportunities.find((o) => o.id === activeId) ?? null : null
-  const activeOpps = opportunities.filter((o) => o.stage !== 'lost' && o.stage !== 'closed_not_interested' && o.stage !== 'complete')
+  const filteredOpportunities = useMemo(() =>
+    designerFilter
+      ? opportunities.filter((o) => o.owner_user_id === designerFilter)
+      : opportunities,
+  [opportunities, designerFilter])
+
+  const activeOpps = filteredOpportunities.filter((o) => o.stage !== 'lost' && o.stage !== 'closed_not_interested' && o.stage !== 'complete')
   const totalPipelineValue = activeOpps.reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
   const lostCount = (grouped['lost']?.length ?? 0) + (grouped['closed_not_interested']?.length ?? 0)
-  const completedCount = opportunities.filter((o) => o.stage === 'complete').length
+  const completedCount = filteredOpportunities.filter((o) => o.stage === 'complete').length
 
   // Optimistic move — update cache immediately, revert on error
   const optimisticMove = useCallback((oppId: string, toStage: OpportunityStage, lostReason?: LostReason) => {
@@ -263,6 +289,45 @@ export default function PipelineBoard() {
         </div>
       </div>
 
+      {/* Designer filter bar — admin only */}
+      {isAdmin && allProfiles.length > 1 && (
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <span className="text-xs text-[var(--warm-400)] font-medium">Filter:</span>
+          <button
+            onClick={() => setDesignerFilter(null)}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+              !designerFilter
+                ? 'bg-[var(--warm-800)] text-white border-[var(--warm-800)]'
+                : 'bg-white text-[var(--warm-500)] border-[var(--warm-200)] hover:border-[var(--warm-300)]'
+            }`}
+          >
+            All designers
+          </button>
+          {allProfiles.filter((p) => p.active).map((p) => {
+            const color = p.color ?? '#6366f1'
+            const isActive = designerFilter === p.id
+            return (
+              <button
+                key={p.id}
+                onClick={() => setDesignerFilter(isActive ? null : p.id)}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border-2 transition-all"
+                style={{
+                  borderColor: color,
+                  backgroundColor: isActive ? color : 'white',
+                  color: isActive ? 'white' : color,
+                }}
+              >
+                <span
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.6)' : color }}
+                />
+                {p.full_name.split(' ')[0]}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Board */}
       <DndContext
         sensors={sensors}
@@ -290,6 +355,7 @@ export default function PipelineBoard() {
                 justMovedId={justMovedId}
                 riskMap={riskMap}
                 fittingMap={fittingMap}
+                designerMap={designerMap}
               />
             )
           })}

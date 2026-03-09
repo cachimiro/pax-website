@@ -148,6 +148,12 @@ export interface Profile {
   avatar_url: string | null
   ai_preferences: AIPreferences
   created_at: string
+  // Multi-user additions
+  color: string
+  google_email: string | null
+  google_calendar_connected: boolean
+  onboarding_complete: boolean
+  invited_by: string | null
 }
 
 export interface Lead {
@@ -271,6 +277,18 @@ export interface Meet1Notes {
   created_at: string
   updated_at: string
 }
+
+// ─── Designer colour palette ──────────────────────────────────────────────────
+export const DESIGNER_COLORS = [
+  '#6366f1', // indigo
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#ef4444', // red
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#f97316', // orange
+  '#06b6d4', // cyan
+] as const
 
 export interface Visit {
   id: string

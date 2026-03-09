@@ -131,8 +131,56 @@ function UsersSection() {
   const { data: profiles = [], isLoading } = useProfiles()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<Profile>>({})
+  const [showInvite, setShowInvite] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteName, setInviteName] = useState('')
+  const [inviteRole, setInviteRole] = useState<'sales' | 'operations' | 'admin'>('sales')
+  const [inviting, setInviting] = useState(false)
+  const [removingId, setRemovingId] = useState<string | null>(null)
   const supabase = createClient()
   const qc = useQueryClient()
+
+  async function handleInvite() {
+    if (!inviteEmail.trim() || !inviteName.trim()) {
+      toast.error('Name and email are required')
+      return
+    }
+    setInviting(true)
+    try {
+      const res = await fetch('/api/crm/admin/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim(), full_name: inviteName.trim(), role: inviteRole }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Invite failed')
+      toast.success(`Invite sent to ${inviteEmail}`)
+      setShowInvite(false)
+      setInviteEmail('')
+      setInviteName('')
+      qc.invalidateQueries({ queryKey: ['profiles'] })
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Invite failed')
+    } finally {
+      setInviting(false)
+    }
+  }
+
+  async function handleRemove(userId: string) {
+    if (!confirm('Deactivate this user? They will lose CRM access.')) return
+    setRemovingId(userId)
+    try {
+      const res = await fetch(`/api/crm/admin/users/${userId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      toast.success('User deactivated')
+      qc.invalidateQueries({ queryKey: ['profiles'] })
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed')
+    } finally {
+      setRemovingId(null)
+    }
+  }
 
   function startEdit(profile: Profile) {
     setEditingId(profile.id)
@@ -143,6 +191,7 @@ function UsersSection() {
       calendar_link: profile.calendar_link,
       service_regions: profile.service_regions,
       active: profile.active,
+      color: profile.color ?? '#6366f1',
     })
   }
 
@@ -169,17 +218,83 @@ function UsersSection() {
     )
   }
 
+  const PALETTE = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#f97316','#06b6d4']
+
   return (
     <div className="space-y-4">
-      <p className="text-xs text-[var(--warm-400)] leading-relaxed">
-        Team members who can log in to the CRM. <strong>Admin</strong> = full access + settings. <strong>Sales</strong> = leads and pipeline up to deposit. <strong>Operations</strong> = fittings, sign-off, and completion.
-      </p>
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-[var(--warm-400)] leading-relaxed max-w-lg">
+          Team members who can log in to the CRM. <strong>Admin</strong> = full access + settings. <strong>Sales</strong> = own leads and pipeline only. <strong>Operations</strong> = fittings, sign-off, and completion.
+        </p>
+        <button
+          onClick={() => setShowInvite(!showInvite)}
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-[var(--green-700)] rounded-xl hover:bg-[var(--green-800)] transition-colors flex-shrink-0 ml-4"
+        >
+          <UserPlus size={13} /> Invite user
+        </button>
+      </div>
+
+      {/* Invite form */}
+      {showInvite && (
+        <div className="bg-[var(--green-50)] border border-[var(--green-200)] rounded-2xl p-5 space-y-3">
+          <p className="text-sm font-semibold text-[var(--green-800)]">Invite a new team member</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[10px] text-[var(--warm-500)] mb-1 uppercase tracking-wider">Full name</label>
+              <input
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                placeholder="Sarah Mitchell"
+                className="w-full px-3 py-2 text-sm border border-[var(--warm-200)] rounded-xl focus:border-[var(--green-500)] focus:outline-none bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-[var(--warm-500)] mb-1 uppercase tracking-wider">Email</label>
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="sarah@paxbespoke.co.uk"
+                className="w-full px-3 py-2 text-sm border border-[var(--warm-200)] rounded-xl focus:border-[var(--green-500)] focus:outline-none bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-[var(--warm-500)] mb-1 uppercase tracking-wider">Role</label>
+              <select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}
+                className="w-full px-3 py-2 text-sm border border-[var(--warm-200)] rounded-xl focus:outline-none bg-white"
+              >
+                <option value="sales">Sales</option>
+                <option value="operations">Operations</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setShowInvite(false)} className="px-3 py-1.5 text-xs text-[var(--warm-500)] hover:text-[var(--warm-700)] rounded-lg hover:bg-white transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={handleInvite}
+              disabled={inviting}
+              className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-white bg-[var(--green-700)] rounded-xl hover:bg-[var(--green-800)] disabled:opacity-50 transition-colors"
+            >
+              {inviting ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+              Send invite
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {profiles.map((profile) => {
         const rc = roleConfig[profile.role] ?? roleConfig.sales
+        const userColor = profile.color ?? '#6366f1'
 
         return editingId === profile.id ? (
-          <div key={profile.id} className="bg-white rounded-2xl border border-[var(--green-200)] shadow-sm p-5 space-y-3">
+          <div key={profile.id} className="bg-white rounded-2xl border-2 shadow-sm p-5 space-y-3" style={{ borderColor: userColor }}>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] text-[var(--warm-400)] mb-1 uppercase tracking-wider">Name</label>
@@ -200,8 +315,20 @@ function UsersSection() {
                 <input value={editForm.phone ?? ''} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="w-full px-3 py-2 text-sm border border-[var(--warm-200)] rounded-xl focus:border-[var(--green-500)] focus:outline-none" />
               </div>
               <div>
-                <label className="block text-[10px] text-[var(--warm-400)] mb-1 uppercase tracking-wider">Calendar Link</label>
-                <input value={editForm.calendar_link ?? ''} onChange={(e) => setEditForm({ ...editForm, calendar_link: e.target.value })} placeholder="https://calendly.com/..." className="w-full px-3 py-2 text-sm border border-[var(--warm-200)] rounded-xl focus:border-[var(--green-500)] focus:outline-none" />
+                <label className="block text-[10px] text-[var(--warm-400)] mb-1 uppercase tracking-wider">Colour</label>
+                <div className="flex gap-1.5 flex-wrap pt-1">
+                  {PALETTE.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setEditForm({ ...editForm, color: c })}
+                      className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
+                      style={{
+                        backgroundColor: c,
+                        borderColor: editForm.color === c ? '#000' : 'transparent',
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
             <div>
@@ -229,11 +356,18 @@ function UsersSection() {
             </div>
           </div>
         ) : (
-          <div key={profile.id} className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 hover:shadow-md transition-all group">
+          <div
+            key={profile.id}
+            className="bg-white rounded-2xl border-l-4 border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 hover:shadow-md transition-all group"
+            style={{ borderLeftColor: userColor }}
+          >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--green-100)] to-[var(--green-50)] flex items-center justify-center text-sm font-bold text-[var(--green-700)]">
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold text-white"
+                    style={{ backgroundColor: userColor }}
+                  >
                     {profile.full_name.charAt(0).toUpperCase()}
                   </div>
                   {profile.active && (
@@ -242,22 +376,44 @@ function UsersSection() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[var(--warm-800)]">{profile.full_name}</p>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${rc.bg} ${rc.text}`}>
-                    {profile.role}
-                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${rc.bg} ${rc.text}`}>
+                      {profile.role}
+                    </span>
+                    {/* Google Calendar status */}
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                      profile.google_calendar_connected
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-[var(--warm-50)] text-[var(--warm-400)]'
+                    }`}>
+                      {profile.google_calendar_connected ? '● Calendar' : '○ No calendar'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={() => startEdit(profile)}
-                className="p-2 text-[var(--warm-300)] hover:text-[var(--warm-500)] hover:bg-[var(--warm-50)] rounded-lg transition-all opacity-0 group-hover:opacity-100"
-              >
-                <Edit3 size={14} />
-              </button>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => startEdit(profile)}
+                  className="p-1.5 text-[var(--warm-300)] hover:text-[var(--warm-600)] hover:bg-[var(--warm-50)] rounded-lg transition-all"
+                >
+                  <Edit3 size={13} />
+                </button>
+                <button
+                  onClick={() => handleRemove(profile.id)}
+                  disabled={removingId === profile.id}
+                  className="p-1.5 text-[var(--warm-300)] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                >
+                  {removingId === profile.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5">
               {profile.phone && (
                 <p className="text-xs text-[var(--warm-500)]">{profile.phone}</p>
+              )}
+              {profile.google_email && (
+                <p className="text-[10px] text-[var(--warm-400)]">{profile.google_email}</p>
               )}
               {profile.service_regions?.length ? (
                 <div className="flex items-center gap-1 flex-wrap">
@@ -270,7 +426,7 @@ function UsersSection() {
                 </div>
               ) : null}
               <p className="text-[10px] text-[var(--warm-300)]">
-                {profile.active_opportunities} active opportunities
+                {profile.active_opportunities} active {profile.active_opportunities === 1 ? 'opportunity' : 'opportunities'}
               </p>
             </div>
 
@@ -279,13 +435,18 @@ function UsersSection() {
                 Inactive
               </div>
             )}
+            {profile.onboarding_complete === false && (
+              <div className="mt-2 px-2 py-1 bg-amber-50 rounded-lg text-[10px] text-amber-600 font-medium inline-block">
+                Awaiting onboarding
+              </div>
+            )}
           </div>
         )
       })}
 
       {profiles.length === 0 && (
         <div className="col-span-2 p-12 text-center text-sm text-[var(--warm-400)]">
-          No users found. Create users in Supabase Auth and add profile rows.
+          No users found.
         </div>
       )}
       </div>
