@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { MessageChannel } from '../types'
 import { DEFAULT_TEMPLATES, interpolate, getTemplateBySlug } from './templates'
-import { sendEmail, sendSms, sendWhatsApp } from './channels'
+import { sendEmail, sendSms, sendWhatsApp, extractCtas } from './channels'
 
 interface SendMessageOptions {
   supabase: SupabaseClient
@@ -69,7 +69,8 @@ export async function sendMessage({
       switch (channel) {
         case 'email': {
           if (!lead.email) break
-          const result = await sendEmail(lead.email, subject, body, supabase, undefined, tracking)
+          const { body: cleanBody, ctas } = extractCtas(body)
+          const result = await sendEmail(lead.email, subject, cleanBody, supabase, undefined, tracking, { ctas })
           status = result.success ? 'sent' : 'failed'
           metadata = { externalId: result.externalId, error: result.error, sentVia: result.sentVia }
           break
@@ -261,7 +262,9 @@ export async function processQueuedMessages(supabase: SupabaseClient): Promise<n
       switch (msg.channel) {
         case 'email':
           if (lead.email) {
-            const r = await sendEmail(lead.email, subject, body, supabase, undefined, tracking, {
+            const { body: cleanBody, ctas } = extractCtas(body)
+            const r = await sendEmail(lead.email, subject, cleanBody, supabase, undefined, tracking, {
+              ctas,
               autoTriggered: isAutoTriggered,
               ctaNotInterestedUrl: typeof meta?.cta_not_interested === 'string' ? meta.cta_not_interested : undefined,
               ctaNeedMoreTimeUrl: typeof meta?.cta_need_more_time === 'string' ? meta.cta_need_more_time : undefined,

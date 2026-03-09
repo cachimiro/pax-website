@@ -8,7 +8,27 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { loadGoogleConfig, getGmailClient, type GoogleConfig } from '../google'
-import { buildBrandedEmail, buildMimeMessage } from './email-template'
+import { buildBrandedEmail, buildMimeMessage, type EmailCta } from './email-template'
+
+/**
+ * Parse [CTA:Button Label|https://url] markers out of a template body.
+ * Returns the cleaned body (markers removed) and the extracted CTAs.
+ * First CTA is primary, subsequent ones are secondary.
+ */
+export function extractCtas(body: string): { body: string; ctas: EmailCta[] } {
+  const ctas: EmailCta[] = []
+  const cleaned = body.replace(/\[CTA:([^\]|]+)\|([^\]]+)\]/g, (_, text, url) => {
+    ctas.push({
+      text: text.trim(),
+      url: url.trim(),
+      style: ctas.length === 0 ? 'primary' : 'secondary',
+    })
+    return '' // remove marker from body
+  })
+  // Collapse any blank lines left by removed markers
+  const collapsedBody = cleaned.replace(/\n{3,}/g, '\n\n').trim()
+  return { body: collapsedBody, ctas }
+}
 
 export interface SendResult {
   success: boolean
@@ -25,8 +45,11 @@ export interface EmailOptions {
   senderRole?: string
   senderPhone?: string
   senderEmail?: string
+  /** Legacy single CTA — use ctas[] for multiple buttons */
   ctaText?: string
   ctaUrl?: string
+  /** Multiple CTA buttons (extracted from [CTA:text|url] markers or passed directly) */
+  ctas?: EmailCta[]
   preheader?: string
   /** If true, appends opt-out CTA links to the email footer */
   autoTriggered?: boolean
@@ -50,14 +73,19 @@ export async function sendViaGmail(
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://paxbespoke.uk'
 
+    // Extract [CTA:] markers from body, merge with any explicit ctas
+    const { body: cleanBody, ctas: extractedCtas } = extractCtas(options.body)
+    const allCtas = [...extractedCtas, ...(options.ctas ?? [])]
+
     const { html, text } = buildBrandedEmail({
-      body: options.body,
+      body: cleanBody,
       senderName: options.senderName ?? 'PaxBespoke',
       senderRole: options.senderRole,
       senderPhone: options.senderPhone,
       senderEmail: options.senderEmail ?? config.email,
       ctaText: options.ctaText,
       ctaUrl: options.ctaUrl,
+      ctas: allCtas,
       preheader: options.preheader,
       autoTriggered: options.autoTriggered,
       ctaNotInterestedUrl: options.ctaNotInterestedUrl,
@@ -102,7 +130,7 @@ export async function sendEmail(
   supabase?: SupabaseClient,
   senderContext?: { name?: string; role?: string; phone?: string; email?: string },
   tracking?: { messageLogId: string; leadId: string },
-  options?: { autoTriggered?: boolean; ctaNotInterestedUrl?: string; ctaNeedMoreTimeUrl?: string }
+  options?: { autoTriggered?: boolean; ctaNotInterestedUrl?: string; ctaNeedMoreTimeUrl?: string; ctas?: EmailCta[] }
 ): Promise<SendResult> {
   // Load stored signature config as fallback when no senderContext provided
   let sender = senderContext
@@ -140,6 +168,7 @@ export async function sendEmail(
           senderRole: sender?.role,
           senderPhone: sender?.phone,
           senderEmail: sender?.email ?? config.email,
+          ctas: options?.ctas,
           autoTriggered: options?.autoTriggered,
           ctaNotInterestedUrl: options?.ctaNotInterestedUrl,
           ctaNeedMoreTimeUrl: options?.ctaNeedMoreTimeUrl,
@@ -163,12 +192,16 @@ export async function sendEmail(
     return { success: true, externalId: 'dry-run', sentVia: 'dry-run' }
   }
 
+  const { body: cleanBodyResend, ctas: extractedCtasResend } = extractCtas(body)
+  const allCtasResend = [...extractedCtasResend, ...(options?.ctas ?? [])]
+
   const { html, text } = buildBrandedEmail({
-    body,
+    body: cleanBodyResend,
     senderName: sender?.name ?? 'PaxBespoke',
     senderRole: sender?.role,
     senderPhone: sender?.phone,
     senderEmail: sender?.email,
+    ctas: allCtasResend,
     autoTriggered: options?.autoTriggered,
     ctaNotInterestedUrl: options?.ctaNotInterestedUrl,
     ctaNeedMoreTimeUrl: options?.ctaNeedMoreTimeUrl,

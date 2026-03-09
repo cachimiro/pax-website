@@ -14,44 +14,40 @@ export const DEFAULT_TEMPLATES: MessageTemplate[] = [
   {
     id: 'call1_confirmed',
     name: 'Call 1 Booking Confirmation',
-    subject: 'Your consultation is confirmed, {{first_name}}',
+    subject: 'Your consultation is confirmed — {{date}} at {{time}}',
     body: `Hi {{first_name}},
 
 Your free consultation with {{owner_name}} is confirmed for {{date}} at {{time}}.
 
-Join your video call here:
-{{meet_link}}
+[CTA:Join video call|{{meet_link}}]
+[CTA:Manage booking|{{cta_manage_booking}}]
 
 What to have ready (optional):
 • A few photos of the space
 • Any inspiration images you like
 • Rough dimensions if you have them
 
-Need to reschedule or cancel? Manage your booking:
-{{cta_manage_booking}}
+Nothing is required — we'll cover everything on the call.
 
-See you soon!
-PaxBespoke`,
+See you soon,
+{{owner_name}}`,
     channels: ['email', 'sms', 'whatsapp'],
   },
   {
     id: 'call1_reminder',
     name: 'Call 1 Reminder (24h)',
-    subject: 'Reminder: Your consultation is coming up',
+    subject: 'Your consultation is tomorrow at {{time}}',
     body: `Hi {{first_name}},
 
-Just a reminder about your consultation with {{owner_name}} tomorrow, {{date}} at {{time}}.
+Just a reminder — your consultation with {{owner_name}} is tomorrow, {{date}} at {{time}}.
 
-Join your video call here:
-{{meet_link}}
+[CTA:Join video call|{{meet_link}}]
+[CTA:Manage booking|{{cta_manage_booking}}]
 
-Please have a few photos of your space ready if possible — it helps us give you the best advice.
+If you have a few photos of your space, bring them along — it helps us give you the most relevant advice.
 
-Need to reschedule? Manage your booking:
-{{cta_manage_booking}}
-
-See you soon!
-PaxBespoke`,
+See you tomorrow,
+{{owner_name}}`,
     channels: ['email', 'sms', 'whatsapp'],
   },
   {
@@ -71,12 +67,12 @@ PaxBespoke`,
   {
     id: 'call2_invite',
     name: 'Call 2 Invite',
-    subject: 'Your design follow-up is ready, {{first_name}}',
+    subject: 'Your design options are ready, {{first_name}}',
     body: `Hi {{first_name}},
 
-Great news — we've put together some options for your {{project_type}} project and we'd love to walk you through them.
+We've put together some options for your {{project_type}} project and we'd love to walk you through them.
 
-Book your follow-up call here: {{booking_link}}
+[CTA:Book your design call|{{booking_link}}]
 
 Looking forward to it,
 {{owner_name}}`,
@@ -85,65 +81,65 @@ Looking forward to it,
   {
     id: 'call2_confirmed',
     name: 'Call 2 Booking Confirmation',
-    subject: 'Your design call is confirmed, {{first_name}}',
+    subject: 'Your design call is confirmed — {{date}} at {{time}}',
     body: `Hi {{first_name}},
 
 Your design call with {{owner_name}} is confirmed for {{date}} at {{time}}.
 
-Join your video call here:
-{{meet_link}}
+We've prepared options for your {{project_type}} project and can't wait to show you.
 
-We've prepared some options for your {{project_type}} project and can't wait to show you.
+[CTA:Join video call|{{meet_link}}]
+[CTA:Manage booking|{{cta_manage_booking}}]
 
-Need to reschedule or cancel? Manage your booking:
-{{cta_manage_booking}}
-
-See you then!
+See you then,
 {{owner_name}}`,
     channels: ['email', 'sms', 'whatsapp'],
   },
   {
     id: 'call2_reminder',
     name: 'Call 2 Reminder (24h)',
-    subject: 'Reminder: Your design call is tomorrow',
+    subject: 'Your design call is tomorrow at {{time}}',
     body: `Hi {{first_name}},
 
-Just a reminder about your design call with {{owner_name}} tomorrow, {{date}} at {{time}}.
-
-Join your video call here:
-{{meet_link}}
+Just a reminder — your design call with {{owner_name}} is tomorrow, {{date}} at {{time}}.
 
 We'll walk through the options we've prepared for your {{project_type}} project.
 
-See you then!
-PaxBespoke`,
+[CTA:Join video call|{{meet_link}}]
+[CTA:Manage booking|{{cta_manage_booking}}]
+
+See you tomorrow,
+{{owner_name}}`,
     channels: ['email', 'sms', 'whatsapp'],
   },
   {
     id: 'deposit_request',
     name: 'Deposit Request',
-    subject: 'Secure your project — deposit details',
+    subject: 'Secure your project — deposit of £{{amount}}',
     body: `Hi {{first_name}},
 
-Thanks for confirming your project. To secure your slot, please pay the deposit of £{{amount}} using the link below:
+Thanks for confirming your {{project_type}} project. To secure your slot, please pay the deposit of £{{amount}}.
 
-{{payment_link}}
+[CTA:Pay deposit — £{{amount}}|{{payment_link}}]
 
-Once received, we'll schedule your onboarding visit.
+Once received, we'll book your onboarding visit to take measurements and finalise everything.
 
-Best,
+Any questions, just reply to this email.
+
 {{owner_name}}`,
     channels: ['email', 'whatsapp'],
   },
   {
     id: 'onboarding_invite',
     name: 'Onboarding Invite',
-    subject: 'Time to measure up — book your onboarding visit',
+    subject: 'Next step: book your onboarding visit',
     body: `Hi {{first_name}},
 
-Your deposit is confirmed — thank you! The next step is your onboarding visit where we'll take detailed measurements and finalise everything.
+Your deposit is confirmed — thank you!
 
-Book your onboarding: {{booking_link}}
+The next step is your onboarding visit, where we'll take detailed measurements and finalise your design choices.
+
+[CTA:Book your onboarding visit|{{booking_link}}]
 
 {{owner_name}}`,
     channels: ['email', 'whatsapp'],
@@ -151,7 +147,7 @@ Book your onboarding: {{booking_link}}
   {
     id: 'onboarding_confirmed',
     name: 'Onboarding Booking Confirmation',
-    subject: 'Your onboarding visit is confirmed, {{first_name}}',
+    subject: 'Your onboarding visit is confirmed — {{date}} at {{time}}',
     body: `Hi {{first_name}},
 
 Your onboarding visit with {{owner_name}} is confirmed for {{date}} at {{time}}.
@@ -161,12 +157,11 @@ During the visit we'll:
 • Finalise your design choices
 • Confirm materials and finishes
 
-Please make sure the wardrobe area is accessible.
+Please make sure the wardrobe area is accessible on the day.
 
-Need to reschedule? Manage your booking:
-{{cta_manage_booking}}
+[CTA:Manage booking|{{cta_manage_booking}}]
 
-See you then!
+See you then,
 {{owner_name}}`,
     channels: ['email', 'sms', 'whatsapp'],
   },
@@ -176,12 +171,15 @@ See you then!
     subject: 'How did we do, {{first_name}}?',
     body: `Hi {{first_name}},
 
-Your {{project_type}} project is complete! We hope you love the result.
+Your {{project_type}} project is complete — we hope you love the result!
 
-We'd really appreciate a quick review — it helps other homeowners find us:
-https://g.page/paxbespoke/review
+If you have a moment, a quick review makes a real difference and helps other homeowners find us.
 
-Thanks for choosing PaxBespoke!`,
+[CTA:Leave a review|https://g.page/paxbespoke/review]
+
+Thank you for choosing PaxBespoke.
+
+{{owner_name}}`,
     channels: ['email', 'whatsapp'],
   },
 ]

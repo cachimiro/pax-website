@@ -4,14 +4,23 @@
  * Generates multipart-ready HTML + plain text.
  */
 
+export interface EmailCta {
+  text: string
+  url: string
+  style?: 'primary' | 'secondary'
+}
+
 interface EmailTemplateOptions {
   body: string
   senderName: string
   senderRole?: string
   senderPhone?: string
   senderEmail?: string
+  /** Single CTA — kept for backward compat, appended to ctas[] */
   ctaText?: string
   ctaUrl?: string
+  /** Multiple CTA buttons rendered in order */
+  ctas?: EmailCta[]
   preheader?: string
   /** If true, appends "Not Interested" / "Need More Time" links at the bottom */
   autoTriggered?: boolean
@@ -62,6 +71,12 @@ export function buildBrandedEmail(options: EmailTemplateOptions): { html: string
     tracking,
   } = options
 
+  // Merge legacy single CTA + new ctas array
+  const allCtas: EmailCta[] = [...(options.ctas ?? [])]
+  if (ctaText && ctaUrl && !allCtas.some((c) => c.url === ctaUrl)) {
+    allCtas.unshift({ text: ctaText, url: ctaUrl, style: 'primary' })
+  }
+
   // Convert plain text body to HTML paragraphs
   const bodyHtml = body
     .split('\n\n')
@@ -84,15 +99,27 @@ export function buildBrandedEmail(options: EmailTemplateOptions): { html: string
     )
   }
 
-  const ctaBlock = ctaText && ctaUrl ? `
+  const ctaBlock = allCtas.length > 0 ? `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px 0;">
-      <tr>
-        <td style="background:${BRAND.orange};border-radius:10px;">
-          <a href="${trackUrl(ctaUrl)}" target="_blank" style="display:inline-block;padding:14px 32px;color:${BRAND.white};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:0.3px;">
-            ${escapeHtml(ctaText)}
-          </a>
+      ${allCtas.map((cta) => {
+        const isPrimary = (cta.style ?? 'primary') === 'primary'
+        const bg = isPrimary ? BRAND.orange : BRAND.white
+        const color = isPrimary ? BRAND.white : BRAND.green
+        const border = isPrimary ? `background:${BRAND.orange}` : `background:${BRAND.white};border:2px solid ${BRAND.green}`
+        return `<tr>
+        <td style="padding-bottom:8px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="${border};border-radius:10px;">
+                <a href="${trackUrl(cta.url)}" target="_blank" style="display:inline-block;padding:${isPrimary ? '14px 32px' : '12px 28px'};color:${color};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:${isPrimary ? '15px' : '14px'};font-weight:600;text-decoration:none;letter-spacing:0.3px;">
+                  ${escapeHtml(cta.text)}
+                </a>
+              </td>
+            </tr>
+          </table>
         </td>
-      </tr>
+      </tr>`
+      }).join('')}
     </table>` : ''
 
   const signatureLines: string[] = []
@@ -226,7 +253,7 @@ export function buildBrandedEmail(options: EmailTemplateOptions): { html: string
   // Plain text fallback
   const text = [
     body,
-    ctaText && ctaUrl ? `\n${ctaText}: ${ctaUrl}` : '',
+    allCtas.length > 0 ? '\n' + allCtas.map((c) => `${c.text}: ${c.url}`).join('\n') : '',
     '\n---',
     senderName,
     senderRole ? `${senderRole} · PaxBespoke` : 'PaxBespoke',
