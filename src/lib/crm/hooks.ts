@@ -957,6 +957,19 @@ export function useMeet1Notes(opportunityId: string | null | undefined) {
   })
 }
 
+/** Returns the full API response { notes, lead, opp } for the Meet1GuidePanel */
+export function useMeet1Full(opportunityId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['meet1-full', opportunityId],
+    enabled: !!opportunityId,
+    queryFn: async () => {
+      const res = await fetch(`/api/crm/meet1/${opportunityId}`)
+      if (!res.ok) return null
+      return res.json() as Promise<{ notes: Meet1Notes | null; lead: Record<string, unknown> | null; opp: Record<string, unknown> | null }>
+    },
+  })
+}
+
 export function useSaveMeet1Notes(opportunityId: string | null | undefined) {
   const qc = useQueryClient()
   return useMutation({

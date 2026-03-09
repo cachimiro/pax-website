@@ -123,7 +123,8 @@ export default function InvoiceManager({ opportunityId }: InvoiceManagerProps) {
         const isResending = resendingId === inv.id
 
         // QBO-specific fields (added in migration 026)
-        const extra = inv as Record<string, unknown>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const extra = (inv as any) as Record<string, unknown>
         const lineItems   = extra.line_items as Array<{ description: string; quantity: number; unit_price: number; amount: number }> | null
         const qboId       = extra.qbo_invoice_id as string | null
         const qboNumber   = extra.qbo_invoice_number as string | null

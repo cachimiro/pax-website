@@ -368,16 +368,18 @@ export async function runStageAutomations(
           packageComplexity: opp.package_complexity,
         })
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const leadAny = lead as any
         const memo = buildInvoiceMemo({
           leadName: lead.name ?? 'Customer',
-          postcode: lead.postcode,
+          postcode: leadAny.postcode ?? null,
           projectType: lead.project_type,
           packageComplexity: opp.package_complexity,
-          measurements: lead.measurements ?? null,
-          spaceConstraints: lead.space_constraints ?? null,
+          measurements: leadAny.measurements ?? null,
+          spaceConstraints: leadAny.space_constraints ?? null,
           doorFinishType: meet1?.finish_type ?? null,
           doorModel: null,
-          homeVisit: !!(lead as Record<string, unknown>).home_visit,
+          homeVisit: !!(leadAny.home_visit),
           designerName: ownerProfile?.full_name ?? 'PaxBespoke',
           callDate: bookingTime
             ? bookingTime.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })

@@ -238,12 +238,13 @@ export async function POST(request: NextRequest) {
     // For Budget package: store the IKEA Planner link as a design record so the
     // designer can access it directly from the opportunity before the design check call.
     if (data.plannerLink && data.packageChoice === 'budget') {
-      await supabase.from('designs').insert({
+      const { error: designErr } = await supabase.from('designs').insert({
         opportunity_id: opportunity.id,
         version: 1,
         planner_link: data.plannerLink,
         notes: 'Customer-submitted IKEA PAX Planner design (Budget package)',
-      }).catch((err) => console.error('Design record creation error:', err))
+      })
+      if (designErr) console.error('Design record creation error:', designErr)
     }
 
     if (bookingError) {

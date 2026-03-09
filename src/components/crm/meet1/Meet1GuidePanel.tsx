@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, CheckCircle2, Loader2, ClipboardList, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
-import { useMeet1Notes, useSaveMeet1Notes, useCompleteMeet1 } from '@/lib/crm/hooks'
+import { useMeet1Full, useSaveMeet1Notes, useCompleteMeet1 } from '@/lib/crm/hooks'
 import { DEFAULT_STATE, NEXT_ACTION_OPTIONS } from './types'
 import type { GuideState, FinishType, PackageChoice } from './types'
 import {
@@ -30,7 +30,7 @@ export default function Meet1GuidePanel({
   onClose,
   onComplete,
 }: Meet1GuidePanelProps) {
-  const { data: serverData, isLoading } = useMeet1Notes(opportunityId)
+  const { data: serverData, isLoading } = useMeet1Full(opportunityId)
   const save = useSaveMeet1Notes(opportunityId)
   const complete = useCompleteMeet1(opportunityId)
 
@@ -77,11 +77,11 @@ export default function Meet1GuidePanel({
       const pkgMap: Record<string, PackageChoice> = {
         budget: 'budget', standard: 'paxbespoke', select: 'select',
       }
-      const pkg = opp?.package_complexity ? (pkgMap[opp.package_complexity] ?? '') : ''
+      const pkg = opp?.package_complexity ? (pkgMap[opp.package_complexity as string] ?? '') : ''
       setState((prev) => ({
         ...prev,
-        room_confirmed: lead.project_type ?? '',
-        space_constraints: lead.space_constraints ?? [],
+        room_confirmed: (lead.project_type as string) ?? '',
+        space_constraints: (lead.space_constraints as string[]) ?? [],
         package_confirmed: pkg as PackageChoice | '',
         next_action: pkg ? NEXT_ACTION_OPTIONS[pkg as PackageChoice] : '',
       }))
@@ -116,7 +116,8 @@ export default function Meet1GuidePanel({
     if (debounceRef.current) clearTimeout(debounceRef.current)
     setSaveStatus('saving')
     debounceRef.current = setTimeout(() => {
-      save.mutate(patch, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      save.mutate(patch as any, {
         onSuccess: () => setSaveStatus('saved'),
         onError: () => { setSaveStatus('idle'); toast.error('Auto-save failed') },
       })
@@ -185,7 +186,8 @@ export default function Meet1GuidePanel({
     !!state.room_confirmed,
     !!state.package_confirmed,
     ['obstacle_bed', 'obstacle_radiator', 'obstacle_curtain_rail', 'obstacle_coving', 'obstacle_picture_rail']
-      .every((k) => (state as Record<string, unknown>)[k] !== 'unknown'),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .every((k) => (state as any)[k] !== 'unknown'),
     isBudget || !!state.finish_type,
     !!state.call_notes.trim(),
   ].filter(Boolean).length

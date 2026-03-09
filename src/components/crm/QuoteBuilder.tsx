@@ -89,8 +89,8 @@ export default function QuoteBuilder({
   onQuoteSent,
 }: QuoteBuilderProps) {
   const [items, setItems] = useState<LineItem[]>(
-    (existingQuote?.items as LineItem[])?.length
-      ? (existingQuote.items as LineItem[])
+    (existingQuote?.items as LineItem[] | undefined)?.length
+      ? (existingQuote!.items as LineItem[])
       : buildDefaultLineItems(lead, opportunity)
   )
   const [depositPct, setDepositPct] = useState(30)
@@ -187,10 +187,12 @@ export default function QuoteBuilder({
 
   // ── Project summary (pre-filled from lead + meet1) ──────────────────────────
   const pkg = PACKAGE_LABELS[opportunity.package_complexity ?? ''] ?? null
-  const constraints = (lead.space_constraints ?? [])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const leadAny = lead as any
+  const constraints = ((leadAny.space_constraints ?? []) as string[])
     .map((c: string) => CONSTRAINT_LABELS[c] ?? c)
     .join(', ')
-  const doorFinish = meet1Notes?.finish_type ?? (lead as Record<string, unknown>).door_finish_type as string | null
+  const doorFinish = meet1Notes?.finish_type ?? (leadAny.door_finish_type as string | null)
 
   return (
     <div className="space-y-5">
@@ -240,9 +242,9 @@ export default function QuoteBuilder({
             <SummaryRow label="Location" value={lead.postcode} />
             <SummaryRow label="Room" value={lead.project_type} />
             <SummaryRow label="Package" value={pkg} />
-            <SummaryRow label="Style" value={lead.style} />
+            <SummaryRow label="Style" value={leadAny.style} />
             <SummaryRow label="Budget band" value={lead.budget_band} />
-            <SummaryRow label="Timeline" value={lead.timeline} />
+            <SummaryRow label="Timeline" value={leadAny.timeline} />
             {constraints && <SummaryRow label="Space notes" value={constraints} />}
             {doorFinish && <SummaryRow label="Door finish" value={doorFinish} />}
             {meet1Notes?.call_notes && (

@@ -110,6 +110,15 @@ export default function PipelineBoard() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
+  const { prefs } = useAIPreferences()
+
+  const activeOpportunity = activeId ? opportunities.find((o) => o.id === activeId) ?? null : null
+  const filteredOpportunities = useMemo(() =>
+    designerFilter
+      ? opportunities.filter((o) => o.owner_user_id === designerFilter)
+      : opportunities,
+  [opportunities, designerFilter])
+
   const grouped = useMemo(() => {
     const map: Record<OpportunityStage, OpportunityWithLead[]> = {} as Record<OpportunityStage, OpportunityWithLead[]>
     for (const stage of STAGE_ORDER) map[stage] = []
@@ -118,8 +127,6 @@ export default function PipelineBoard() {
     }
     return map
   }, [filteredOpportunities])
-
-  const { prefs } = useAIPreferences()
 
   // Compute risk for each opportunity (lightweight — stage-based only)
   const riskMap = useMemo(() => {
@@ -132,14 +139,7 @@ export default function PipelineBoard() {
       }
     }
     return map
-  }, [opportunities, prefs.suggestions_enabled, prefs.snooze_weekends])
-
-  const activeOpportunity = activeId ? opportunities.find((o) => o.id === activeId) ?? null : null
-  const filteredOpportunities = useMemo(() =>
-    designerFilter
-      ? opportunities.filter((o) => o.owner_user_id === designerFilter)
-      : opportunities,
-  [opportunities, designerFilter])
+  }, [filteredOpportunities, prefs.suggestions_enabled, prefs.snooze_weekends])
 
   const activeOpps = filteredOpportunities.filter((o) => o.stage !== 'lost' && o.stage !== 'closed_not_interested' && o.stage !== 'complete')
   const totalPipelineValue = activeOpps.reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
