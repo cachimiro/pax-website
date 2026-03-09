@@ -136,6 +136,7 @@ function BookingFlowInner() {
   };
 
   const [formData, setFormData] = useState(getInitialFormData);
+  const [assignedDesigner, setAssignedDesigner] = useState<string | null>(null);
 
   // Restore step from localStorage for returning visitors
   const getInitialStep = () => {
@@ -402,6 +403,7 @@ function BookingFlowInner() {
             <BudgetTimelineScreen
               budgetRange={formData.budgetRange}
               timeline={formData.timeline}
+              packageChoice={formData.packageChoice}
               onBudgetChange={(v) => updateField('budgetRange', v)}
               onTimelineChange={(v) => updateField('timeline', v)}
               onNext={() => goTo(7)}
@@ -480,7 +482,7 @@ function BookingFlowInner() {
                   } else {
                     // Standard new booking flow
                     const tracking = getTrackingData();
-                    await fetch('/api/booking', {
+                    const bookingRes = await fetch('/api/booking', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
@@ -506,6 +508,12 @@ function BookingFlowInner() {
                         ...tracking,
                       }),
                     });
+                    if (bookingRes.ok) {
+                      const bookingData = await bookingRes.json();
+                      if (bookingData.designer_name) {
+                        setAssignedDesigner(bookingData.designer_name);
+                      }
+                    }
                   }
                 } catch {
                   // Don't block the user flow if CRM submission fails
@@ -529,6 +537,7 @@ function BookingFlowInner() {
                 room: formData.room,
                 packageChoice: formData.packageChoice,
                 postcodeLocation: formData.postcodeLocation,
+                designerName: assignedDesigner ?? undefined,
               }}
             />
           )}

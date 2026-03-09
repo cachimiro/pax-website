@@ -1,8 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { ArrowRight, Check, HelpCircle } from 'lucide-react';
-import SelectionCard from '../SelectionCard';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, HelpCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 import MiniTestimonial from '../MiniTestimonial';
 
 interface PackageScreenProps {
@@ -16,32 +16,124 @@ const packages = [
   {
     id: 'budget',
     name: 'Budget',
-    tagline: 'Smart & Simple',
     price: 'From £800',
-    features: ['Standard IKEA PAX doors', 'Filler panels fitted', 'You supply IKEA items'],
-    bestFor: 'Reasonably priced alternative to fitted wardrobes',
-    color: '#f28c43',
+    description: 'You design it in the IKEA PAX Planner, we fit it to a built-in finish.',
+    features: ['Standard IKEA PAX doors', 'Filler panels & skirting fitted', 'You source the IKEA items'],
+    accentColor: '#f28c43',
   },
   {
     id: 'paxbespoke',
     name: 'PaxBespoke',
-    tagline: 'Where Pax Meets Bespoke',
     price: 'From £1,500',
-    features: ['Doors within IKEA/PAX range', 'Custom trim colours', 'Flush fillers', 'Skirting board finish'],
-    bestFor: 'High-quality built-in finish at a sensible budget',
-    color: '#2d5c37',
+    description: 'We design it for you — a true built-in look using the PAX system.',
+    features: ['Full design service included', 'Custom trim & flush fillers', 'Skirting board finish', 'We source everything'],
+    popular: false,
+    accentColor: '#2d5c37',
   },
   {
     id: 'select',
     name: 'Select',
-    tagline: 'Designed Without Limits',
     price: 'From £2,500',
-    features: ['Everything in PaxBespoke', 'Bespoke doors (spray-painted or vinyl)', 'Full wall integration', 'Sliding doors'],
-    bestFor: 'Most premium finishes, little to no restrictions',
+    description: 'No restrictions — any door style, any colour, full wall integration.',
+    features: ['Everything in PaxBespoke', 'Spray-painted (any colour) or vinyl doors', 'Full wall integration', 'Sliding doors available'],
     popular: true,
-    color: '#2d5c37',
+    accentColor: '#2d5c37',
   },
 ];
+
+type Package = typeof packages[number];
+
+function PackageCard({
+  pkg,
+  selected,
+  onClick,
+}: {
+  pkg: Package;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileTap={{ scale: 0.98 }}
+      className={`relative w-full text-left rounded-2xl border-2 p-4 transition-all duration-200 ${
+        selected
+          ? 'border-green-700 bg-green-50/50 shadow-sm'
+          : 'border-warm-100 bg-white hover:border-warm-200 hover:shadow-sm'
+      }`}
+    >
+      {pkg.popular && (
+        <span className="absolute -top-2.5 left-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#2d5c37] text-white tracking-wide font-[family-name:var(--font-heading)]">
+          Most popular
+        </span>
+      )}
+
+      <div className="flex items-start gap-3">
+        {/* Radio indicator — left side, never overlaps content */}
+        <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+          selected ? 'border-green-700 bg-green-700' : 'border-warm-300 bg-white'
+        }`}>
+          {selected && <div className="w-2 h-2 rounded-full bg-white" />}
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between gap-2 mb-1">
+            <span className="font-bold text-warm-900 font-[family-name:var(--font-heading)]">
+              {pkg.name}
+            </span>
+            <span className="font-bold text-warm-900 font-[family-name:var(--font-heading)] flex-shrink-0 text-sm">
+              {pkg.price}
+              <span className="text-[10px] font-normal text-warm-400 ml-1">fitted</span>
+            </span>
+          </div>
+
+          <p className="text-xs text-warm-500 mb-2 leading-relaxed">{pkg.description}</p>
+
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {pkg.features.map((f) => (
+              <span key={f} className="flex items-center gap-1 text-xs text-warm-600">
+                <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: pkg.accentColor }} />
+                {f}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Budget callout — expands inline when selected */}
+      <AnimatePresence>
+        {selected && pkg.id === 'budget' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-xl p-3">
+              <AlertTriangle className="w-3.5 h-3.5 text-orange-500 flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-orange-800 leading-relaxed space-y-1">
+                <p className="font-semibold">You&apos;ll need an IKEA PAX Planner design</p>
+                <p>Create your wardrobe layout in the free IKEA PAX Planner before the call. We&apos;ll review it together, check nothing is missed, and prepare your quote.</p>
+                <a
+                  href="https://www.ikea.com/addon-app/storageone/pax/web/latest/gb/en/#/planner"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-orange-600 font-semibold underline"
+                >
+                  Open IKEA PAX Planner
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
+}
 
 export default function PackageScreen({ value, onChange, onNext, postcodeLocation }: PackageScreenProps) {
   return (
@@ -52,15 +144,12 @@ export default function PackageScreen({ value, onChange, onNext, postcodeLocatio
         transition={{ delay: 0.1 }}
       >
         <h2 className="text-2xl md:text-3xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
-          Which package interests you?
+          Which finish level suits you?
         </h2>
-        <p className="text-warm-500 mb-1">
+        <p className="text-warm-500 mb-6">
           {postcodeLocation
-            ? `Great — we cover ${postcodeLocation}. Now, which finish level suits you?`
-            : 'Pick the finish level that suits your space and budget.'}
-        </p>
-        <p className="text-xs text-warm-400 mb-6 font-[family-name:var(--font-heading)]">
-          Why we ask: Knowing your preference helps us prepare relevant examples and pricing for your call.
+            ? `We cover ${postcodeLocation}. Pick the package that fits your budget and how involved you want to be.`
+            : 'Pick the package that fits your budget and how involved you want to be.'}
         </p>
       </motion.div>
 
@@ -70,47 +159,13 @@ export default function PackageScreen({ value, onChange, onNext, postcodeLocatio
             key={pkg.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 + i * 0.05 }}
+            transition={{ delay: 0.12 + i * 0.06 }}
           >
-            <SelectionCard
+            <PackageCard
+              pkg={pkg}
               selected={value === pkg.id}
               onClick={() => onChange(pkg.id)}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-bold text-warm-900 font-[family-name:var(--font-heading)]">
-                      {pkg.name}
-                    </p>
-                    {pkg.popular && (
-                      <span className="text-[10px] font-bold bg-[#2d5c37] text-white px-2 py-0.5 rounded-full font-[family-name:var(--font-heading)]">
-                        Recommended
-                      </span>
-                    )}
-                    <span className={`text-[10px] font-semibold uppercase tracking-wider font-[family-name:var(--font-heading)] ${
-                      pkg.id === 'budget' ? 'text-[#f28c43]' : pkg.id === 'paxbespoke' ? 'text-[#2d5c37]' : 'text-[#2d5c37]'
-                    }`}>
-                      {pkg.tagline}
-                    </span>
-                  </div>
-                  <p className="text-xs text-warm-500 mb-2">{pkg.bestFor}</p>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1">
-                    {pkg.features.map((f) => (
-                      <span key={f} className="flex items-center gap-1 text-xs text-warm-600">
-                        <Check className="w-3 h-3" style={{ color: pkg.color }} />
-                        {f}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-lg font-bold text-warm-900 font-[family-name:var(--font-heading)]">
-                    {pkg.price}
-                  </p>
-                  <p className="text-[10px] text-warm-400">fitted</p>
-                </div>
-              </div>
-            </SelectionCard>
+            />
           </motion.div>
         ))}
 
@@ -118,30 +173,35 @@ export default function PackageScreen({ value, onChange, onNext, postcodeLocatio
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
+          transition={{ delay: 0.32 }}
         >
-          <SelectionCard
-            selected={value === 'unsure'}
+          <motion.button
+            type="button"
             onClick={() => onChange('unsure')}
+            whileTap={{ scale: 0.98 }}
+            className={`w-full text-left rounded-2xl border-2 p-4 transition-all duration-200 ${
+              value === 'unsure'
+                ? 'border-green-700 bg-green-50/50 shadow-sm'
+                : 'border-warm-100 bg-white hover:border-warm-200 hover:shadow-sm'
+            }`}
           >
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                value === 'unsure' ? 'bg-orange-50' : 'bg-warm-50'
+              <div className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                value === 'unsure' ? 'border-green-700 bg-green-700' : 'border-warm-300 bg-white'
               }`}>
-                <HelpCircle className={`w-5 h-5 ${
-                  value === 'unsure' ? 'text-orange-500' : 'text-warm-400'
-                }`} />
+                {value === 'unsure' && <div className="w-2 h-2 rounded-full bg-white" />}
               </div>
+              <HelpCircle className={`w-4 h-4 flex-shrink-0 ${value === 'unsure' ? 'text-green-700' : 'text-warm-400'}`} />
               <div>
                 <p className="font-semibold text-warm-900 text-sm font-[family-name:var(--font-heading)]">
-                  Not sure yet — help me decide
+                  Help me choose
                 </p>
                 <p className="text-xs text-warm-500">
                   We&apos;ll recommend the right package on the call based on your space and budget.
                 </p>
               </div>
             </div>
-          </SelectionCard>
+          </motion.button>
         </motion.div>
       </div>
 

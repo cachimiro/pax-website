@@ -1,40 +1,65 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight, PoundSterling, Calendar, HelpCircle } from 'lucide-react';
+import { ArrowRight, Calendar } from 'lucide-react';
 import SelectionCard from '../SelectionCard';
 
 interface BudgetTimelineScreenProps {
   budgetRange: string;
   timeline: string;
+  packageChoice: string;
   onBudgetChange: (v: string) => void;
   onTimelineChange: (v: string) => void;
   onNext: () => void;
 }
 
-const budgetOptions = [
-  { id: 'under-1000', label: 'Under £1,000', icon: PoundSterling },
-  { id: '1000-2000', label: '£1,000 – £2,000', icon: PoundSterling },
-  { id: '2000-4000', label: '£2,000 – £4,000', icon: PoundSterling },
-  { id: '4000-plus', label: '£4,000+', icon: PoundSterling },
-  { id: 'guidance', label: 'I\'d like guidance', icon: HelpCircle },
-];
+// Budget options filtered by package to avoid showing irrelevant ranges
+const budgetOptionsByPackage: Record<string, { id: string; label: string }[]> = {
+  budget: [
+    { id: 'under-1000', label: 'Under £1,000' },
+    { id: '1000-2000', label: '£1,000 – £2,000' },
+    { id: 'guidance', label: 'I\'d like guidance' },
+  ],
+  paxbespoke: [
+    { id: '1000-2000', label: '£1,000 – £2,000' },
+    { id: '2000-4000', label: '£2,000 – £4,000' },
+    { id: '4000-plus', label: '£4,000+' },
+    { id: 'guidance', label: 'I\'d like guidance' },
+  ],
+  select: [
+    { id: '2000-4000', label: '£2,000 – £4,000' },
+    { id: '4000-plus', label: '£4,000+' },
+    { id: 'guidance', label: 'I\'d like guidance' },
+  ],
+  unsure: [
+    { id: 'under-1000', label: 'Under £1,000' },
+    { id: '1000-2000', label: '£1,000 – £2,000' },
+    { id: '2000-4000', label: '£2,000 – £4,000' },
+    { id: '4000-plus', label: '£4,000+' },
+    { id: 'guidance', label: 'I\'d like guidance' },
+  ],
+};
 
 const timelineOptions = [
   { id: 'asap', label: 'Within 2 weeks' },
   { id: '1-2-months', label: '1–2 months' },
   { id: '2-3-months', label: '2–3 months' },
-  { id: 'exploring', label: 'Just exploring for now' },
+  { id: 'exploring', label: 'Just exploring' },
 ];
 
 export default function BudgetTimelineScreen({
   budgetRange,
   timeline,
+  packageChoice,
   onBudgetChange,
   onTimelineChange,
   onNext,
 }: BudgetTimelineScreenProps) {
   const canContinue = budgetRange && timeline;
+  const budgetOptions = budgetOptionsByPackage[packageChoice] ?? budgetOptionsByPackage.unsure;
+
+  // If the previously selected budget is no longer in the filtered list, it's still valid
+  // (user may have changed package) — we just show the current options
 
   return (
     <div>
@@ -44,13 +69,10 @@ export default function BudgetTimelineScreen({
         transition={{ delay: 0.1 }}
       >
         <h2 className="text-2xl md:text-3xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
-          A couple of quick questions
+          Budget & timing
         </h2>
-        <p className="text-warm-500 mb-1">
-          This helps us give you the most relevant advice on the call.
-        </p>
-        <p className="text-xs text-warm-400 mb-8 font-[family-name:var(--font-heading)]">
-          There&apos;s no wrong answer. This just helps us make the most of your call.
+        <p className="text-warm-500 mb-8">
+          Helps us give you the most relevant advice on the call. No wrong answers.
         </p>
       </motion.div>
 
@@ -61,13 +83,10 @@ export default function BudgetTimelineScreen({
         transition={{ delay: 0.15 }}
         className="mb-8"
       >
-        <h3 className="text-base font-semibold text-warm-800 mb-1 font-[family-name:var(--font-heading)]">
+        <h3 className="text-base font-semibold text-warm-800 mb-3 font-[family-name:var(--font-heading)]">
           What&apos;s your rough budget?
         </h3>
-        <p className="text-xs text-warm-400 mb-3">
-          Why we ask: So we can recommend the right package and set realistic expectations.
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {budgetOptions.map((opt, i) => (
             <motion.div
               key={opt.id}
@@ -79,7 +98,7 @@ export default function BudgetTimelineScreen({
                 selected={budgetRange === opt.id}
                 onClick={() => onBudgetChange(opt.id)}
               >
-                <div className="text-center py-1">
+                <div className="text-center py-1 pr-6">
                   <p className="font-semibold text-sm text-warm-900 font-[family-name:var(--font-heading)]">
                     {opt.label}
                   </p>
@@ -97,12 +116,9 @@ export default function BudgetTimelineScreen({
         transition={{ delay: 0.3 }}
         className="mb-8"
       >
-        <h3 className="text-base font-semibold text-warm-800 mb-1 font-[family-name:var(--font-heading)]">
+        <h3 className="text-base font-semibold text-warm-800 mb-3 font-[family-name:var(--font-heading)]">
           When are you looking to get started?
         </h3>
-        <p className="text-xs text-warm-400 mb-3">
-          Why we ask: So we can advise on lead times and availability.
-        </p>
         <div className="grid grid-cols-2 gap-2">
           {timelineOptions.map((opt, i) => (
             <motion.div
@@ -115,7 +131,7 @@ export default function BudgetTimelineScreen({
                 selected={timeline === opt.id}
                 onClick={() => onTimelineChange(opt.id)}
               >
-                <div className="text-center py-1">
+                <div className="text-center py-1 pr-6">
                   <Calendar className={`w-4 h-4 mx-auto mb-1 ${
                     timeline === opt.id ? 'text-orange-500' : 'text-warm-400'
                   }`} />

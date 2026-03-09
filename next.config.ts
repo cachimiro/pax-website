@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['*.gitpod.dev'],
+  allowedDevOrigins: [
+    '*.gitpod.dev',
+    '*.eu-central-1-01.gitpod.dev',
+    '3000--019cd0d4-5fba-7188-bcca-a4b96ff3c9b3.eu-central-1-01.gitpod.dev',
+  ],
   turbopack: {},
   webpack: (config, { dev }) => {
     if (dev) {

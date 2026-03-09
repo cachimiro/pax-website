@@ -147,13 +147,13 @@ export default function CalendarScreen({ onNext, packageChoice }: CalendarScreen
       </h2>
       <p className="text-sm text-warm-500 mb-1">
         {isBudget
-          ? 'Up to 20 minutes. We\'ll review your IKEA plan together, confirm nothing is missed, and prepare your final quote.'
-          : 'Video consultations last up to 1 hour. Choose a day and time that works for you.'}
+          ? 'Up to 20 minutes. We\'ll review your PAX Planner design together, check nothing is missed, and prepare your quote.'
+          : 'Up to 1 hour. We\'ll go through your space, style, and options — and give you a clear price range.'}
       </p>
       <p className="text-xs text-warm-400 mb-6 italic">
         {isBudget
-          ? 'Have your IKEA Planner link and measurements to hand for the call.'
-          : 'We\'ll prepare examples and pricing relevant to your space before the call.'}
+          ? 'Have your IKEA PAX Planner link to hand. Don\'t have one yet? Create it at ikea.com/gb/en/planners before the call.'
+          : 'We\'ll prepare relevant examples and pricing before the call.'}
       </p>
 
       {/* Date picker */}

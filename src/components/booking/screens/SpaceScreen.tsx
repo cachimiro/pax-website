@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   Camera, Ruler, ArrowRight, Upload, X, Link2, Home,
   Mountain, Building2, Columns3, ArrowUpFromLine, DoorOpen,
-  LayoutGrid, AlertTriangle, Info,
+  LayoutGrid, AlertTriangle, Info, ExternalLink,
 } from 'lucide-react';
 import MiniTestimonial from '../MiniTestimonial';
 
@@ -135,7 +135,6 @@ function BudgetSpaceLayout({ onNext }: { onNext: SpaceScreenProps['onNext'] }) {
   const [measurements, setMeasurements] = useState('');
   const [plannerLink, setPlannerLink] = useState('');
   const [spaceConstraints, setSpaceConstraints] = useState<string[]>([]);
-  const [plannerError, setPlannerError] = useState(false);
 
   const toggleConstraint = (id: string) => {
     if (id === 'none') { setSpaceConstraints(['none']); return; }
@@ -146,18 +145,17 @@ function BudgetSpaceLayout({ onNext }: { onNext: SpaceScreenProps['onNext'] }) {
   };
 
   const handleContinue = () => {
-    if (!plannerLink.trim()) { setPlannerError(true); return; }
-    onNext({ photos, measurements, shareOnCall: false, plannerLink, spaceConstraints });
+    onNext({ photos, measurements, shareOnCall: false, plannerLink: plannerLink.trim() || undefined, spaceConstraints });
   };
 
   return (
     <div className="max-w-lg mx-auto space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
-          Tell us about your space
+          Your space
         </h2>
         <p className="text-sm text-warm-500">
-          For the Budget Package, you lead the design. We need a few things from you before the design check call.
+          Share what you have — we&apos;ll cover anything missing on the call.
         </p>
       </div>
 
@@ -210,32 +208,42 @@ function BudgetSpaceLayout({ onNext }: { onNext: SpaceScreenProps['onNext'] }) {
         <SpaceConstraints selected={spaceConstraints} onToggle={toggleConstraint} />
       </motion.div>
 
-      {/* IKEA Planner — required */}
+      {/* IKEA Planner — optional, but encouraged */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
         <div className="flex items-center gap-2 mb-2">
           <Link2 className="w-4 h-4 text-warm-500" />
           <h3 className="text-base font-semibold text-warm-800 font-[family-name:var(--font-heading)]">
-            IKEA PAX Planner design <span className="text-red-500">*</span>
+            IKEA PAX Planner link
+            <span className="text-warm-400 font-normal text-sm ml-1">(optional)</span>
           </h3>
         </div>
         <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-4 mb-3">
           <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-xs text-blue-800 leading-relaxed space-y-1">
+          <div className="text-xs text-blue-800 leading-relaxed space-y-2">
             <p>
-              The Budget Package requires you to create your own design in the{' '}
+              The Budget Package works best when you&apos;ve created a layout in the IKEA PAX Planner. We&apos;ll review it together on the call, check nothing is missed, and prepare your quote.
+            </p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
               <a
-                href="https://www.ikea.com/addon-app/storageone/pax/"
+                href="https://www.ikea.com/addon-app/storageone/pax/web/latest/gb/en/#/planner"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline font-semibold"
+                className="inline-flex items-center gap-1 text-blue-700 font-semibold underline"
               >
-                IKEA PAX Planner
+                PAX Planner (wardrobes)
+                <ExternalLink className="w-3 h-3" />
               </a>
-              .
-            </p>
-            <p>
-              On the design check call, we&apos;ll review it together, confirm nothing is missed, and prepare your final quote.
-            </p>
+              <a
+                href="https://www.ikea.com/addon-app/skytta/web/latest/gb/en/#/planner"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-blue-700 font-semibold underline"
+              >
+                SKYTTA Planner (sliding doors)
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+            <p className="text-blue-600">Don&apos;t have one yet? No problem — we&apos;ll follow up before the call.</p>
           </div>
         </div>
         <div className="relative">
@@ -243,31 +251,11 @@ function BudgetSpaceLayout({ onNext }: { onNext: SpaceScreenProps['onNext'] }) {
           <input
             type="url"
             value={plannerLink}
-            onChange={(e) => { setPlannerLink(e.target.value); setPlannerError(false); }}
-            placeholder="Paste your IKEA Planner link here"
-            className={`w-full pl-10 pr-4 py-3.5 rounded-2xl border text-base sm:text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
-              plannerError ? 'border-red-300 ring-1 ring-red-300' : 'border-warm-200'
-            }`}
+            onChange={(e) => { setPlannerLink(e.target.value); }}
+            placeholder="Paste your IKEA Planner link here (if you have one)"
+            className="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-warm-200 text-base sm:text-sm bg-white transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
           />
         </div>
-        {plannerError && (
-          <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
-            A Planner link is required for the Budget Package before booking.
-          </p>
-        )}
-        <p className="text-[11px] text-warm-400 mt-1.5">
-          Don&apos;t have one yet?{' '}
-          <a
-            href="https://www.ikea.com/addon-app/storageone/pax/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-orange-500 underline"
-          >
-            Create your design at IKEA PAX Planner
-          </a>
-          {' '}then paste the link here.
-        </p>
       </motion.div>
 
       <MiniTestimonial
@@ -330,10 +318,10 @@ function StandardSpaceLayout({
     <div className="max-w-lg mx-auto space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
-          Tell us about your space
+          Your space
         </h2>
         <p className="text-sm text-warm-500">
-          Whatever you have is perfect — nothing here is required. We&apos;ll cover everything on the consultation call.
+          Nothing here is required — share what you have and we&apos;ll cover the rest on the call.
         </p>
       </div>
 
@@ -418,47 +406,134 @@ function StandardSpaceLayout({
 
       {/* Select: door finish */}
       {isSelect && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <h3 className="text-base font-semibold text-warm-800 mb-1 font-[family-name:var(--font-heading)]">
-            Preferred door finish <span className="text-warm-400 font-normal text-sm">(optional)</span>
-          </h3>
-          <p className="text-xs text-warm-400 mb-3">
-            We&apos;ll walk through all door styles and finishes on the call — this just helps us prepare.
-          </p>
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            {[
-              { id: 'spray-painted', label: 'Spray-painted doors' },
-              { id: 'vinyl', label: 'Vinyl doors' },
-              { id: 'unsure', label: 'Not sure yet' },
-            ].map((opt) => (
-              <motion.button
-                key={opt.id}
-                onClick={() => setDoorFinishType(opt.id)}
-                whileTap={{ scale: 0.97 }}
-                className={`p-3 rounded-xl border-2 transition-all text-center ${
-                  doorFinishType === opt.id
-                    ? 'border-green-700 bg-green-50/60'
-                    : 'border-warm-100 bg-white hover:border-warm-200'
-                }`}
-              >
-                <span className={`text-sm font-semibold font-[family-name:var(--font-heading)] ${
-                  doorFinishType === opt.id ? 'text-green-700' : 'text-warm-600'
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="space-y-4">
+          <div>
+            <h3 className="text-base font-semibold text-warm-800 mb-1 font-[family-name:var(--font-heading)]">
+              Door finish <span className="text-warm-400 font-normal text-sm">(optional)</span>
+            </h3>
+            <p className="text-xs text-warm-400 mb-3">
+              We&apos;ll go through this in detail on the call — this just helps us prepare.
+            </p>
+
+            {/* Spray-painted card */}
+            <motion.button
+              onClick={() => setDoorFinishType('spray-painted')}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full text-left rounded-2xl border-2 p-4 mb-2 transition-all ${
+                doorFinishType === 'spray-painted'
+                  ? 'border-green-700 bg-green-50/50'
+                  : 'border-warm-100 bg-white hover:border-warm-200'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                  doorFinishType === 'spray-painted' ? 'border-green-700 bg-green-700' : 'border-warm-300'
                 }`}>
-                  {opt.label}
+                  {doorFinishType === 'spray-painted' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-warm-900 mb-1 font-[family-name:var(--font-heading)]">
+                    Spray-painted doors
+                    <span className="ml-2 text-[10px] font-bold bg-green-700 text-white px-2 py-0.5 rounded-full">Fully bespoke</span>
+                  </p>
+                  <p className="text-xs text-warm-500 mb-2 leading-relaxed">
+                    Any door style, any colour. Made from moisture-resistant Finsa MDF with a durable spray finish. We colour-match to Farrow &amp; Ball, Dulux, Lick, Little Greene, and more.
+                  </p>
+                  <p className="text-xs text-warm-400">
+                    Style inspiration: use the vinyl visualiser below as a reference, or share a Pinterest link, Instagram photo, or any door you like — we can match it.
+                  </p>
+                </div>
+              </div>
+            </motion.button>
+
+            {/* Vinyl card */}
+            <motion.button
+              onClick={() => setDoorFinishType('vinyl')}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full text-left rounded-2xl border-2 p-4 mb-2 transition-all ${
+                doorFinishType === 'vinyl'
+                  ? 'border-green-700 bg-green-50/50'
+                  : 'border-warm-100 bg-white hover:border-warm-200'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                  doorFinishType === 'vinyl' ? 'border-green-700 bg-green-700' : 'border-warm-300'
+                }`}>
+                  {doorFinishType === 'vinyl' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-warm-900 mb-1 font-[family-name:var(--font-heading)]">
+                    Vinyl-wrapped doors
+                    <span className="ml-2 text-[10px] font-semibold text-warm-400 border border-warm-200 px-2 py-0.5 rounded-full">Limited range</span>
+                  </p>
+                  <p className="text-xs text-warm-500 mb-2 leading-relaxed">
+                    A selection of door styles and colours from our vinyl range. More limited than spray-painted in both style and colour options.
+                  </p>
+                  <a
+                    href="https://www.auniquechoice.co.uk/doors/aspire/door-visualiser"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 text-xs text-green-700 font-semibold underline"
+                  >
+                    Browse vinyl door styles &amp; colours
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            </motion.button>
+
+            {/* Not sure */}
+            <motion.button
+              onClick={() => setDoorFinishType('unsure')}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full text-left rounded-2xl border-2 p-3 transition-all ${
+                doorFinishType === 'unsure'
+                  ? 'border-green-700 bg-green-50/50'
+                  : 'border-warm-100 bg-white hover:border-warm-200'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                  doorFinishType === 'unsure' ? 'border-green-700 bg-green-700' : 'border-warm-300'
+                }`}>
+                  {doorFinishType === 'unsure' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <span className="text-sm font-semibold text-warm-700 font-[family-name:var(--font-heading)]">
+                  Not sure yet — we&apos;ll go through options on the call
                 </span>
-              </motion.button>
-            ))}
+              </div>
+            </motion.button>
           </div>
-          <label className="block text-sm font-medium text-warm-700 mb-1.5 font-[family-name:var(--font-heading)]">
-            Door style reference <span className="text-warm-400 font-normal">(optional)</span>
-          </label>
-          <input
-            type="text"
-            value={doorModel}
-            onChange={(e) => setDoorModel(e.target.value)}
-            placeholder="e.g. shaker style, a Door Visualiser link, or describe what you like"
-            className="w-full px-4 py-3 rounded-2xl border border-warm-200 text-sm text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all bg-white"
-          />
+
+          {/* Door style reference — shown for spray-painted or unsure */}
+          {(doorFinishType === 'spray-painted' || doorFinishType === 'unsure' || doorFinishType === '') && (
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
+              <label className="block text-sm font-medium text-warm-700 mb-1.5 font-[family-name:var(--font-heading)]">
+                Door style inspiration <span className="text-warm-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={doorModel}
+                onChange={(e) => setDoorModel(e.target.value)}
+                placeholder="Pinterest link, Instagram, shaker style, or describe what you like"
+                className="w-full px-4 py-3 rounded-2xl border border-warm-200 text-sm text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all bg-white"
+              />
+              <p className="text-[11px] text-warm-400 mt-1.5">
+                You can also use the{' '}
+                <a
+                  href="https://www.auniquechoice.co.uk/doors/aspire/door-visualiser"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green-700 underline"
+                >
+                  vinyl door visualiser
+                </a>
+                {' '}as a style reference — we can replicate any of those styles in spray-painted.
+              </p>
+            </motion.div>
+          )}
         </motion.div>
       )}
 
