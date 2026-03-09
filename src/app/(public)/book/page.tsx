@@ -427,6 +427,7 @@ function BookingFlowInner() {
 
           {step === 8 && (
             <CalendarScreen
+              packageChoice={formData.packageChoice}
               onNext={async (date, time) => {
                 updateField('date', date);
                 updateField('time', time);

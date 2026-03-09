@@ -17,7 +17,13 @@ const bookingSchema = z.object({
   packageChoice: z.string().optional(),
   budgetRange: z.string().optional(),
   timeline: z.string().optional(),
+  // Space info
   measurements: z.string().optional(),
+  spaceConstraints: z.array(z.string()).optional(),
+  homeVisit: z.boolean().optional(),
+  plannerLink: z.string().optional(),
+  doorFinishType: z.string().optional(),
+  doorModel: z.string().optional(),
   whatsappOptIn: z.boolean().optional(),
   date: z.string().min(1),
   time: z.string().min(1),
@@ -64,7 +70,9 @@ export async function POST(request: NextRequest) {
 
     // Parse the booking date/time early so we can check for conflicts
     const scheduledAt = parseBookingDateTime(data.date, data.time)
-    const slotEnd = new Date(scheduledAt.getTime() + 30 * 60 * 1000)
+    // Budget = 20 min design check; Standard/Select = 60 min consultation
+    const durationMin = data.packageChoice === 'budget' ? 20 : 60
+    const slotEnd = new Date(scheduledAt.getTime() + durationMin * 60 * 1000)
 
     // Server-side double-booking prevention
     // Check 1: Google Calendar FreeBusy
@@ -118,7 +126,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build notes from form data
+    // Build notes summary from form data (human-readable for CRM timeline)
     const notesParts: string[] = []
     if (data.room) notesParts.push(`Room: ${data.room}`)
     if (data.style) notesParts.push(`Style: ${data.style}`)
@@ -126,9 +134,27 @@ export async function POST(request: NextRequest) {
     if (data.budgetRange) notesParts.push(`Budget: ${data.budgetRange}`)
     if (data.timeline) notesParts.push(`Timeline: ${data.timeline}`)
     if (data.measurements) notesParts.push(`Measurements: ${data.measurements}`)
+    if (data.spaceConstraints?.length) notesParts.push(`Space: ${data.spaceConstraints.join(', ')}`)
+    if (data.homeVisit) notesParts.push('Home visit requested: Yes')
+    if (data.plannerLink) notesParts.push(`IKEA Planner: ${data.plannerLink}`)
+    if (data.doorFinishType) notesParts.push(`Door finish: ${data.doorFinishType}`)
+    if (data.doorModel) notesParts.push(`Door style: ${data.doorModel}`)
     if (data.postcodeLocation) notesParts.push(`Location: ${data.postcodeLocation}`)
     if (data.whatsappOptIn) notesParts.push('WhatsApp opt-in: Yes')
     const notes = notesParts.join('\n')
+
+    // Derive package_complexity for the opportunity
+    const packageComplexityMap: Record<string, 'budget' | 'standard' | 'select'> = {
+      budget: 'budget',
+      paxbespoke: 'standard',
+      select: 'select',
+    }
+    const packageComplexity = data.packageChoice
+      ? (packageComplexityMap[data.packageChoice] ?? null)
+      : null
+
+    // Budget = online design check (20 min); Standard/Select = full consultation (60 min)
+    const bookingDurationMin = data.packageChoice === 'budget' ? 20 : 60
 
     // Classify traffic source from UTM or referrer
     const trafficSource = classifySource(data.utm_source, data.utm_medium, data.referrer)
@@ -147,6 +173,13 @@ export async function POST(request: NextRequest) {
         notes,
         owner_user_id: ownerId,
         status: 'new',
+        // Space info (discrete columns — also summarised in notes above)
+        measurements: data.measurements ?? null,
+        space_constraints: data.spaceConstraints?.length ? data.spaceConstraints : null,
+        home_visit: data.homeVisit ?? false,
+        planner_link: data.plannerLink ?? null,
+        door_finish_type: data.doorFinishType ?? null,
+        door_model: data.doorModel ?? null,
         // Attribution
         traffic_source: trafficSource,
         utm_source: data.utm_source ?? null,
@@ -175,6 +208,10 @@ export async function POST(request: NextRequest) {
         lead_id: lead.id,
         stage: 'call1_scheduled',
         owner_user_id: ownerId,
+        package_complexity: packageComplexity,
+        // Budget = online design check; Standard/Select = video consultation
+        entry_route: data.packageChoice === 'budget' ? 'online_consultation' : 'video_call',
+        visit_required: data.homeVisit ?? false,
       })
       .select()
       .single()
@@ -191,12 +228,23 @@ export async function POST(request: NextRequest) {
         opportunity_id: opportunity.id,
         type: 'call1',
         scheduled_at: scheduledAt.toISOString(),
-        duration_min: 30,
+        duration_min: bookingDurationMin,
         owner_user_id: ownerId,
         outcome: 'pending',
       })
       .select()
       .single()
+
+    // For Budget package: store the IKEA Planner link as a design record so the
+    // designer can access it directly from the opportunity before the design check call.
+    if (data.plannerLink && data.packageChoice === 'budget') {
+      await supabase.from('designs').insert({
+        opportunity_id: opportunity.id,
+        version: 1,
+        planner_link: data.plannerLink,
+        notes: 'Customer-submitted IKEA PAX Planner design (Budget package)',
+      }).catch((err) => console.error('Design record creation error:', err))
+    }
 
     if (bookingError) {
       console.error('Booking creation error:', bookingError)

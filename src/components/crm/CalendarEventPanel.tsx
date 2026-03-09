@@ -6,10 +6,16 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Phone, Video, Home, Wrench, Calendar, Clock, MapPin,
   ExternalLink, Copy, CheckCircle2, XCircle, AlertTriangle,
-  ChevronRight, Sparkles, User, RefreshCw, Loader2,
+  ChevronRight, Sparkles, User, RefreshCw, Loader2, ClipboardList,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { CalendarEvent } from './CalendarTypes'
+import dynamic from 'next/dynamic'
+
+const Meet1GuidePanel = dynamic(
+  () => import('./meet1/Meet1GuidePanel'),
+  { ssr: false, loading: () => null }
+)
 
 interface CalendarEventPanelProps {
   event: CalendarEvent | null
@@ -66,6 +72,7 @@ export default function CalendarEventPanel({
   const [rescheduleDate, setRescheduleDate] = useState('')
   const [rescheduleTime, setRescheduleTime] = useState('')
   const [depositConfirmed, setDepositConfirmed] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
 
   const resetForm = useCallback(() => {
     setMode('view'); setNotes(''); setReason('')
@@ -264,6 +271,23 @@ export default function CalendarEventPanel({
                 </div>
               )}
 
+              {/* Call Guide — call1 events only */}
+              {event.eventType === 'call1' && event.opportunityId && (
+                <button
+                  onClick={() => setGuideOpen(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--green-50)] border border-[var(--green-200)] rounded-xl hover:bg-[var(--green-100)] transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[var(--green-100)] flex items-center justify-center flex-shrink-0">
+                    <ClipboardList size={15} className="text-[var(--green-700)]" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-[var(--green-800)]">Open Call Guide</p>
+                    <p className="text-xs text-[var(--green-600)]">Structured checklist for Meet 1</p>
+                  </div>
+                  <ChevronRight size={14} className="text-[var(--green-500)] group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              )}
+
               {/* Value */}
               {event.value && (
                 <div className="flex items-center justify-between bg-[var(--warm-50)]/50 rounded-xl p-4">
@@ -435,6 +459,21 @@ export default function CalendarEventPanel({
             </div>
           </motion.div>
         </>
+      )}
+
+      {/* Meet 1 Call Guide — slides in over the event panel */}
+      {guideOpen && event?.opportunityId && (
+        <Meet1GuidePanel
+          opportunityId={event.opportunityId}
+          bookingId={event.id}
+          leadName={event.title}
+          onClose={() => setGuideOpen(false)}
+          onComplete={() => {
+            setGuideOpen(false)
+            onActionComplete()
+            onClose()
+          }}
+        />
       )}
     </AnimatePresence>
   )

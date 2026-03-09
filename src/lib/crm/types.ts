@@ -219,6 +219,59 @@ export interface Opportunity {
 
 // ─── Sales Process Entities ──────────────────────────────────────────────────
 
+// ─── Meet 1 Notes ────────────────────────────────────────────────────────────
+
+export type ObstacleState = 'present' | 'not_present' | 'unknown'
+
+export type FinishType = 'skirting_board' | 'flush_fit' | 'cornice' | 'other'
+
+export interface FinishDetails {
+  // skirting_board
+  height_mm?: number
+  photos_received?: boolean
+  // flush_fit
+  gap_noted?: boolean
+  // cornice
+  cornice_height_mm?: number
+  // other / shared
+  notes?: string
+}
+
+export interface Meet1Notes {
+  id: string
+  opportunity_id: string
+  booking_id: string | null
+  lead_id: string | null
+  // Section 1
+  room_confirmed: string | null
+  space_constraints: string[] | null
+  photos_on_file: boolean
+  photos_note: string | null
+  // Section 2
+  package_confirmed: 'budget' | 'paxbespoke' | 'select' | null
+  budget_responsibility_confirmed: boolean
+  // Section 3
+  obstacle_bed: ObstacleState
+  obstacle_radiator: ObstacleState
+  obstacle_curtain_rail: ObstacleState
+  obstacle_coving: ObstacleState
+  obstacle_picture_rail: ObstacleState
+  obstacle_other: string | null
+  // Section 4
+  finish_type: FinishType | null
+  finish_details: FinishDetails
+  // Section 5
+  call_notes: string | null
+  next_action: string | null
+  // Meta
+  completed: boolean
+  completed_by: string | null
+  completed_at: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface Visit {
   id: string
   opportunity_id: string

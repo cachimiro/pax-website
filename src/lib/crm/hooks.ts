@@ -23,6 +23,7 @@ import type {
   EmailMessage,
   EmailEvent,
   MessageTemplate,
+  Meet1Notes,
 } from './types'
 import { toast } from 'sonner'
 import { runStageAutomations } from './automation'
@@ -936,6 +937,62 @@ export function useSignature() {
       const res = await fetch('/api/crm/signature')
       const data = await res.json()
       return data.signature
+    },
+  })
+}
+
+// ─── Meet 1 Notes ────────────────────────────────────────────────────────────
+
+export function useMeet1Notes(opportunityId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['meet1-notes', opportunityId],
+    enabled: !!opportunityId,
+    queryFn: async () => {
+      const res = await fetch(`/api/crm/meet1/${opportunityId}`)
+      if (!res.ok) return null
+      const data = await res.json()
+      return (data.notes ?? null) as Meet1Notes | null
+    },
+  })
+}
+
+export function useSaveMeet1Notes(opportunityId: string | null | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (patch: Partial<Meet1Notes>) => {
+      const res = await fetch(`/api/crm/meet1/${opportunityId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      })
+      if (!res.ok) throw new Error('Failed to save')
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['meet1-notes', opportunityId] })
+    },
+  })
+}
+
+export function useCompleteMeet1(opportunityId: string | null | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { bookingId: string; callNotes: string }) => {
+      const res = await fetch(`/api/crm/meet1/${opportunityId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error ?? 'Failed to complete call')
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['meet1-notes', opportunityId] })
+      qc.invalidateQueries({ queryKey: ['bookings'] })
+      qc.invalidateQueries({ queryKey: ['opportunities'] })
     },
   })
 }

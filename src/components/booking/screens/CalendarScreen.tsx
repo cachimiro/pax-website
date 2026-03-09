@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Clock, Users, Zap, MessageCircle, Phone, Cal
 
 interface CalendarScreenProps {
   onNext: (date: string, time: string) => void;
+  packageChoice?: string;
 }
 
 interface BusyInterval {
@@ -59,7 +60,8 @@ function isSlotBusy(slotStart: Date, busyIntervals: BusyInterval[]): boolean {
   });
 }
 
-export default function CalendarScreen({ onNext }: CalendarScreenProps) {
+export default function CalendarScreen({ onNext, packageChoice }: CalendarScreenProps) {
+  const isBudget = packageChoice === 'budget';
   const dates = useMemo(() => getAvailableDates(), []);
   const [dateOffset, setDateOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -141,13 +143,17 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
   return (
     <div className="max-w-lg mx-auto">
       <h2 className="text-2xl font-bold text-warm-900 mb-2 font-[family-name:var(--font-heading)]">
-        Pick a time for your call
+        {isBudget ? 'Book your online design check' : 'Pick a time for your call'}
       </h2>
       <p className="text-sm text-warm-500 mb-1">
-        Video consultations last 20–30 minutes. Choose a day and time that works for you.
+        {isBudget
+          ? 'Up to 20 minutes. We\'ll review your IKEA plan together, confirm nothing is missed, and prepare your final quote.'
+          : 'Video consultations last up to 1 hour. Choose a day and time that works for you.'}
       </p>
       <p className="text-xs text-warm-400 mb-6 italic">
-        We ask so we can prepare for your consultation and have everything ready.
+        {isBudget
+          ? 'Have your IKEA Planner link and measurements to hand for the call.'
+          : 'We\'ll prepare examples and pricing relevant to your space before the call.'}
       </p>
 
       {/* Date picker */}
@@ -285,7 +291,9 @@ export default function CalendarScreen({ onNext }: CalendarScreenProps) {
               <p className="text-sm font-semibold text-green-900 font-[family-name:var(--font-heading)]">
                 {selectedDate} at {selectedTime}
               </p>
-              <p className="text-xs text-[#0C6B4E]">20–30 minute video consultation</p>
+              <p className="text-xs text-[#0C6B4E]">
+                {isBudget ? '20-minute online design check' : 'Up to 1 hour video consultation'}
+              </p>
             </div>
           </div>
 
