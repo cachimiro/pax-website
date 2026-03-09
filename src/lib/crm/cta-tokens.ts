@@ -136,3 +136,36 @@ export function generateAllCTAUrls(opportunityId: string): Record<string, string
     cta_manage_booking: `${baseUrl}/my-booking?token=${manageToken}`,
   }
 }
+
+/**
+ * Generate a secure token for the public quote agreement page.
+ * Stored in quote_tokens table; validated server-side on the /quote/[token] page.
+ */
+export async function generateQuoteToken(
+  supabase: import('@supabase/supabase-js').SupabaseClient,
+  quoteId: string,
+  expiresInDays = 30
+): Promise<string | null> {
+  const expiresAt = new Date(Date.now() + expiresInDays * 86400 * 1000).toISOString()
+
+  const { data, error } = await supabase
+    .from('quote_tokens')
+    .insert({ quote_id: quoteId, expires_at: expiresAt })
+    .select('token')
+    .single()
+
+  if (error || !data) {
+    console.error('[quote_tokens] Failed to generate token:', error)
+    return null
+  }
+
+  return data.token
+}
+
+/**
+ * Build the full public URL for a quote agreement page.
+ */
+export function buildQuoteUrl(token: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://paxbespoke.uk'
+  return `${baseUrl}/quote/${token}`
+}

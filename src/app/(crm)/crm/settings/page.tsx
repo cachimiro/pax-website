@@ -60,6 +60,20 @@ export default function SettingsPage() {
     }
   }, [tab, isAdmin])
 
+  // Show toast for QuickBooks OAuth result
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const qbConnected = params.get('qb_connected')
+    const qbError = params.get('qb_error')
+    if (qbConnected === '1') {
+      toast.success('QuickBooks connected')
+      window.history.replaceState({}, '', '/crm/settings?tab=integrations')
+    } else if (qbError) {
+      toast.error(`QuickBooks connection failed: ${qbError.replace(/_/g, ' ')}`)
+      window.history.replaceState({}, '', '/crm/settings?tab=integrations')
+    }
+  }, [])
+
   // Show toast for Google OAuth result
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -1094,6 +1108,188 @@ function IntegrationsSection() {
       </div>
 
       <ChannelStatusPanel />
+      <QuickBooksSection />
+    </div>
+  )
+}
+
+// ─── QuickBooks Section ───────────────────────────────────────────────────────
+
+function QuickBooksSection() {
+  const [status, setStatus] = useState<{
+    connected: boolean
+    has_credentials: boolean
+    company_name?: string
+    environment?: string
+    connected_at?: string
+    token_expired?: boolean
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [connecting, setConnecting] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/crm/quickbooks/status')
+      .then((r) => r.json())
+      .then(setStatus)
+      .catch(() => setStatus({ connected: false, has_credentials: false }))
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function connect() {
+    setConnecting(true)
+    try {
+      const res = await fetch('/api/crm/quickbooks/auth-url')
+      const data = await res.json()
+      if (data.error) { toast.error(data.error); return }
+      window.location.href = data.url
+    } catch {
+      toast.error('Failed to start QuickBooks connection')
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  async function disconnect() {
+    setDisconnecting(true)
+    try {
+      await fetch('/api/crm/quickbooks/status', { method: 'DELETE' })
+      setStatus((s) => s ? { ...s, connected: false } : s)
+      toast.success('QuickBooks disconnected')
+    } catch {
+      toast.error('Failed to disconnect')
+    } finally {
+      setDisconnecting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-[var(--warm-100)] p-5 mt-4">
+        <div className="flex items-center gap-2">
+          <Loader2 size={14} className="animate-spin text-[var(--warm-400)]" />
+          <span className="text-xs text-[var(--warm-400)]">Loading QuickBooks status...</span>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 mt-4">
+      <div className="flex items-center gap-2.5 mb-3">
+        {/* QuickBooks logo mark */}
+        <div className="w-9 h-9 rounded-xl bg-[#2CA01C]/10 flex items-center justify-center flex-shrink-0">
+          <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="16" fill="#2CA01C"/>
+            <path d="M8 16a8 8 0 1 0 16 0 8 8 0 0 0-16 0zm8-5.5v2.25H13.5a3.25 3.25 0 0 0 0 6.5H16v2.25h-2.5a5.5 5.5 0 0 1 0-11H16zm0 2.25h2.5a3.25 3.25 0 0 1 0 6.5H16v-2.25h2.5a1 1 0 0 0 0-2H16v-2.25z" fill="white"/>
+          </svg>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-[var(--warm-800)]">QuickBooks Online</h3>
+          <p className="text-[10px] text-[var(--warm-400)]">Invoicing &amp; payments</p>
+        </div>
+        {status?.connected && (
+          <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            Connected
+            {status.environment === 'sandbox' && ' (sandbox)'}
+          </span>
+        )}
+      </div>
+
+      {!status?.has_credentials && (
+        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-4 text-xs text-amber-800">
+          <AlertTriangle size={13} className="flex-shrink-0 mt-0.5 text-amber-500" />
+          <span>
+            <strong>Credentials not configured.</strong> Add <code className="bg-amber-100 px-1 rounded">QB_CLIENT_ID</code> and <code className="bg-amber-100 px-1 rounded">QB_CLIENT_SECRET</code> to your environment variables, then reconnect.
+          </span>
+        </div>
+      )}
+
+      {status?.connected ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            {status.company_name && (
+              <div>
+                <p className="text-[10px] text-[var(--warm-400)] uppercase tracking-wide">Company</p>
+                <p className="font-medium text-[var(--warm-800)] mt-0.5">{status.company_name}</p>
+              </div>
+            )}
+            {status.connected_at && (
+              <div>
+                <p className="text-[10px] text-[var(--warm-400)] uppercase tracking-wide">Connected</p>
+                <p className="font-medium text-[var(--warm-800)] mt-0.5">
+                  {new Date(status.connected_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {status.token_expired && (
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
+              <AlertTriangle size={12} className="text-amber-500 flex-shrink-0" />
+              Token expired — reconnect to resume invoice creation.
+            </div>
+          )}
+
+          <div className="space-y-2 text-xs text-[var(--warm-600)]">
+            {[
+              'Invoices created automatically when a customer agrees to a quote',
+              'Invoice sent to customer via QuickBooks email',
+              'Your accountant sees every invoice in real time',
+              'Payment confirmation advances the deal automatically',
+            ].map((f, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                {f}
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={disconnect}
+            disabled={disconnecting}
+            className="text-[11px] text-[var(--warm-400)] hover:text-red-500 transition-colors"
+          >
+            {disconnecting ? 'Disconnecting...' : 'Disconnect QuickBooks'}
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-xs text-[var(--warm-500)] leading-relaxed">
+            Connect QuickBooks to automatically create and send invoices when customers agree to quotes. Your accountant sees everything in real time.
+          </p>
+
+          <div className="space-y-2 text-xs text-[var(--warm-600)]">
+            {[
+              'Invoices created automatically from agreed quotes',
+              'Full line items and project details on every invoice',
+              'Customer receives invoice via QuickBooks email',
+              'Payment confirmation advances the deal stage automatically',
+            ].map((f, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--warm-300)] flex-shrink-0" />
+                {f}
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={connect}
+            disabled={connecting || !status?.has_credentials}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#2CA01C] text-white text-sm font-semibold hover:bg-[#248a17] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {connecting ? <Loader2 size={14} className="animate-spin" /> : null}
+            {connecting ? 'Connecting...' : 'Connect QuickBooks'}
+          </button>
+
+          {!status?.has_credentials && (
+            <p className="text-[10px] text-[var(--warm-300)] text-center">
+              Add credentials first — see the implementation guide for setup instructions.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }

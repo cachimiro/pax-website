@@ -134,7 +134,7 @@ export async function runStageAutomations(
   let designLink = ''
   const { data: latestQuote } = await supabase
     .from('quotes')
-    .select('amount, deposit_amount, design_id')
+    .select('id, amount, deposit_amount, design_id')
     .eq('opportunity_id', opportunityId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -202,17 +202,36 @@ export async function runStageAutomations(
   // Generate CTA URLs for email action links
   const ctaUrls = generateAllCTAUrls(opportunityId)
 
+  // Package label for templates
+  const PACKAGE_LABELS: Record<string, string> = {
+    budget: 'Budget Package',
+    paxbespoke: 'PaxBespoke Package',
+    select: 'Select Package',
+  }
+  const packageName = PACKAGE_LABELS[opp.package_complexity ?? ''] ?? 'Bespoke Wardrobe'
+
+  // Deposit + balance amounts as formatted strings
+  const rawDeposit = latestQuote?.deposit_amount
+    ? Number(latestQuote.deposit_amount)
+    : opp.value_estimate ? Math.round(opp.value_estimate * 0.3) : 0
+  const rawTotal = latestQuote?.amount ? Number(latestQuote.amount) : opp.value_estimate ?? 0
+  const rawBalance = rawTotal - rawDeposit
+
   const variables: Record<string, string> = {
     name: lead.name ?? '',
     first_name: (lead.name ?? '').split(' ')[0],
     owner_name: ownerName,
     project_type: lead.project_type ?? 'wardrobe',
-    amount: opp.value_estimate ? Math.round(opp.value_estimate * 0.3).toLocaleString('en-GB') : '',
+    amount: rawDeposit > 0 ? rawDeposit.toLocaleString('en-GB') : '',
     booking_link: bookingLink,
     meet_link: meetLink ?? '',
-    // Sales process variables
-    quote_amount: quoteAmount,
-    deposit_amount: depositAmountStr,
+    // Quote variables
+    quote_amount: rawTotal > 0 ? rawTotal.toLocaleString('en-GB') : quoteAmount,
+    deposit_amount: rawDeposit > 0 ? rawDeposit.toLocaleString('en-GB') : depositAmountStr,
+    balance_amount: rawBalance > 0 ? rawBalance.toLocaleString('en-GB') : '',
+    package_name: packageName,
+    quote_link: '',  // populated below for quote_sent stage
+    invoice_number: '',
     design_link: designLink,
     fitting_dates: fittingDates,
     confirmed_fitting_date: confirmedFittingDate,
@@ -224,6 +243,19 @@ export async function runStageAutomations(
     ...ctaUrls,
     // Fitter variables (populated below if applicable)
     fitter_name: '',
+  }
+
+  // For quote_sent stage, generate a fresh quote token and set quote_link
+  if (stage === 'quote_sent' && latestQuote) {
+    try {
+      const { generateQuoteToken, buildQuoteUrl } = await import('./cta-tokens')
+      const token = await generateQuoteToken(supabase, latestQuote.id ?? '')
+      if (token) {
+        variables.quote_link = buildQuoteUrl(token)
+      }
+    } catch {
+      variables.quote_link = `${baseUrl}/quote/expired`
+    }
   }
 
   if (bookingTime) {
@@ -285,44 +317,129 @@ export async function runStageAutomations(
       invoiceId = newInvoice?.id
     }
 
-    // Generate Stripe checkout URL
+    // Create QuickBooks invoice and get payment link
     if (invoiceId) {
       try {
-        const { getStripe } = await import('./stripe')
-        const stripe = getStripe()
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://paxbespoke.uk'
+        const {
+          createOrFindCustomer,
+          createQBInvoice,
+          sendQBInvoice,
+          buildInvoiceMemo,
+          buildLineItems,
+        } = await import('./quickbooks')
 
-        const session = await stripe.checkout.sessions.create({
-          mode: 'payment',
-          payment_method_types: ['card'],
-          customer_email: lead.email ?? undefined,
-          line_items: [{
-            price_data: {
-              currency: 'gbp',
-              unit_amount: depositAmount * 100,
-              product_data: {
-                name: `PaxBespoke Deposit — ${lead.name ?? 'Project'}`,
-                description: 'Deposit payment for your bespoke wardrobe project',
-              },
-            },
-            quantity: 1,
-          }],
-          metadata: { invoice_id: invoiceId, opportunity_id: opportunityId },
-          success_url: `${baseUrl}/crm/onboarding/${opportunityId}?payment=success`,
-          cancel_url: `${baseUrl}/crm/onboarding/${opportunityId}?payment=cancelled`,
+        // Load accepted quote items for line items
+        const { data: acceptedQuote } = await supabase
+          .from('quotes')
+          .select('items, amount, deposit_amount')
+          .eq('opportunity_id', opportunityId)
+          .eq('status', 'accepted')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        // Load meet1 notes for memo
+        const { data: meet1 } = await supabase
+          .from('meet1_notes')
+          .select('finish_type, call_notes')
+          .eq('opportunity_id', opportunityId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        // Load designer name
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', opp.owner_user_id)
+          .maybeSingle()
+
+        const quoteItems = (acceptedQuote?.items ?? []) as Array<{
+          description: string; quantity?: number; unit_price?: number; amount: number
+        }>
+        const totalAmount = acceptedQuote?.amount ?? depositAmount
+        const depositAmt = acceptedQuote?.deposit_amount ?? depositAmount
+
+        const lineItems = buildLineItems({
+          quoteItems,
+          totalAmount,
+          depositAmount: depositAmt,
+          projectType: lead.project_type,
+          packageComplexity: opp.package_complexity,
         })
 
-        if (session.url) {
-          variables.payment_link = session.url
+        const memo = buildInvoiceMemo({
+          leadName: lead.name ?? 'Customer',
+          postcode: lead.postcode,
+          projectType: lead.project_type,
+          packageComplexity: opp.package_complexity,
+          measurements: lead.measurements ?? null,
+          spaceConstraints: lead.space_constraints ?? null,
+          doorFinishType: meet1?.finish_type ?? null,
+          doorModel: null,
+          homeVisit: !!(lead as Record<string, unknown>).home_visit,
+          designerName: ownerProfile?.full_name ?? 'PaxBespoke',
+          callDate: bookingTime
+            ? bookingTime.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+            : null,
+          quoteNotes: meet1?.call_notes ?? null,
+        })
+
+        const dueDate = new Date(Date.now() + 7 * 86400 * 1000)
+          .toISOString().split('T')[0]
+
+        // Create customer in QBO
+        const customer = await createOrFindCustomer(supabase, {
+          name: lead.name ?? 'Customer',
+          email: lead.email,
+          phone: lead.phone,
+        })
+
+        // Create invoice in QBO
+        const qbInvoice = await createQBInvoice(supabase, {
+          customerId: customer.qbo_customer_id,
+          lineItems,
+          memo,
+          dueDate,
+          customerEmail: lead.email,
+          customerRef: lead.name ?? 'Customer',
+        })
+
+        // Send invoice via QBO email (so accountant sees it immediately)
+        if (lead.email && !qbInvoice.dry_run) {
+          await sendQBInvoice(supabase, qbInvoice.qbo_invoice_id, lead.email)
         }
 
+        // Store QBO details on local invoice
         await supabase
           .from('invoices')
-          .update({ stripe_session_id: session.id })
+          .update({
+            qbo_invoice_id: qbInvoice.qbo_invoice_id,
+            qbo_invoice_number: qbInvoice.qbo_invoice_number,
+            qbo_pay_url: qbInvoice.qbo_pay_url,
+            line_items: lineItems,
+            memo,
+            due_date: dueDate,
+            sent_at: new Date().toISOString(),
+          })
           .eq('id', invoiceId)
+
+        // Set payment_link for the deposit request email
+        if (qbInvoice.qbo_pay_url) {
+          variables.payment_link = qbInvoice.qbo_pay_url
+        } else {
+          // Fallback: link to the invoice page in the client portal
+          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://paxbespoke.uk'
+          variables.payment_link = `${baseUrl}/my-booking?invoice=${invoiceId}`
+        }
+
+        variables.amount = String(depositAmt)
+        variables.quote_amount = String(totalAmount)
+        variables.invoice_number = qbInvoice.qbo_invoice_number
+
       } catch (err) {
-        console.error('Stripe checkout creation error:', err)
-        variables.payment_link = '[Payment link unavailable — contact us]'
+        console.error('[automation] QBO invoice creation error:', err)
+        variables.payment_link = '[Payment link unavailable — contact us to pay your deposit]'
       }
     }
   }

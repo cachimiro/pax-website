@@ -12,6 +12,29 @@ export interface MessageTemplate {
  */
 export const DEFAULT_TEMPLATES: MessageTemplate[] = [
   {
+    id: 'quote_sent',
+    name: 'Quote for Agreement',
+    subject: 'Your PaxBespoke quote — £{{quote_amount}}',
+    body: `Hi {{first_name}},
+
+Your quote for your {{project_type}} project is ready to review.
+
+Here's a summary:
+• Package: {{package_name}}
+• Total: £{{quote_amount}}
+• Deposit to secure your slot: £{{deposit_amount}}
+• Balance on completion: £{{balance_amount}}
+
+Please review the full breakdown and agree to proceed. Once you agree, we'll send your deposit invoice straight away.
+
+[CTA:Review & agree to quote|{{quote_link}}]
+
+The link is valid for 30 days. If you have any questions, just reply to this email.
+
+{{owner_name}}`,
+    channels: ['email'],
+  },
+  {
     id: 'call1_confirmed',
     name: 'Call 1 Booking Confirmation',
     subject: 'Your consultation is confirmed — {{date}} at {{time}}',

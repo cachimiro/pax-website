@@ -38,13 +38,38 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { opportunity_id, design_id, amount, deposit_amount, items, notes } = body
+  const { opportunity_id, quote_id, design_id, amount, deposit_amount, items, notes } = body
 
   if (!opportunity_id || !amount) {
     return NextResponse.json({ error: 'opportunity_id and amount required' }, { status: 400 })
   }
 
   const admin = createAdminClient()
+
+  // If quote_id provided, update existing draft instead of creating new
+  if (quote_id) {
+    const { data: quote, error } = await admin
+      .from('quotes')
+      .update({
+        amount,
+        deposit_amount: deposit_amount ?? Math.round(amount * 0.3),
+        items: items || [],
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', quote_id)
+      .eq('status', 'draft') // only update drafts
+      .select()
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    await admin
+      .from('opportunities')
+      .update({ value_estimate: amount })
+      .eq('id', opportunity_id)
+
+    return NextResponse.json(quote)
+  }
 
   const { data: quote, error } = await admin
     .from('quotes')
@@ -62,7 +87,6 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Update opportunity value_estimate
   await admin
     .from('opportunities')
     .update({ value_estimate: amount })
