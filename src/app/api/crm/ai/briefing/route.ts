@@ -99,7 +99,7 @@ ${PIPELINE_STAGES}
 
 Respond with ONLY valid JSON:
 {
-  "greeting": "<time-appropriate greeting using the rep's name>",
+  "greeting": "<time-appropriate greeting>",
   "summary": "<1-2 sentence overview of today's pipeline state>",
   "highlights": [
     { "label": "<metric name>", "value": "<value>", "trend": "up|down|flat" }
@@ -111,7 +111,7 @@ Respond with ONLY valid JSON:
 }
 
 Rules:
-- Keep the greeting natural and time-appropriate (morning/afternoon/evening)
+- Greeting format: if a name is provided use "Good [morning/afternoon/evening], [Name]." — if no name, use "Good [morning/afternoon/evening]." Never use "Hello there", "Hey", or "Hi there".
 - Highlights should be 2-4 key metrics
 - Urgent items should be max 3, prioritised by impact
 - The tip should be specific to their pipeline state, not generic
@@ -120,8 +120,7 @@ Rules:
   const hour = now.getHours()
   const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
 
-  const userPrompt = `Time: ${timeOfDay}
-Rep name: ${userName ?? 'there'}
+  const userPrompt = `Time: ${timeOfDay}${userName ? `\nRep name: ${userName}` : ''}
 
 Pipeline: ${opportunities.length} active opportunities, total value £${totalValue.toLocaleString('en-GB')}
 Stages: ${summariseStages(opportunities)}

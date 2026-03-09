@@ -37,7 +37,7 @@ Respond with ONLY valid JSON:
   "action": "<specific action, e.g. 'Call Sarah to confirm her site visit for Thursday'>",
   "reason": "<why this is the priority>",
   "urgency": "high" | "medium" | "low",
-  "script_hint": "<1-2 sentence talking point or email opener>",
+  "script_hint": "<1 sentence specific to this lead — reference their name, project type, or last interaction. No generic openers like 'just checking in' or 'hope you're well'.>",
   "risk": "<what happens if this isn't done soon>"
 }`
 

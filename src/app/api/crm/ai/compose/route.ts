@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   }
 
   const openai = getOpenAI()
-  const firstName = lead.name?.split(' ')[0] ?? 'there'
+  const firstName = lead.name?.split(' ')[0] ?? null
 
   // Fetch enriched context if lead has an ID
   let contextBlock = ''
@@ -66,10 +66,11 @@ TONE: ${toneGuide[tone] ?? toneGuide.friendly}
 CHANNEL: ${channelGuide[channel] ?? channelGuide.email}
 
 RULES:
-- Address the lead as "${firstName}"
+- ${firstName ? `Address the lead as "${firstName}"` : 'Do not use a name in the salutation — omit it entirely'}
 - Do NOT fabricate specific dates, times, prices, or links — use placeholders like {{date}}, {{time}}, {{amount}}, {{booking_link}}, {{payment_link}} where needed
 - Do NOT mention competitors or make promises about timelines you can't verify
 - Keep the message natural and human-sounding, not robotic
+- Do NOT open with filler phrases like "I hope this finds you well", "Just wanted to reach out", "I hope you're doing well", "I wanted to touch base", or similar. Open with something specific and purposeful.
 - For email: provide both a subject line and body, separated by a blank line after "Subject: ..."
 - For SMS/WhatsApp: provide only the message body, no subject
 
