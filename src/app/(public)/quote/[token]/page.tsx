@@ -41,7 +41,8 @@ export default async function QuotePage({ params }: Props) {
 
   if (!quote) return notFound()
 
-  const opp = quote.opportunities as Record<string, unknown>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const opp = (quote.opportunities as any) as Record<string, unknown>
   const lead = opp?.leads as Record<string, unknown>
   const meet1 = (opp?.meet1_notes as Record<string, unknown>[] | null)?.[0] ?? null
 
