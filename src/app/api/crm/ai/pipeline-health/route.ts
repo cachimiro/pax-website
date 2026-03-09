@@ -104,6 +104,30 @@ export async function POST(request: NextRequest) {
   }
   const topLostReason = Object.entries(lostReasons).sort((a, b) => b[1] - a[1])[0]
 
+  // Fitting-specific data
+  const [fittingJobs, openBoardJobs] = await Promise.all([
+    supabase
+      .from('fitting_jobs')
+      .select('status, offer_expires_at, open_board_at, scheduled_date')
+      .not('status', 'in', '("cancelled","approved","complete")')
+      .limit(50),
+    supabase
+      .from('fitting_jobs')
+      .select('id, open_board_at')
+      .eq('status', 'open_board'),
+  ])
+
+  const fittingData = fittingJobs.data ?? []
+  const offeredJobs = fittingData.filter((j: { status: string }) => j.status === 'offered')
+  const boardJobs = openBoardJobs.data ?? []
+  const pendingSignoffs = fittingData.filter((j: { status: string }) => j.status === 'completed' || j.status === 'signed_off')
+
+  const fittingSummary = [
+    offeredJobs.length > 0 ? `${offeredJobs.length} jobs offered (awaiting fitter response)` : '',
+    boardJobs.length > 0 ? `${boardJobs.length} jobs on open board (need fitter)` : '',
+    pendingSignoffs.length > 0 ? `${pendingSignoffs.length} jobs awaiting sign-off/approval` : '',
+  ].filter(Boolean).join('; ') || 'No fitting issues'
+
   const openai = getOpenAI()
 
   const systemPrompt = `You are a pipeline analyst for PaxBespoke. Produce a weekly pipeline health report.
@@ -162,6 +186,7 @@ NEW LEADS: ${newLeads.data?.length ?? 0} this week vs ${priorLeads.data?.length 
 
 TASKS: ${openTasks.length} open, ${overdueTasks.length} overdue
 BOOKINGS: ${recentBookings.length} this week, ${noShows.length} no-shows
+FITTINGS: ${fittingSummary}
 
 AT-RISK CANDIDATES (stuck longest):
 ${active

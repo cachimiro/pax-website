@@ -16,10 +16,11 @@ const STAGE_TARGETS: Record<string, { days: number; action: string; icon: Sugges
   proposal_agreed:     { days: 7,  action: 'Send deposit request', icon: 'pound' },
   awaiting_deposit:    { days: 5,  action: 'Follow up on deposit payment', icon: 'pound' },
   deposit_paid:        { days: 3,  action: 'Schedule onboarding session', icon: 'calendar' },
-  onboarding_scheduled:{ days: 2,  action: 'Prepare onboarding materials', icon: 'check' },
-  onboarding_complete: { days: 3,  action: 'Confirm production start date', icon: 'check' },
-  production:          { days: 14, action: 'Update client on production progress', icon: 'mail' },
-  installation:        { days: 7,  action: 'Confirm installation date', icon: 'calendar' },
+  fitting_confirmed:   { days: 2,  action: 'Assign fitter to this job', icon: 'check' },
+  fitter_assigned:     { days: 3,  action: 'Confirm fitter is prepared for fitting day', icon: 'check' },
+  fitting_in_progress: { days: 2,  action: 'Check in with fitter on progress', icon: 'phone' },
+  fitting_complete:    { days: 1,  action: 'Send sign-off request to customer', icon: 'mail' },
+  sign_off_pending:    { days: 2,  action: 'Follow up on sign-off', icon: 'mail' },
 }
 
 export function getSuggestion(opp: OpportunityWithLead): Suggestion | null {

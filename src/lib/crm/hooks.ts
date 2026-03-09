@@ -312,7 +312,7 @@ export function useMoveOpportunityStage() {
       // Set KPI timestamps
       if (stage === 'complete') updates.completed_at = new Date().toISOString()
       if (stage === 'deposit_paid') updates.deposit_paid_at = new Date().toISOString()
-      if (stage === 'onboarding_complete') updates.onboarding_completed_at = new Date().toISOString()
+      if (stage === 'fitter_assigned') updates.onboarding_completed_at = new Date().toISOString()
       if (stage === 'qualified') updates.call1_completed_at = new Date().toISOString()
 
       const { data, error } = await supabase()
@@ -477,7 +477,7 @@ export function useUpdateTask() {
           const autoMoveMap: Record<string, OpportunityStage> = {
             call1_attempt: 'qualified',
             call2_attempt: 'proposal_agreed',
-            onboarding_session: 'onboarding_complete',
+            onboarding_session: 'fitter_assigned',
           }
           const targetStage = autoMoveMap[data.type]
           if (targetStage) {

@@ -44,10 +44,11 @@ export function initChecklist(template: Omit<ChecklistItem, 'checked'>[]): Check
 
 // ─── Fitting job types ──────────────────────────────────────────────────────
 
-export type FittingJobStatus = 'assigned' | 'accepted' | 'in_progress' | 'completed' | 'signed_off' | 'approved' | 'rejected' | 'cancelled'
+export type FittingJobStatus = 'offered' | 'assigned' | 'accepted' | 'declined' | 'open_board' | 'claimed' | 'in_progress' | 'completed' | 'signed_off' | 'approved' | 'rejected' | 'cancelled'
 export type SubcontractorStatus = 'invited' | 'active' | 'suspended'
 export type SignerRelation = 'owner' | 'tenant' | 'family_member' | 'other'
 export type SignOffMethod = 'in_person' | 'remote_link'
+export type OfferResponse = 'accepted' | 'declined' | 'expired'
 
 export interface Subcontractor {
   id: string
@@ -60,7 +61,44 @@ export interface Subcontractor {
   invite_sent_at: string | null
   activated_at: string | null
   notes: string | null
+  available_for_jobs: boolean
+  travel_radius_miles: number
+  service_areas: string[]
+  google_calendar_id: string | null
+  calendar_sync_enabled: boolean
+  avg_rating: number | null
+  total_jobs_completed: number
+  decline_rate: number
   created_at: string
+}
+
+export interface FitterAvailability {
+  id: string
+  subcontractor_id: string
+  day_of_week: number // 0=Sunday
+  start_time: string
+  end_time: string
+  max_jobs_per_day: number
+  is_available: boolean
+  effective_from: string
+  effective_until: string | null
+}
+
+export interface FitterBlockedDate {
+  id: string
+  subcontractor_id: string
+  blocked_date: string
+  end_date: string | null
+  reason: string | null
+  all_day: boolean
+  start_time: string | null
+  end_time: string | null
+}
+
+export interface JobDocument {
+  name: string
+  url: string
+  uploaded_at: string
 }
 
 export interface FittingJob {
@@ -76,6 +114,27 @@ export interface FittingJob {
   customer_name: string | null
   customer_address: string | null
   customer_phone: string | null
+  customer_email: string | null
+  // Job pack
+  fitting_fee: number | null
+  scope_of_work: string | null
+  access_notes: string | null
+  parking_info: string | null
+  ikea_order_ref: string | null
+  special_instructions: string | null
+  design_documents: JobDocument[]
+  measurement_documents: JobDocument[]
+  estimated_duration_hours: number
+  notes: string | null
+  // Offering
+  offered_at: string | null
+  offer_expires_at: string | null
+  offer_response: OfferResponse | null
+  decline_reason: string | null
+  claimed_from_board: boolean
+  open_board_at: string | null
+  google_event_id: string | null
+  // Checklists
   checklist_before: ChecklistData
   checklist_after: ChecklistData
   photos_before: string[]
@@ -83,6 +142,7 @@ export interface FittingJob {
   videos: string[]
   notes_before: string | null
   notes_after: string | null
+  // Signatures
   fitter_signature: string | null
   fitter_signed_at: string | null
   customer_signature: string | null
@@ -93,6 +153,7 @@ export interface FittingJob {
   sign_off_token: string | null
   sign_off_sent_to: string | null
   sign_off_sent_at: string | null
+  // Completion
   completed_at: string | null
   approved_at: string | null
   approved_by: string | null
@@ -101,6 +162,17 @@ export interface FittingJob {
   updated_at: string
   // Joined data
   subcontractor?: Subcontractor
+}
+
+export interface FittingJobOffer {
+  id: string
+  fitting_job_id: string
+  subcontractor_id: string
+  offered_at: string
+  expires_at: string
+  responded_at: string | null
+  response: OfferResponse | null
+  decline_reason: string | null
 }
 
 export interface FittingMessage {

@@ -15,7 +15,7 @@ const bookingSchema = z.object({
 const BOOKING_STAGE_MAP: Record<string, OpportunityStage> = {
   call1: 'call1_scheduled',
   call2: 'call2_scheduled',
-  onboarding: 'onboarding_scheduled',
+  onboarding: 'fitting_confirmed',
 }
 
 /**

@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // Valid status transitions for fitters
 const VALID_TRANSITIONS: Record<string, string[]> = {
   assigned: ['accepted'],
+  claimed: ['accepted'],
   accepted: ['in_progress'],
   in_progress: ['completed'],
 }
@@ -138,6 +139,16 @@ export async function PATCH(
       .single()
 
     if (error) throw error
+
+    // Sync pipeline stage
+    if (body.status) {
+      try {
+        const { syncOpportunityStage } = await import('@/lib/fitter/sync-stage')
+        await syncOpportunityStage(id, body.status)
+      } catch (e) {
+        console.error('Stage sync error:', e)
+      }
+    }
 
     // Notify office when job is completed
     if (body.status === 'completed') {

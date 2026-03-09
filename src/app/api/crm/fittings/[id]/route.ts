@@ -82,6 +82,14 @@ export async function PATCH(
 
     if (error) throw error
 
+    // Sync pipeline stage
+    try {
+      const { syncOpportunityStage } = await import('@/lib/fitter/sync-stage')
+      await syncOpportunityStage(id, job.status)
+    } catch (e) {
+      console.error('Stage sync error:', e)
+    }
+
     // Notify fitter on rejection
     if (body.action === 'reject' && job.subcontractors?.email) {
       try {

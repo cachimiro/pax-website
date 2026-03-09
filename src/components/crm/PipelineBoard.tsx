@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -21,6 +21,7 @@ import StageTransitionModal from './StageTransitionModal'
 import LostReasonModal from './LostReasonModal'
 import { PIPELINE_STAGES, PIPELINE_GROUPS, STAGE_ORDER } from '@/lib/crm/stages'
 import { useOpportunities, useMoveOpportunityStage } from '@/lib/crm/hooks'
+import { createClient } from '@/lib/supabase/client'
 import type { OpportunityStage, OpportunityWithLead, LostReason } from '@/lib/crm/types'
 import { assessOpportunityRisk, type RiskLevel } from '@/lib/crm/risk'
 import { useAIPreferences } from '@/lib/crm/ai-preferences'
@@ -39,10 +40,42 @@ export function getNextStage(current: OpportunityStage): OpportunityStage | null
   return next === 'lost' ? null : next
 }
 
+export interface FittingInfo {
+  status: string
+  fitter_name: string | null
+  scheduled_date: string | null
+  offer_expires_at: string | null
+}
+
 export default function PipelineBoard() {
   const { data: opportunities = [], isLoading } = useOpportunities()
   const moveStage = useMoveOpportunityStage()
   const qc = useQueryClient()
+
+  // Fetch fitting job data for pipeline cards
+  const [fittingMap, setFittingMap] = useState<Record<string, FittingInfo>>({})
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('fitting_jobs')
+      .select('opportunity_id, status, scheduled_date, offer_expires_at, subcontractors(name)')
+      .not('status', 'in', '("cancelled")')
+      .then(({ data }) => {
+        if (!data) return
+        const map: Record<string, FittingInfo> = {}
+        for (const j of data) {
+          const subRaw = j.subcontractors as unknown
+          const sub = Array.isArray(subRaw) ? subRaw[0] as { name: string } | undefined : subRaw as { name: string } | null
+          map[j.opportunity_id] = {
+            status: j.status,
+            fitter_name: sub?.name || null,
+            scheduled_date: j.scheduled_date,
+            offer_expires_at: j.offer_expires_at,
+          }
+        }
+        setFittingMap(map)
+      })
+  }, [opportunities]) // re-fetch when opportunities change
 
   const [activeId, setActiveId] = useState<string | null>(null)
   const [justMovedId, setJustMovedId] = useState<string | null>(null)
@@ -256,6 +289,7 @@ export default function PipelineBoard() {
                 onQuickMove={quickMove}
                 justMovedId={justMovedId}
                 riskMap={riskMap}
+                fittingMap={fittingMap}
               />
             )
           })}
@@ -267,7 +301,7 @@ export default function PipelineBoard() {
         }}>
           {activeOpportunity ? (
             <div className="pipeline-drag-overlay">
-              <OpportunityCard opportunity={activeOpportunity} isDragging />
+              <OpportunityCard opportunity={activeOpportunity} isDragging fittingInfo={fittingMap[activeOpportunity.id]} />
             </div>
           ) : null}
         </DragOverlay>

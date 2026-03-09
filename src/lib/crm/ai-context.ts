@@ -43,12 +43,14 @@ DEPOSIT:
   deposit_paid — Payment received. Fitting slot confirmed.
   fitting_confirmed — Fitting date locked. 48h reminder auto-sent.
 
-OPERATIONS:
-  onboarding_scheduled — Handed off to operations.
-  onboarding_complete — Measurements taken, design finalised.
-  production — Wardrobe being manufactured.
-  installation — Installation scheduled or in progress.
-  complete — Project delivered. Auto-sends review request.
+ON SITE:
+  fitter_assigned — Fitter assigned or offer accepted. Job pack sent.
+  fitting_in_progress — Fitter is on-site working.
+
+CLOSE:
+  fitting_complete — Fitter marked job done. Awaiting sign-off.
+  sign_off_pending — Sign-off sent to customer.
+  complete — Job approved, project delivered. Auto-sends review request.
 
 PAUSED/CLOSED:
   on_hold — Client needs time. Nurture emails every 2 weeks.
@@ -74,7 +76,8 @@ export const STAGE_TARGETS = `Target timelines per stage:
 - fitting_proposed: within 2 days of final quote
 - awaiting_deposit: follow up within 3 days
 - deposit_paid → fitting_confirmed: same day
-- onboarding_scheduled: within 5 days of deposit`
+- fitting_confirmed → fitter_assigned: within 2 days
+- fitting_complete → sign_off: within 1 day`
 
 // ─── Safe JSON Parsing ───────────────────────────────────────────────────────
 

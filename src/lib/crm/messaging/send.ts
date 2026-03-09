@@ -169,7 +169,7 @@ async function resolveTemplateVars(
   const bookingTypeMap: Record<string, string> = {
     call1_scheduled: 'call1',
     call2_scheduled: 'call2',
-    onboarding_scheduled: 'onboarding',
+    fitting_confirmed: 'onboarding',
   }
   const triggerStage = meta.trigger_stage ?? opp.stage
   const bookingType = bookingTypeMap[triggerStage]

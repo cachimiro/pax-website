@@ -88,6 +88,14 @@ export async function POST(
         console.error('Failed to send sign-off notification:', notifErr)
       }
 
+      // Sync pipeline stage
+      try {
+        const { syncOpportunityStage } = await import('@/lib/fitter/sync-stage')
+        await syncOpportunityStage(id, 'signed_off')
+      } catch (e) {
+        console.error('Stage sync error:', e)
+      }
+
       return NextResponse.json({ success: true, method: 'in_person' })
 
     } else if (body.method === 'remote_link') {

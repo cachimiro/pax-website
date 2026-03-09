@@ -3,9 +3,10 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { formatDistanceToNow, differenceInDays } from 'date-fns'
-import { GripVertical, Phone, Mail, MessageSquare, ChevronRight, AlertCircle } from 'lucide-react'
+import { GripVertical, Phone, Mail, MessageSquare, ChevronRight, AlertCircle, Wrench, Timer, Clipboard } from 'lucide-react'
 import type { OpportunityWithLead } from '@/lib/crm/types'
 import type { RiskLevel } from '@/lib/crm/risk'
+import type { FittingInfo } from './PipelineBoard'
 import { STAGES, STAGE_ORDER } from '@/lib/crm/stages'
 import Link from 'next/link'
 
@@ -15,9 +16,37 @@ interface OpportunityCardProps {
   onQuickMove?: () => void
   riskLevel?: RiskLevel
   riskReason?: string
+  fittingInfo?: FittingInfo
 }
 
-export default function OpportunityCard({ opportunity, isDragging: isDraggingOverlay, onQuickMove, riskLevel, riskReason }: OpportunityCardProps) {
+const FITTING_STATUS_DISPLAY: Record<string, { label: string; className: string; icon: typeof Wrench }> = {
+  offered:     { label: 'Offered',      className: 'bg-purple-50 text-purple-600 border-purple-200', icon: Timer },
+  assigned:    { label: 'Assigned',     className: 'bg-blue-50 text-blue-600 border-blue-200', icon: Wrench },
+  claimed:     { label: 'Claimed',      className: 'bg-cyan-50 text-cyan-600 border-cyan-200', icon: Wrench },
+  accepted:    { label: 'Accepted',     className: 'bg-indigo-50 text-indigo-600 border-indigo-200', icon: Wrench },
+  in_progress: { label: 'On Site',      className: 'bg-amber-50 text-amber-600 border-amber-200', icon: Wrench },
+  completed:   { label: 'Done',         className: 'bg-green-50 text-green-600 border-green-200', icon: Wrench },
+  signed_off:  { label: 'Signed Off',   className: 'bg-emerald-50 text-emerald-600 border-emerald-200', icon: Wrench },
+  approved:    { label: 'Approved',     className: 'bg-teal-50 text-teal-600 border-teal-200', icon: Wrench },
+  open_board:  { label: 'Open Board',   className: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Clipboard },
+  declined:    { label: 'Declined',     className: 'bg-red-50 text-red-600 border-red-200', icon: AlertCircle },
+}
+
+function FittingBadge({ info }: { info: FittingInfo }) {
+  const display = FITTING_STATUS_DISPLAY[info.status]
+  if (!display) return null
+  const Icon = display.icon
+  return (
+    <div className={`mt-1.5 ml-7 flex items-center gap-1.5 px-2 py-1 rounded-md border text-[10px] font-medium ${display.className}`}>
+      <Icon size={10} />
+      <span>{display.label}</span>
+      {info.fitter_name && <span className="text-[9px] opacity-70">— {info.fitter_name}</span>}
+      {info.status === 'open_board' && <span className="text-[9px] opacity-70">— needs fitter</span>}
+    </div>
+  )
+}
+
+export default function OpportunityCard({ opportunity, isDragging: isDraggingOverlay, onQuickMove, riskLevel, riskReason, fittingInfo }: OpportunityCardProps) {
   const {
     attributes,
     listeners,
@@ -131,6 +160,9 @@ export default function OpportunityCard({ opportunity, isDragging: isDraggingOve
           </div>
         </div>
 
+        {/* Fitting status indicator */}
+        {fittingInfo && <FittingBadge info={fittingInfo} />}
+
         {/* Quick actions row */}
         <div className="flex items-center justify-between mt-2 ml-7 opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="flex items-center gap-1">
@@ -186,3 +218,4 @@ export default function OpportunityCard({ opportunity, isDragging: isDraggingOve
     </div>
   )
 }
+

@@ -118,6 +118,10 @@ function scoreSalesProcess(opp: Opportunity): number {
     awaiting_deposit: 18,
     deposit_paid: 22,
     fitting_confirmed: 25,
+    fitter_assigned: 25,
+    fitting_in_progress: 25,
+    fitting_complete: 25,
+    sign_off_pending: 25,
   }
   score += stageBonus[opp.stage] ?? 0
   return Math.min(25, score)

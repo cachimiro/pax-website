@@ -5,11 +5,12 @@ import { createClient } from '@/lib/supabase/client'
 import {
   Wrench, Loader2, AlertCircle, User, Calendar, MapPin,
   ChevronDown, ChevronRight, ExternalLink, Clock, CheckCircle2,
-  XCircle, UserPlus
+  UserPlus, Clipboard
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import FittingDetailPanel from '@/components/crm/FittingDetailPanel'
+import JobPackForm from '@/components/crm/JobPackForm'
 
 interface FittingJobRow {
   id: string
@@ -47,7 +48,11 @@ interface OpportunityForFitting {
 }
 
 const STATUS_BADGES: Record<string, { label: string; className: string }> = {
+  offered:     { label: 'Offered',     className: 'bg-purple-100 text-purple-700' },
   assigned:    { label: 'Assigned',    className: 'bg-blue-100 text-blue-700' },
+  declined:    { label: 'Declined',    className: 'bg-orange-100 text-orange-700' },
+  open_board:  { label: 'Open Board',  className: 'bg-yellow-100 text-yellow-700' },
+  claimed:     { label: 'Claimed',     className: 'bg-cyan-100 text-cyan-700' },
   accepted:    { label: 'Accepted',    className: 'bg-indigo-100 text-indigo-700' },
   in_progress: { label: 'In Progress', className: 'bg-amber-100 text-amber-700' },
   completed:   { label: 'Completed',   className: 'bg-green-100 text-green-700' },
@@ -67,7 +72,7 @@ export default function FittingsPage() {
   const [allJobs, setAllJobs] = useState<FittingJobRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState<'unassigned' | 'active' | 'completed'>('unassigned')
+  const [tab, setTab] = useState<'unassigned' | 'offered' | 'active' | 'board' | 'completed'>('unassigned')
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
@@ -81,7 +86,7 @@ export default function FittingsPage() {
           id, stage, value_estimate,
           leads!inner(name, phone, email, postcode)
         `)
-        .in('stage', ['fitting_proposed', 'fitting_confirmed', 'fitting_complete', 'sign_off_pending', 'completed'])
+        .in('stage', ['fitting_proposed', 'proposal_agreed', 'fitting_confirmed', 'fitter_assigned', 'fitting_in_progress', 'fitting_complete', 'sign_off_pending'])
         .order('updated_at', { ascending: false })
 
       // Fetch fitting slots
@@ -135,7 +140,9 @@ export default function FittingsPage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   const unassigned = opportunities.filter(o => !o.fitting_job)
-  const activeJobs = allJobs.filter(j => ['assigned', 'accepted', 'in_progress'].includes(j.status))
+  const offeredJobs = allJobs.filter(j => j.status === 'offered')
+  const activeJobs = allJobs.filter(j => ['assigned', 'claimed', 'accepted', 'in_progress'].includes(j.status))
+  const boardJobs = allJobs.filter(j => j.status === 'open_board')
   const completedJobs = allJobs.filter(j => ['completed', 'signed_off', 'approved'].includes(j.status))
 
   if (loading) {
@@ -166,23 +173,28 @@ export default function FittingsPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <StatCard label="Unassigned" value={unassigned.length} color="text-amber-600" />
+        {offeredJobs.length > 0 && <StatCard label="Offered" value={offeredJobs.length} color="text-purple-600" />}
         <StatCard label="Active Jobs" value={activeJobs.length} color="text-blue-600" />
+        {boardJobs.length > 0 && <StatCard label="Open Board" value={boardJobs.length} color="text-yellow-600" />}
         <StatCard label="Completed" value={completedJobs.length} color="text-green-600" />
-        <StatCard label="Active Fitters" value={subcontractors.length} color="text-[var(--brand)]" />
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-[var(--warm-50)] rounded-xl p-1">
-        {(['unassigned', 'active', 'completed'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-              tab === t ? 'bg-white shadow-sm text-[var(--warm-900)]' : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'
+      <div className="flex gap-1 bg-[var(--warm-50)] rounded-xl p-1 overflow-x-auto">
+        {([
+          { key: 'unassigned' as const, label: `Unassigned (${unassigned.length})` },
+          ...(offeredJobs.length > 0 ? [{ key: 'offered' as const, label: `Offered (${offeredJobs.length})` }] : []),
+          { key: 'active' as const, label: `Active (${activeJobs.length})` },
+          ...(boardJobs.length > 0 ? [{ key: 'board' as const, label: `Board (${boardJobs.length})` }] : []),
+          { key: 'completed' as const, label: `Completed (${completedJobs.length})` },
+        ]).map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap px-2 ${
+              tab === t.key ? 'bg-white shadow-sm text-[var(--warm-900)]' : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'
             }`}>
-            {t === 'unassigned' ? `Unassigned (${unassigned.length})` :
-             t === 'active' ? `Active (${activeJobs.length})` :
-             `Completed (${completedJobs.length})`}
+            {t.label}
           </button>
         ))}
       </div>
@@ -205,12 +217,36 @@ export default function FittingsPage() {
         </div>
       )}
 
+      {tab === 'offered' && (
+        <div className="space-y-3">
+          {offeredJobs.length === 0 ? (
+            <EmptyState icon={Clock} text="No pending offers" />
+          ) : (
+            offeredJobs.map(job => (
+              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} />
+            ))
+          )}
+        </div>
+      )}
+
       {tab === 'active' && (
         <div className="space-y-3">
           {activeJobs.length === 0 ? (
             <EmptyState icon={Wrench} text="No active fitting jobs" />
           ) : (
             activeJobs.map(job => (
+              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} />
+            ))
+          )}
+        </div>
+      )}
+
+      {tab === 'board' && (
+        <div className="space-y-3">
+          {boardJobs.length === 0 ? (
+            <EmptyState icon={Clipboard} text="No jobs on the open board" />
+          ) : (
+            boardJobs.map(job => (
               <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} />
             ))
           )}
@@ -266,45 +302,6 @@ function UnassignedCard({
   onAssigned: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
-  const [selectedFitter, setSelectedFitter] = useState('')
-  const [scheduledDate, setScheduledDate] = useState(
-    opp.fitting_slot?.confirmed_date
-      ? new Date(opp.fitting_slot.confirmed_date).toISOString().slice(0, 16)
-      : ''
-  )
-  const [notes, setNotes] = useState('')
-  const [assigning, setAssigning] = useState(false)
-  const [assignError, setAssignError] = useState('')
-
-  async function handleAssign() {
-    if (!selectedFitter) return
-    setAssigning(true)
-    setAssignError('')
-    try {
-      const res = await fetch('/api/crm/fittings/assign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          opportunity_id: opp.id,
-          subcontractor_id: selectedFitter,
-          scheduled_date: scheduledDate || null,
-          customer_name: opp.lead.name,
-          customer_address: opp.lead.postcode || null,
-          customer_phone: opp.lead.phone || null,
-          notes: notes || null,
-        }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to assign')
-      }
-      onAssigned()
-    } catch (err: unknown) {
-      setAssignError(err instanceof Error ? err.message : 'Failed to assign')
-    } finally {
-      setAssigning(false)
-    }
-  }
 
   return (
     <div className="bg-white rounded-xl border border-[var(--warm-100)] overflow-hidden">
@@ -323,6 +320,7 @@ function UnassignedCard({
                   <Calendar size={11} />{formatDate(opp.fitting_slot.confirmed_date)}
                 </span>
               )}
+              {opp.value_estimate && <span>£{opp.value_estimate.toLocaleString()}</span>}
               <span className="capitalize">{opp.stage.replace(/_/g, ' ')}</span>
             </div>
           </div>
@@ -338,49 +336,23 @@ function UnassignedCard({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-3 border-t border-[var(--warm-50)]">
-              <div className="pt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-[var(--warm-600)]">Assign Fitter</label>
-                  <select value={selectedFitter} onChange={e => setSelectedFitter(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 text-sm border border-[var(--warm-100)] rounded-lg focus:border-[var(--brand)] focus:outline-none">
-                    <option value="">Select fitter...</option>
-                    {subcontractors.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-[var(--warm-600)]">Scheduled Date/Time</label>
-                  <input type="datetime-local" value={scheduledDate}
-                    onChange={e => setScheduledDate(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 text-sm border border-[var(--warm-100)] rounded-lg focus:border-[var(--brand)] focus:outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-[var(--warm-600)]">Notes for Fitter</label>
-                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-                  placeholder="Special instructions, access codes, etc."
-                  className="w-full mt-1 px-3 py-2 text-sm border border-[var(--warm-100)] rounded-lg focus:border-[var(--brand)] focus:outline-none resize-none" />
-              </div>
-
-              {assignError && (
-                <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center gap-1">
-                  <XCircle size={12} /> {assignError}
-                </div>
-              )}
-
-              <div className="flex justify-between items-center">
+            <div className="px-4 pb-4 border-t border-[var(--warm-50)]">
+              <div className="flex justify-end pt-2 pb-1">
                 <Link href={`/crm/pipeline?opp=${opp.id}`}
-                  className="text-xs text-[var(--brand)] hover:underline flex items-center gap-1">
-                  <ExternalLink size={12} /> View in Pipeline
+                  className="text-[10px] text-[var(--brand)] hover:underline flex items-center gap-1">
+                  <ExternalLink size={10} /> View in Pipeline
                 </Link>
-                <button onClick={handleAssign} disabled={!selectedFitter || assigning}
-                  className="px-4 py-2 bg-[var(--brand)] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2">
-                  {assigning && <Loader2 size={14} className="animate-spin" />}
-                  Assign Fitter
-                </button>
               </div>
+              <JobPackForm
+                opportunityId={opp.id}
+                customerName={opp.lead.name}
+                customerPhone={opp.lead.phone}
+                customerEmail={opp.lead.email}
+                customerPostcode={opp.lead.postcode}
+                confirmedDate={opp.fitting_slot?.confirmed_date || null}
+                subcontractors={subcontractors.map(s => ({ id: s.id, name: s.name }))}
+                onSubmitted={onAssigned}
+              />
             </div>
           </motion.div>
         )}

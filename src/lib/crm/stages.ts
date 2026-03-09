@@ -40,12 +40,14 @@ export const STAGES: Record<OpportunityStage, StageConfig> = {
   deposit_paid:         { label: 'Deposit Paid',         color: 'bg-emerald-50', textColor: 'text-emerald-700', dotColor: 'bg-emerald-600', group: 'deposit',  description: 'Payment received via Stripe. Fitting slot auto-confirmed. Confirmation email sent.' },
   fitting_confirmed:    { label: 'Fitting Confirmed',    color: 'bg-emerald-50', textColor: 'text-emerald-600', dotColor: 'bg-emerald-500', group: 'deposit',  description: 'Fitting date locked. 48h reminder auto-sent. Ready for ops handoff.' },
 
-  // ─── Operations ────────────────────────────────────────────────────────────
-  onboarding_scheduled: { label: 'Ops Handoff',          color: 'bg-purple-50',  textColor: 'text-purple-700',  dotColor: 'bg-purple-400',  group: 'ops',      description: 'Handed off to operations. All sales data (design, quote, fitting date, deposit) transferred.' },
-  onboarding_complete:  { label: 'Onboarding Complete',  color: 'bg-purple-50',  textColor: 'text-purple-700',  dotColor: 'bg-purple-600', group: 'ops',      description: 'Measurements taken, design finalised. Ready for production.' },
-  production:           { label: 'Production',           color: 'bg-amber-50',   textColor: 'text-amber-700',   dotColor: 'bg-amber-500',   group: 'ops',      description: 'Wardrobe is being manufactured. Update when ready for installation.' },
-  installation:         { label: 'Installation',         color: 'bg-amber-50',   textColor: 'text-amber-700',   dotColor: 'bg-amber-600',   group: 'ops',      description: 'Installation scheduled or in progress.' },
-  complete:             { label: 'Complete',             color: 'bg-emerald-50', textColor: 'text-emerald-800', dotColor: 'bg-emerald-700', group: 'ops',      description: 'Project delivered. Auto-sends review request after completion.' },
+  // ─── Fitting Execution ──────────────────────────────────────────────────────
+  fitter_assigned:      { label: 'Fitter Assigned',      color: 'bg-purple-50',  textColor: 'text-purple-700',  dotColor: 'bg-purple-400',  group: 'onsite',   description: 'Fitter assigned or offer accepted. Job pack sent. Awaiting fitting day.' },
+  fitting_in_progress:  { label: 'Fitting In Progress',  color: 'bg-purple-50',  textColor: 'text-purple-700',  dotColor: 'bg-purple-600',  group: 'onsite',   description: 'Fitter is on-site working. Photos and checklists being captured.' },
+
+  // ─── Close ─────────────────────────────────────────────────────────────────
+  fitting_complete:     { label: 'Fitting Complete',     color: 'bg-teal-50',    textColor: 'text-teal-700',    dotColor: 'bg-teal-500',    group: 'close',    description: 'Fitter marked job done. Awaiting customer sign-off.' },
+  sign_off_pending:     { label: 'Sign-Off Pending',     color: 'bg-teal-50',    textColor: 'text-teal-700',    dotColor: 'bg-teal-600',    group: 'close',    description: 'Sign-off sent to customer. Awaiting signature and approval.' },
+  complete:             { label: 'Complete',             color: 'bg-emerald-50', textColor: 'text-emerald-800', dotColor: 'bg-emerald-700', group: 'close',    description: 'Job approved, project delivered. Auto-sends review request.' },
 
   // ─── Paused / Closed ──────────────────────────────────────────────────────
   on_hold:              { label: 'On Hold',              color: 'bg-slate-50',   textColor: 'text-slate-600',   dotColor: 'bg-slate-400',   group: 'paused',   description: 'Client needs more time. Pressure follow-ups stopped. Nurture email every 2 weeks. Auto-closes after 3 unanswered nurtures.' },
@@ -70,10 +72,10 @@ export const STAGE_ORDER: OpportunityStage[] = [
   'awaiting_deposit',
   'deposit_paid',
   'fitting_confirmed',
-  'onboarding_scheduled',
-  'onboarding_complete',
-  'production',
-  'installation',
+  'fitter_assigned',
+  'fitting_in_progress',
+  'fitting_complete',
+  'sign_off_pending',
   'complete',
   'on_hold',
   'lost',
@@ -96,7 +98,8 @@ export const PIPELINE_GROUPS: PipelineGroup[] = [
   { key: 'meet2',   label: 'Meet 2',         stages: ['call2_scheduled', 'meet2_completed'],                           color: 'bg-cyan-500' },
   { key: 'fitting', label: 'Fitting',        stages: ['fitting_proposed', 'proposal_agreed'],                          color: 'bg-amber-500' },
   { key: 'deposit', label: 'Deposit',        stages: ['awaiting_deposit', 'deposit_paid', 'fitting_confirmed'],        color: 'bg-orange-500' },
-  { key: 'ops',     label: 'Operations',     stages: ['onboarding_scheduled', 'onboarding_complete', 'production', 'installation', 'complete'], color: 'bg-purple-500' },
+  { key: 'onsite',  label: 'On Site',        stages: ['fitter_assigned', 'fitting_in_progress'],                       color: 'bg-purple-500' },
+  { key: 'close',   label: 'Close',          stages: ['fitting_complete', 'sign_off_pending', 'complete'],             color: 'bg-teal-500' },
   { key: 'paused',  label: 'On Hold',        stages: ['on_hold'],                                                     color: 'bg-slate-400' },
   { key: 'closed',  label: 'Closed',         stages: ['lost', 'closed_not_interested'],                               color: 'bg-red-400' },
 ]

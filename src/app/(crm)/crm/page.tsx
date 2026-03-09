@@ -255,7 +255,7 @@ function CrmMetrics() {
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
   // Pipeline value (active opportunities)
-  const activeStages = new Set(['new_enquiry', 'call1_scheduled', 'qualified', 'call2_scheduled', 'proposal_agreed', 'awaiting_deposit', 'deposit_paid', 'onboarding_scheduled', 'onboarding_complete', 'production', 'installation'])
+  const activeStages = new Set(['new_enquiry', 'call1_scheduled', 'qualified', 'call2_scheduled', 'proposal_agreed', 'awaiting_deposit', 'deposit_paid', 'fitting_confirmed', 'fitter_assigned', 'fitting_in_progress', 'fitting_complete', 'sign_off_pending'])
   const activeOpps = opportunities.filter((o) => activeStages.has(o.stage))
   const pipelineValue = activeOpps.reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
 

@@ -44,10 +44,11 @@ export const STAGE_OPTIONS = [
   { value: 'proposal_agreed', label: 'Proposal Agreed' },
   { value: 'awaiting_deposit', label: 'Awaiting Deposit' },
   { value: 'deposit_paid', label: 'Deposit Paid' },
-  { value: 'onboarding_scheduled', label: 'Onboarding Scheduled' },
-  { value: 'onboarding_complete', label: 'Onboarding Complete' },
-  { value: 'production', label: 'Production' },
-  { value: 'installation', label: 'Installation' },
+  { value: 'fitting_confirmed', label: 'Fitting Confirmed' },
+  { value: 'fitter_assigned', label: 'Fitter Assigned' },
+  { value: 'fitting_in_progress', label: 'Fitting In Progress' },
+  { value: 'fitting_complete', label: 'Fitting Complete' },
+  { value: 'sign_off_pending', label: 'Sign-Off Pending' },
   { value: 'complete', label: 'Complete' },
 ]
 

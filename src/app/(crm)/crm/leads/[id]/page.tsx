@@ -18,6 +18,7 @@ import {
   useEmailEventsByLead,
   useSoftDeleteLead,
 } from '@/lib/crm/hooks'
+import { createClient } from '@/lib/supabase/client'
 import StatusBadge from '@/components/crm/StatusBadge'
 import ActivityTimeline from '@/components/crm/ActivityTimeline'
 import PostCallCard from '@/components/crm/PostCallCard'
@@ -50,6 +51,7 @@ import {
   ChevronDown,
   ChevronUp,
   Trash2,
+  Wrench,
 } from 'lucide-react'
 import { formatDistanceToNow, format, addDays, isFuture } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -60,7 +62,7 @@ import SendConfirmation from '@/components/crm/SendConfirmation'
 import { useAIPreferences } from '@/lib/crm/ai-preferences'
 import type { MessageChannel } from '@/lib/crm/types'
 
-type Tab = 'contact' | 'opportunities' | 'bookings' | 'messages' | 'invoices' | 'tasks' | 'activity'
+type Tab = 'contact' | 'opportunities' | 'bookings' | 'messages' | 'invoices' | 'tasks' | 'activity' | 'fitting'
 
 export default function LeadDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -122,6 +124,7 @@ export default function LeadDetailPage() {
     { key: 'messages', label: 'Messages', icon: <MessageSquare size={14} />, count: messages.length },
     { key: 'invoices', label: 'Invoices', icon: <FileText size={14} />, count: invoices.length },
     { key: 'tasks', label: 'Tasks', icon: <CheckSquare size={14} />, count: tasks.length },
+    { key: 'fitting', label: 'Fitting', icon: <Wrench size={14} /> },
   ]
 
   if (isLoading) {
@@ -485,6 +488,7 @@ export default function LeadDetailPage() {
                 {activeTab === 'messages' && <MessagesTab messages={messages} leadId={id} />}
                 {activeTab === 'invoices' && <InvoicesTab invoices={invoices} />}
                 {activeTab === 'tasks' && <TasksTab tasks={tasks} />}
+                {activeTab === 'fitting' && <FittingTab opportunityIds={leadOpportunities.map(o => o.id)} />}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -1003,3 +1007,86 @@ function EmptyTab({ message }: { message: string }) {
     </div>
   )
 }
+
+function FittingTab({ opportunityIds }: { opportunityIds: string[] }) {
+  const [jobs, setJobs] = useState<Array<{
+    id: string; job_code: string; status: string; scheduled_date: string | null;
+    customer_name: string | null; fitting_fee: number | null;
+    fitter_name: string | null; scope_of_work: string | null;
+    completed_at: string | null; signed_off_at: string | null;
+  }>>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (opportunityIds.length === 0) { setLoading(false); return }
+    async function load() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('fitting_jobs')
+        .select('id, job_code, status, scheduled_date, customer_name, fitting_fee, scope_of_work, completed_at, signed_off_at, subcontractors(name)')
+        .in('opportunity_id', opportunityIds)
+        .order('created_at', { ascending: false })
+      setJobs((data || []).map((j: Record<string, unknown>) => {
+        const subRaw = j.subcontractors as unknown
+        const sub = Array.isArray(subRaw) ? subRaw[0] as { name: string } | undefined : subRaw as { name: string } | null
+        return { ...j, fitter_name: sub?.name || null } as (typeof jobs)[0]
+      }))
+      setLoading(false)
+    }
+    load()
+  }, [opportunityIds])
+
+  if (loading) return <div className="p-4 text-center"><Loader2 size={16} className="animate-spin mx-auto text-[var(--warm-400)]" /></div>
+  if (jobs.length === 0) return <EmptyTab message="No fitting jobs for this lead" />
+
+  const STATUS_COLORS: Record<string, string> = {
+    offered: 'bg-purple-100 text-purple-700',
+    assigned: 'bg-blue-100 text-blue-700',
+    claimed: 'bg-cyan-100 text-cyan-700',
+    accepted: 'bg-indigo-100 text-indigo-700',
+    in_progress: 'bg-amber-100 text-amber-700',
+    completed: 'bg-green-100 text-green-700',
+    signed_off: 'bg-emerald-100 text-emerald-700',
+    approved: 'bg-teal-100 text-teal-700',
+    open_board: 'bg-yellow-100 text-yellow-700',
+    declined: 'bg-orange-100 text-orange-700',
+    rejected: 'bg-red-100 text-red-700',
+    cancelled: 'bg-gray-100 text-gray-500',
+  }
+
+  return (
+    <div className="space-y-3">
+      {jobs.map(job => (
+        <Link key={job.id} href="/crm/fittings" className="block bg-white rounded-xl border border-[var(--warm-100)] p-4 hover:border-[var(--warm-200)] transition-colors">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Wrench size={14} className="text-[var(--warm-400)]" />
+              <span className="text-xs font-mono text-[var(--warm-500)]">{job.job_code}</span>
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[job.status] || 'bg-gray-100 text-gray-500'}`}>
+                {job.status.replace(/_/g, ' ')}
+              </span>
+            </div>
+            {job.fitting_fee && <span className="text-xs font-medium text-green-700">£{job.fitting_fee}</span>}
+          </div>
+          <div className="flex flex-wrap gap-3 text-xs text-[var(--warm-500)]">
+            {job.fitter_name && <span className="flex items-center gap-1"><User size={11} />{job.fitter_name}</span>}
+            {job.scheduled_date && (
+              <span className="flex items-center gap-1">
+                <Calendar size={11} />
+                {new Date(job.scheduled_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </span>
+            )}
+            {job.scope_of_work && <span className="truncate max-w-[200px]">{job.scope_of_work}</span>}
+          </div>
+          {(job.completed_at || job.signed_off_at) && (
+            <div className="flex gap-3 mt-2 text-[10px] text-[var(--warm-400)]">
+              {job.completed_at && <span>Completed: {format(new Date(job.completed_at), 'dd MMM HH:mm')}</span>}
+              {job.signed_off_at && <span>Signed off: {format(new Date(job.signed_off_at), 'dd MMM HH:mm')}</span>}
+            </div>
+          )}
+        </Link>
+      ))}
+    </div>
+  )
+}
+

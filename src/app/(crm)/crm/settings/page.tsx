@@ -172,7 +172,7 @@ function UsersSection() {
   return (
     <div className="space-y-4">
       <p className="text-xs text-[var(--warm-400)] leading-relaxed">
-        Team members who can log in to the CRM. <strong>Admin</strong> = full access + settings. <strong>Sales</strong> = leads and pipeline up to deposit. <strong>Operations</strong> = onboarding, production, and installation.
+        Team members who can log in to the CRM. <strong>Admin</strong> = full access + settings. <strong>Sales</strong> = leads and pipeline up to deposit. <strong>Operations</strong> = fittings, sign-off, and completion.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {profiles.map((profile) => {

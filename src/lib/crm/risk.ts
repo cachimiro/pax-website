@@ -36,7 +36,10 @@ const STAGE_URGENCY: Record<string, number> = {
   awaiting_deposit: 5,
   deposit_paid: 3,
   fitting_confirmed: 2,
-  onboarding_scheduled: 2,
+  fitter_assigned: 7,
+  fitting_in_progress: 3,
+  fitting_complete: 2,
+  sign_off_pending: 3,
   on_hold: 45,
 }
 
@@ -253,8 +256,11 @@ function getStageAction(stage: string): string {
     proposal_agreed: 'Send deposit request',
     awaiting_deposit: 'Follow up on deposit',
     deposit_paid: 'Confirm fitting slot',
-    fitting_confirmed: 'Prepare materials',
-    onboarding_scheduled: 'Prepare onboarding materials',
+    fitting_confirmed: 'Assign fitter',
+    fitter_assigned: 'Confirm fitter is prepared',
+    fitting_in_progress: 'Check fitter progress',
+    fitting_complete: 'Send sign-off request',
+    sign_off_pending: 'Follow up on sign-off',
     on_hold: 'Check if client is ready to resume',
   }
   return actions[stage] ?? 'Follow up'

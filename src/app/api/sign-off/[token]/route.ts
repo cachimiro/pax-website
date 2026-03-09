@@ -102,6 +102,14 @@ export async function POST(
 
     console.log(`Job ${job.job_code} remotely signed off by ${customer_signer_name}`)
 
+    // Sync pipeline stage
+    try {
+      const { syncOpportunityStage } = await import('@/lib/fitter/sync-stage')
+      await syncOpportunityStage(job.id, 'signed_off')
+    } catch (e) {
+      console.error('Stage sync error:', e)
+    }
+
     // Notify office
     try {
       const { notifyOfficeJobSignedOff } = await import('@/lib/fitter/notifications')

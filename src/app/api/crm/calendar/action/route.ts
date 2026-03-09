@@ -24,7 +24,7 @@ const COMPLETE_STAGE_MAP: Record<string, { from: OpportunityStage; to: Opportuni
   call1:      { from: 'call1_scheduled', to: 'meet1_completed' },
   call2:      { from: 'call2_scheduled', to: 'meet2_completed' },
   visit:      { from: 'visit_scheduled', to: 'visit_completed' },
-  onboarding: { from: 'onboarding_scheduled', to: 'onboarding_complete' },
+  onboarding: { from: 'fitting_confirmed', to: 'fitter_assigned' },
 }
 
 // Template slugs for each action
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
       // Check for deposit-paid edge case
       if (opportunityId && !confirm) {
         const { data: opp } = await admin.from('opportunities').select('stage').eq('id', opportunityId).single()
-        const depositStages: OpportunityStage[] = ['deposit_paid', 'fitting_confirmed', 'onboarding_scheduled', 'onboarding_complete', 'production', 'installation']
+        const depositStages: OpportunityStage[] = ['deposit_paid', 'fitting_confirmed', 'fitter_assigned', 'fitting_in_progress', 'fitting_complete', 'sign_off_pending']
         if (opp && depositStages.includes(opp.stage as OpportunityStage)) {
           return NextResponse.json({
             requiresConfirmation: true,

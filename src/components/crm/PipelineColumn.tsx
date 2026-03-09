@@ -5,15 +5,13 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { STAGES } from '@/lib/crm/stages'
 import type { OpportunityStage, OpportunityWithLead } from '@/lib/crm/types'
 import type { RiskLevel } from '@/lib/crm/risk'
+import type { FittingInfo } from './PipelineBoard'
 import OpportunityCard from './OpportunityCard'
 
 interface PipelineColumnProps {
   stage: OpportunityStage
-  /** Display label for grouped columns (overrides stage label) */
   groupLabel?: string
-  /** All stages in this group (for sub-stage badges on cards) */
   groupStages?: OpportunityStage[]
-  /** Color class for the group header dot */
   groupColor?: string
   opportunities: OpportunityWithLead[]
   isLoading: boolean
@@ -21,9 +19,10 @@ interface PipelineColumnProps {
   onQuickMove: (opp: OpportunityWithLead) => void
   justMovedId: string | null
   riskMap?: Record<string, { level: RiskLevel; reason: string }>
+  fittingMap?: Record<string, FittingInfo>
 }
 
-export default function PipelineColumn({ stage, groupLabel, groupStages, groupColor, opportunities, isLoading, totalPipelineValue, onQuickMove, justMovedId, riskMap = {} }: PipelineColumnProps) {
+export default function PipelineColumn({ stage, groupLabel, groupStages, groupColor, opportunities, isLoading, totalPipelineValue, onQuickMove, justMovedId, riskMap = {}, fittingMap = {} }: PipelineColumnProps) {
   const config = STAGES[stage]
   const displayLabel = groupLabel || config.label
   const dotColorClass = groupColor || config.dotColor
@@ -116,6 +115,7 @@ export default function PipelineColumn({ stage, groupLabel, groupStages, groupCo
                   onQuickMove={() => onQuickMove(opp)}
                   riskLevel={riskMap[opp.id]?.level}
                   riskReason={riskMap[opp.id]?.reason}
+                  fittingInfo={fittingMap[opp.id]}
                 />
               </div>
             ))

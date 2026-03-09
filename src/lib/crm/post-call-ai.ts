@@ -9,7 +9,7 @@ const STAGE_TRANSITIONS: Record<string, OpportunityStage[]> = {
   call2: ['meet2_completed', 'fitting_proposed', 'proposal_agreed', 'lost'],
   meet2: ['meet2_completed', 'fitting_proposed', 'proposal_agreed', 'lost'],
   visit: ['visit_completed', 'lost'],
-  onboarding: ['onboarding_complete', 'lost'],
+  onboarding: ['fitter_assigned', 'lost'],
 }
 
 const AUTO_MOVE_THRESHOLD = 90

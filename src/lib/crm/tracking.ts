@@ -350,7 +350,7 @@ export async function getDropoffMetrics(
     { stage: 'call2_scheduled', label: 'Call 2 Booked' },
     { stage: 'proposal_agreed', label: 'Proposal Agreed' },
     { stage: 'deposit_paid', label: 'Deposit Paid' },
-    { stage: 'onboarding_complete', label: 'Onboarding Done' },
+    { stage: 'fitter_assigned', label: 'Fitter Assigned' },
     { stage: 'complete', label: 'Complete' },
   ]
 
@@ -361,12 +361,12 @@ export async function getDropoffMetrics(
   function reachedStage(oppStage: string, targetStage: string): boolean {
     const oppIdx = stageIndex[oppStage] ?? -1
     const targetIdx = stageIndex[targetStage] ?? 999
-    // Special stages that map to indices
     const stageMap: Record<string, number> = {
       awaiting_deposit: 4,
-      onboarding_scheduled: 5,
-      production: 7,
-      installation: 7,
+      fitting_confirmed: 5,
+      fitting_in_progress: 5,
+      fitting_complete: 5,
+      sign_off_pending: 5,
     }
     const effectiveIdx = stageMap[oppStage] ?? oppIdx
     return effectiveIdx >= targetIdx || oppStage === targetStage

@@ -24,6 +24,7 @@ const jobs = [
   { name: 'messages',      path: '/api/cron/messages',      intervalMs: 2 * 60 * 1000 },
   { name: 'meetings',      path: '/api/cron/meetings',      intervalMs: 5 * 60 * 1000 },
   { name: 'abandonments',  path: '/api/cron/abandonments',  intervalMs: 10 * 60 * 1000 },
+  { name: 'offer-expiry', path: '/api/cron/offer-expiry',  intervalMs: 5 * 60 * 1000 },
 ]
 
 // ─── Runner ──────────────────────────────────────────────────────────────────

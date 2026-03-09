@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
-import { Wrench, LayoutDashboard, MessageSquare, LogOut, Loader2 } from 'lucide-react'
+import { Wrench, LayoutDashboard, MessageSquare, LogOut, Loader2, Clipboard, CalendarDays } from 'lucide-react'
 import Link from 'next/link'
 
 const NAV_ITEMS = [
   { href: '/fitter', label: 'Jobs', icon: LayoutDashboard },
+  { href: '/fitter/board', label: 'Board', icon: Clipboard },
+  { href: '/fitter/availability', label: 'Schedule', icon: CalendarDays },
   { href: '/fitter/messages', label: 'Messages', icon: MessageSquare },
 ]
 

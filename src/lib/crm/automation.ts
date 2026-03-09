@@ -15,7 +15,8 @@ const stageTasks: Partial<Record<OpportunityStage, { type: string; description: 
   visit_completed:   { type: 'revise_design',     description: (n) => `Revise design after visit for ${n}` },
   meet2_completed:   { type: 'update_quote',      description: (n) => `Update quote after Meet 2 for ${n}` },
   deposit_paid:      { type: 'confirm_fitting',   description: (n) => `Confirm fitting slot for ${n}` },
-  fitting_confirmed: { type: 'prepare_materials', description: (n) => `Prepare materials for ${n}` },
+  fitting_confirmed: { type: 'assign_fitter',     description: (n) => `Assign fitter for ${n}` },
+  fitting_complete:  { type: 'review_signoff',     description: (n) => `Review sign-off for ${n}` },
   on_hold:           { type: 'nurture_checkin',    description: (n) => `Nurture check-in for ${n} (2 weeks)` },
 }
 
@@ -84,7 +85,7 @@ export async function runStageAutomations(
   const bookingTypeMap: Record<string, string> = {
     call1_scheduled: 'call1',
     call2_scheduled: 'call2',
-    onboarding_scheduled: 'onboarding',
+    fitter_assigned: 'onboarding',
   }
   const bookingType = bookingTypeMap[stage]
 
@@ -221,11 +222,37 @@ export async function runStageAutomations(
     package_type: opp.package_complexity ?? '',
     // CTA URLs
     ...ctaUrls,
+    // Fitter variables (populated below if applicable)
+    fitter_name: '',
   }
 
   if (bookingTime) {
     variables.date = bookingTime.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
     variables.time = bookingTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  // Populate fitter variables for fitting stages
+  const fittingStages = ['fitter_assigned', 'fitting_in_progress', 'fitting_complete', 'sign_off_pending', 'complete']
+  if (fittingStages.includes(stage)) {
+    const { data: fittingJob } = await supabase
+      .from('fitting_jobs')
+      .select('subcontractor_id, scheduled_date, subcontractors(name)')
+      .eq('opportunity_id', opportunityId)
+      .not('status', 'in', '("cancelled")')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (fittingJob) {
+      const subRaw = fittingJob.subcontractors as unknown
+      const sub = Array.isArray(subRaw) ? subRaw[0] as { name: string } | undefined : subRaw as { name: string } | null
+      variables.fitter_name = sub?.name || ''
+      if (fittingJob.scheduled_date) {
+        const fd = new Date(fittingJob.scheduled_date)
+        variables.fitting_date = fd.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+        variables.fitting_time = fd.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      }
+    }
   }
 
   // Auto-create invoice + payment link for awaiting_deposit
@@ -382,6 +409,7 @@ export async function runStageAutomations(
       }
     }
   }
+
 }
 
 /**
