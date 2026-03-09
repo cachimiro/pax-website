@@ -32,7 +32,7 @@ interface JobDetail {
   customer_signature: string | null
   customer_signer_name: string | null
   sign_off_method: string | null
-  signed_off_at: string | null
+  customer_signed_at: string | null
   rejection_reason: string | null
   subcontractors: { name: string; email: string; phone: string | null } | null
 }

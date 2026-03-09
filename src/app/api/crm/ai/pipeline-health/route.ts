@@ -12,67 +12,54 @@ export async function POST(request: NextRequest) {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
 
-  const [activeOpps, wonOpps, lostOpps, priorWon, priorLost, stageLog, tasks, bookings, newLeads, priorLeads] = await Promise.all([
+  // Run all DB queries in parallel — keep selects minimal to reduce latency
+  const [activeOpps, recentOpps, stageLog, tasks, bookings, newLeads] = await Promise.all([
     supabase
       .from('opportunities')
-      .select('id, stage, value_estimate, updated_at, created_at, lead:leads(id, name, project_type, budget_band)')
+      .select('id, stage, value_estimate, updated_at, lead:leads(id, name)')
       .not('stage', 'in', '("lost","complete")')
       .order('updated_at', { ascending: false })
       .limit(30),
     supabase
       .from('opportunities')
-      .select('id, stage, value_estimate, updated_at, lead:leads(name)')
-      .eq('stage', 'complete')
-      .gte('updated_at', weekAgo.toISOString())
-      .limit(20),
-    supabase
-      .from('opportunities')
-      .select('id, stage, value_estimate, lost_reason, updated_at, lead:leads(name)')
-      .eq('stage', 'lost')
-      .gte('updated_at', weekAgo.toISOString())
-      .limit(20),
-    supabase
-      .from('opportunities')
-      .select('id')
-      .eq('stage', 'complete')
+      .select('id, stage, value_estimate, lost_reason, updated_at')
+      .in('stage', ['complete', 'lost'])
       .gte('updated_at', twoWeeksAgo.toISOString())
-      .lt('updated_at', weekAgo.toISOString()),
-    supabase
-      .from('opportunities')
-      .select('id')
-      .eq('stage', 'lost')
-      .gte('updated_at', twoWeeksAgo.toISOString())
-      .lt('updated_at', weekAgo.toISOString()),
+      .limit(40),
     supabase
       .from('stage_log')
-      .select('from_stage, to_stage, changed_at, opportunity:opportunities(lead:leads(name))')
+      .select('from_stage, to_stage, changed_at')
       .gte('changed_at', weekAgo.toISOString())
       .order('changed_at', { ascending: false })
-      .limit(50),
+      .limit(30),
     supabase
       .from('tasks')
-      .select('type, status, due_at')
+      .select('status, due_at')
       .neq('status', 'done')
       .limit(30),
     supabase
       .from('bookings')
-      .select('type, outcome, scheduled_at')
+      .select('outcome, scheduled_at')
       .gte('scheduled_at', weekAgo.toISOString())
       .limit(20),
     supabase
       .from('leads')
-      .select('id')
-      .gte('created_at', weekAgo.toISOString()),
-    supabase
-      .from('leads')
-      .select('id')
-      .gte('created_at', twoWeeksAgo.toISOString())
-      .lt('created_at', weekAgo.toISOString()),
+      .select('id, created_at')
+      .gte('created_at', twoWeeksAgo.toISOString()),
   ])
 
+  // Derive won/lost/prior from the single recentOpps query
+  const allRecent = recentOpps.data ?? []
+  const wonOpps = { data: allRecent.filter((o) => o.stage === 'complete' && new Date(o.updated_at) >= weekAgo) }
+  const lostOpps = { data: allRecent.filter((o) => o.stage === 'lost' && new Date(o.updated_at) >= weekAgo) }
+  const priorWon = { data: allRecent.filter((o) => o.stage === 'complete' && new Date(o.updated_at) < weekAgo) }
+  const priorLost = { data: allRecent.filter((o) => o.stage === 'lost' && new Date(o.updated_at) < weekAgo) }
+  const newLeadsData = (newLeads.data ?? []).filter((l) => new Date(l.created_at) >= weekAgo)
+  const priorLeadsData = (newLeads.data ?? []).filter((l) => new Date(l.created_at) < weekAgo)
+
   const active = activeOpps.data ?? []
-  const won = wonOpps.data ?? []
-  const lost = lostOpps.data ?? []
+  const won = wonOpps.data
+  const lost = lostOpps.data
   const transitions = stageLog.data ?? []
   const openTasks = tasks.data ?? []
   const recentBookings = bookings.data ?? []
@@ -104,18 +91,14 @@ export async function POST(request: NextRequest) {
   }
   const topLostReason = Object.entries(lostReasons).sort((a, b) => b[1] - a[1])[0]
 
-  // Fitting-specific data
-  const [fittingJobs, openBoardJobs] = await Promise.all([
-    supabase
-      .from('fitting_jobs')
-      .select('status, offer_expires_at, open_board_at, scheduled_date')
-      .not('status', 'in', '("cancelled","approved","complete")')
-      .limit(50),
-    supabase
-      .from('fitting_jobs')
-      .select('id, open_board_at')
-      .eq('status', 'open_board'),
-  ])
+  // Fitting summary — single query
+  const { data: fittingJobsData } = await supabase
+    .from('fitting_jobs')
+    .select('status')
+    .not('status', 'in', '("cancelled","approved")')
+    .limit(50)
+  const fittingJobs = { data: fittingJobsData }
+  const openBoardJobs = { data: (fittingJobsData ?? []).filter((j) => j.status === 'open_board') }
 
   const fittingData = fittingJobs.data ?? []
   const offeredJobs = fittingData.filter((j: { status: string }) => j.status === 'offered')
@@ -178,11 +161,11 @@ Stage distribution: ${stageDistribution || 'Empty'}
 
 WON THIS WEEK: ${won.length} deals, £${wonValue.toLocaleString('en-GB')}
 LOST THIS WEEK: ${lost.length} deals${topLostReason ? `, top reason: ${topLostReason[0]} (${topLostReason[1]}x)` : ''}
-PRIOR WEEK: ${priorWon.data?.length ?? 0} won, ${priorLost.data?.length ?? 0} lost
+PRIOR WEEK: ${priorWon.data.length} won, ${priorLost.data.length} lost
 
-STAGE TRANSITIONS (7d): ${transitions.length} moves${transitions.length > 0 ? ': ' + transitions.slice(0, 10).map((t: any) => `${(t.opportunity as any)?.lead?.name ?? '?'}: ${t.from_stage ?? 'new'} → ${t.to_stage}`).join(', ') : ''}
+STAGE TRANSITIONS (7d): ${transitions.length} moves${transitions.length > 0 ? ': ' + transitions.slice(0, 8).map((t: any) => `${t.from_stage ?? 'new'} → ${t.to_stage}`).join(', ') : ''}
 
-NEW LEADS: ${newLeads.data?.length ?? 0} this week vs ${priorLeads.data?.length ?? 0} prior week
+NEW LEADS: ${newLeadsData.length} this week vs ${priorLeadsData.length} prior week
 
 TASKS: ${openTasks.length} open, ${overdueTasks.length} overdue
 BOOKINGS: ${recentBookings.length} this week, ${noShows.length} no-shows
@@ -210,8 +193,8 @@ Generate the weekly pipeline health report.`
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      temperature: 0.4,
-      max_tokens: 800,
+      temperature: 0.3,
+      max_tokens: 600,
     })
 
     const raw = completion.choices[0]?.message?.content ?? '{}'

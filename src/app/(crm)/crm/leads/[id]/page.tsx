@@ -1011,7 +1011,7 @@ function FittingTab({ opportunityIds }: { opportunityIds: string[] }) {
     id: string; job_code: string; status: string; scheduled_date: string | null;
     customer_name: string | null; fitting_fee: number | null;
     fitter_name: string | null; scope_of_work: string | null;
-    completed_at: string | null; signed_off_at: string | null;
+    completed_at: string | null; customer_signed_at: string | null;
   }>>([])
   const [loading, setLoading] = useState(true)
 
@@ -1021,7 +1021,7 @@ function FittingTab({ opportunityIds }: { opportunityIds: string[] }) {
       const supabase = createClient()
       const { data } = await supabase
         .from('fitting_jobs')
-        .select('id, job_code, status, scheduled_date, customer_name, fitting_fee, scope_of_work, completed_at, signed_off_at, subcontractors(name)')
+        .select('id, job_code, status, scheduled_date, customer_name, fitting_fee, scope_of_work, completed_at, customer_signed_at, subcontractors(name)')
         .in('opportunity_id', opportunityIds)
         .order('created_at', { ascending: false })
       setJobs((data || []).map((j: Record<string, unknown>) => {
@@ -1076,10 +1076,10 @@ function FittingTab({ opportunityIds }: { opportunityIds: string[] }) {
             )}
             {job.scope_of_work && <span className="truncate max-w-[200px]">{job.scope_of_work}</span>}
           </div>
-          {(job.completed_at || job.signed_off_at) && (
+          {(job.completed_at || job.customer_signed_at) && (
             <div className="flex gap-3 mt-2 text-[10px] text-[var(--warm-400)]">
               {job.completed_at && <span>Completed: {format(new Date(job.completed_at), 'dd MMM HH:mm')}</span>}
-              {job.signed_off_at && <span>Signed off: {format(new Date(job.signed_off_at), 'dd MMM HH:mm')}</span>}
+              {job.customer_signed_at && <span>Signed off: {format(new Date(job.customer_signed_at), 'dd MMM HH:mm')}</span>}
             </div>
           )}
         </Link>

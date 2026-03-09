@@ -27,7 +27,7 @@ interface FittingJobRow {
   checklist_before: Record<string, unknown> | null
   checklist_after: Record<string, unknown> | null
   sign_off_method: string | null
-  signed_off_at: string | null
+  customer_signed_at: string | null
 }
 
 interface SubcontractorRow {
@@ -394,7 +394,7 @@ function JobCard({ job, subcontractors, onClick }: { job: FittingJobRow; subcont
           </div>
           {job.sign_off_method && (
             <div className="text-xs text-green-600 mt-1">
-              Signed off: {job.sign_off_method} {job.signed_off_at && `on ${formatDate(job.signed_off_at)}`}
+              Signed off: {job.sign_off_method} {job.customer_signed_at && `on ${formatDate(job.customer_signed_at)}`}
             </div>
           )}
         </div>
