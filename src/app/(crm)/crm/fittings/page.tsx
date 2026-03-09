@@ -95,16 +95,21 @@ export default function FittingsPage() {
         ? await supabase.from('fitting_slots').select('*').in('opportunity_id', oppIds)
         : { data: [] }
 
-      // Fetch fitting jobs
-      const { data: jobs } = oppIds.length > 0
-        ? await supabase.from('fitting_jobs').select('*').in('opportunity_id', oppIds)
-        : { data: [] }
-
-      // Fetch all jobs for the "active" and "completed" tabs
-      const { data: allJobsData } = await supabase
-        .from('fitting_jobs')
-        .select('*')
-        .order('created_at', { ascending: false })
+      // Fetch fitting jobs — table may not exist yet if migrations are pending
+      let jobs: FittingJobRow[] = []
+      let allJobsData: FittingJobRow[] = []
+      try {
+        const [jobsRes, allJobsRes] = await Promise.all([
+          oppIds.length > 0
+            ? supabase.from('fitting_jobs').select('*').in('opportunity_id', oppIds)
+            : Promise.resolve({ data: [], error: null }),
+          supabase.from('fitting_jobs').select('*').order('created_at', { ascending: false }),
+        ])
+        jobs = (jobsRes.data || []) as FittingJobRow[]
+        allJobsData = (allJobsRes.data || []) as FittingJobRow[]
+      } catch {
+        // fitting_jobs table not yet created — show unassigned list without job data
+      }
 
       // Fetch active subcontractors
       const { data: subs } = await supabase
@@ -113,7 +118,7 @@ export default function FittingsPage() {
         .eq('status', 'active')
 
       const slotMap = new Map((slots || []).map(s => [s.opportunity_id, s]))
-      const jobMap = new Map((jobs || []).map(j => [j.opportunity_id, j]))
+      const jobMap = new Map(jobs.map(j => [j.opportunity_id, j]))
 
       const mapped: OpportunityForFitting[] = (opps || []).map((o: Record<string, unknown>) => {
         const lead = o.leads as { name: string; phone: string | null; email: string | null; postcode: string | null }
@@ -129,7 +134,7 @@ export default function FittingsPage() {
 
       setOpportunities(mapped)
       setSubcontractors(subs || [])
-      setAllJobs((allJobsData || []) as FittingJobRow[])
+      setAllJobs(allJobsData)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load data')
     } finally {
@@ -348,7 +353,7 @@ function UnassignedCard({
                 customerName={opp.lead.name}
                 customerPhone={opp.lead.phone}
                 customerEmail={opp.lead.email}
-                customerPostcode={opp.lead.postcode}
+                customerAddress={opp.lead.postcode || null}
                 confirmedDate={opp.fitting_slot?.confirmed_date || null}
                 subcontractors={subcontractors.map(s => ({ id: s.id, name: s.name }))}
                 onSubmitted={onAssigned}

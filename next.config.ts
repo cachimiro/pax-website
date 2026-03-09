@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['googleapis'],
   allowedDevOrigins: [
     '*.gitpod.dev',
     '*.eu-central-1-01.gitpod.dev',

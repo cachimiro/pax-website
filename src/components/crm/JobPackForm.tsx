@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import {
   Loader2, XCircle, Upload, FileText, Trash2, ChevronDown, ChevronUp,
-  PoundSterling, Clock, MapPin, Car, Key, FileBox, Wrench, Send, UserCheck
+  PoundSterling, Clock, MapPin, Car, Key, FileBox, Wrench, Send, UserCheck, User
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import FitterAvailabilityGrid from './FitterAvailabilityGrid'
@@ -18,7 +18,7 @@ interface JobPackFormProps {
   customerName: string
   customerPhone: string | null
   customerEmail: string | null
-  customerPostcode: string | null
+  customerAddress: string | null
   confirmedDate: string | null
   subcontractors: SubcontractorOption[]
   onSubmitted: () => void
@@ -32,7 +32,7 @@ interface DocFile {
 
 export default function JobPackForm({
   opportunityId, customerName, customerPhone, customerEmail,
-  customerPostcode, confirmedDate, subcontractors, onSubmitted,
+  customerAddress, confirmedDate, subcontractors, onSubmitted,
 }: JobPackFormProps) {
   // Fitter & schedule
   const [selectedFitter, setSelectedFitter] = useState('')
@@ -40,6 +40,12 @@ export default function JobPackForm({
     confirmedDate ? new Date(confirmedDate).toISOString().slice(0, 16) : ''
   )
   const [estimatedHours, setEstimatedHours] = useState('8')
+
+  // Editable customer details (pre-filled from lead)
+  const [editName, setEditName] = useState(customerName)
+  const [editPhone, setEditPhone] = useState(customerPhone || '')
+  const [editEmail, setEditEmail] = useState(customerEmail || '')
+  const [editAddress, setEditAddress] = useState(customerAddress || '')
 
   // Job pack details
   const [fittingFee, setFittingFee] = useState('')
@@ -102,8 +108,8 @@ export default function JobPackForm({
   }
 
   async function handleSubmit() {
-    if (!selectedFitter) { setError('Select a fitter'); return }
-    if (!scheduledDate) { setError('Set a date'); return }
+    if (!selectedFitter) { setError('Select a fitter first'); return }
+    if (!scheduledDate) { setError('Set a fitting date first'); return }
     setSubmitting(true)
     setError('')
     try {
@@ -115,10 +121,10 @@ export default function JobPackForm({
           subcontractor_id: selectedFitter,
           mode,
           scheduled_date: scheduledDate || null,
-          customer_name: customerName,
-          customer_address: customerPostcode || null,
-          customer_phone: customerPhone || null,
-          customer_email: customerEmail || null,
+          customer_name: editName || null,
+          customer_address: editAddress || null,
+          customer_phone: editPhone || null,
+          customer_email: editEmail || null,
           fitting_fee: fittingFee ? parseFloat(fittingFee) : null,
           scope_of_work: scopeOfWork || null,
           access_notes: accessNotes || null,
@@ -145,8 +151,45 @@ export default function JobPackForm({
 
   const INPUT = "w-full mt-1 px-3 py-2 text-sm border border-[var(--warm-100)] rounded-lg focus:border-[var(--brand)] focus:outline-none"
 
+  const missingFitter = !selectedFitter
+  const missingDate = !scheduledDate
+  const canSubmit = !missingFitter && !missingDate
+
   return (
     <div className="space-y-3 pt-3">
+
+      {/* Customer info — pre-filled from lead, editable */}
+      <div className="bg-[var(--warm-50)] rounded-xl p-3 space-y-2">
+        <p className="text-[10px] font-semibold text-[var(--warm-500)] uppercase tracking-wider flex items-center gap-1">
+          <User size={10} /> Customer details (pre-filled from lead)
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <label className="text-[10px] text-[var(--warm-500)]">Name</label>
+            <input value={editName} onChange={e => setEditName(e.target.value)}
+              className="w-full mt-0.5 px-2.5 py-1.5 text-sm border border-[var(--warm-200)] rounded-lg focus:border-[var(--brand)] focus:outline-none bg-white" />
+          </div>
+          <div>
+            <label className="text-[10px] text-[var(--warm-500)]">Phone</label>
+            <input value={editPhone} onChange={e => setEditPhone(e.target.value)}
+              placeholder="Not provided"
+              className="w-full mt-0.5 px-2.5 py-1.5 text-sm border border-[var(--warm-200)] rounded-lg focus:border-[var(--brand)] focus:outline-none bg-white" />
+          </div>
+          <div>
+            <label className="text-[10px] text-[var(--warm-500)]">Email</label>
+            <input value={editEmail} onChange={e => setEditEmail(e.target.value)}
+              placeholder="Not provided"
+              className="w-full mt-0.5 px-2.5 py-1.5 text-sm border border-[var(--warm-200)] rounded-lg focus:border-[var(--brand)] focus:outline-none bg-white" />
+          </div>
+          <div>
+            <label className="text-[10px] text-[var(--warm-500)]">Address</label>
+            <input value={editAddress} onChange={e => setEditAddress(e.target.value)}
+              placeholder="Full address for fitter"
+              className="w-full mt-0.5 px-2.5 py-1.5 text-sm border border-[var(--warm-200)] rounded-lg focus:border-[var(--brand)] focus:outline-none bg-white" />
+          </div>
+        </div>
+      </div>
+
       {/* Fitter & Date */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
@@ -274,8 +317,24 @@ export default function JobPackForm({
         </div>
       )}
 
+      {/* Validation hints */}
+      {(missingFitter || missingDate) && (
+        <div className="flex flex-wrap gap-2">
+          {missingFitter && (
+            <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 flex items-center gap-1">
+              <XCircle size={11} /> Select a fitter
+            </span>
+          )}
+          {missingDate && (
+            <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 flex items-center gap-1">
+              <XCircle size={11} /> Set a fitting date
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Action buttons */}
-      <div className="flex items-center gap-2 pt-1">
+      <div className="flex items-center gap-2 pt-1 border-t border-[var(--warm-100)]">
         {/* Mode toggle */}
         <div className="flex bg-[var(--warm-50)] rounded-lg p-0.5 text-[11px] font-medium">
           <button onClick={() => setMode('offer')}
@@ -290,12 +349,19 @@ export default function JobPackForm({
 
         <div className="flex-1" />
 
-        <button onClick={handleSubmit} disabled={!selectedFitter || !scheduledDate || submitting}
-          className={`px-4 py-2 text-white text-sm font-medium rounded-lg transition-opacity disabled:opacity-50 flex items-center gap-2 ${
-            mode === 'offer' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[var(--brand)] hover:opacity-90'
+        <button
+          onClick={handleSubmit}
+          disabled={!canSubmit || submitting}
+          title={!canSubmit ? (missingFitter ? 'Select a fitter first' : 'Set a fitting date first') : undefined}
+          className={`px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2 ${
+            canSubmit
+              ? mode === 'offer'
+                ? 'bg-amber-600 hover:bg-amber-700 shadow-sm'
+                : 'bg-[var(--brand)] hover:opacity-90 shadow-sm'
+              : 'bg-[var(--warm-300)] cursor-not-allowed'
           }`}>
           {submitting && <Loader2 size={14} className="animate-spin" />}
-          {mode === 'offer' ? 'Send Offer (24h)' : 'Assign Directly'}
+          {mode === 'offer' ? 'Send Offer (24h)' : 'Confirm Assignment'}
         </button>
       </div>
 

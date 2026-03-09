@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
         design_documents: body.design_documents || [],
         measurement_documents: body.measurement_documents || [],
         estimated_duration_hours: body.estimated_duration_hours || 8,
-        notes: body.notes || null,
+        notes_before: body.notes || null,
         offered_at: isOffer ? now.toISOString() : null,
         offer_expires_at: isOffer ? expiresAt.toISOString() : null,
       })
