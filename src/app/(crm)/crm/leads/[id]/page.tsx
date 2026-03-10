@@ -299,6 +299,7 @@ export default function LeadDetailPage() {
             <DiscoveryAnswersCard
               meet1Notes={meet1Notes}
               isLoading={meet1Loading}
+              opportunityId={primaryOpp?.id ?? null}
             />
 
             {/* AI Insights — collapsible panel */}

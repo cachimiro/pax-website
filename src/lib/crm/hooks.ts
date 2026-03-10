@@ -225,7 +225,7 @@ export function useOpportunities(filters?: { stage?: OpportunityStage; owner_use
     queryFn: async () => {
       let query = supabase()
         .from('opportunities')
-        .select('*, lead:leads(*), owner:profiles!owner_user_id(id, full_name, avatar_url)')
+        .select('*, lead:leads(*), owner:profiles(id, full_name, avatar_url)')
         .order('updated_at', { ascending: false })
 
       if (filters?.stage) query = query.eq('stage', filters.stage)
@@ -245,7 +245,7 @@ export function useOpportunity(id: string) {
     queryFn: async () => {
       const { data, error } = await supabase()
         .from('opportunities')
-        .select('*, lead:leads(*), owner:profiles!owner_user_id(id, full_name, avatar_url)')
+        .select('*, lead:leads(*), owner:profiles(id, full_name, avatar_url)')
         .eq('id', id)
         .single()
       if (error) throw error
@@ -837,7 +837,7 @@ export function useStageLog(opportunityId: string) {
     queryFn: async () => {
       const { data, error } = await supabase()
         .from('stage_log')
-        .select('*, changed_by_profile:profiles!changed_by(full_name)')
+        .select('*, changed_by_profile:profiles(full_name)')
         .eq('opportunity_id', opportunityId)
         .order('changed_at', { ascending: false })
       if (error) throw error
