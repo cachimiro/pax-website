@@ -12,7 +12,7 @@ interface SectionShellProps {
   children: React.ReactNode
 }
 
-export default function SectionShell({ number, title, complete, defaultOpen = false, children }: SectionShellProps) {
+export default function SectionShell({ number, title, complete, defaultOpen = true, children }: SectionShellProps) {
   const [open, setOpen] = useState(defaultOpen)
 
   return (
