@@ -24,6 +24,7 @@ import type {
   EmailEvent,
   MessageTemplate,
   Meet1Notes,
+  LeadNote,
 } from './types'
 import { toast } from 'sonner'
 import { runStageAutomations } from './automation'
@@ -1037,3 +1038,87 @@ export function useUpdateSignature() {
 }
 
 
+
+
+// ─── Lead Notes ──────────────────────────────────────────────────────────────
+
+export function useLeadNotes(leadId: string) {
+  return useQuery<LeadNote[]>({
+    queryKey: ['lead_notes', leadId],
+    queryFn: async () => {
+      const res = await fetch(`/api/crm/leads/${leadId}/notes`)
+      if (!res.ok) throw new Error('Failed to load notes')
+      const json = await res.json()
+      return (json.notes ?? json) as LeadNote[]
+    },
+    enabled: !!leadId,
+  })
+}
+
+export function useAddLeadNote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (note: { lead_id: string; section: string; body: string }) => {
+      const res = await fetch(`/api/crm/leads/${note.lead_id}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section: note.section, body: note.body }),
+      })
+      if (!res.ok) throw new Error('Failed to save note')
+      const json = await res.json()
+      return (json.note ?? json) as LeadNote
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['lead_notes', vars.lead_id] })
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useUpdateLeadNote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (note: { lead_id: string; note_id: string; body: string }) => {
+      const res = await fetch(`/api/crm/leads/${note.lead_id}/notes/${note.note_id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: note.body }),
+      })
+      if (!res.ok) throw new Error('Failed to update note')
+      return res.json()
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['lead_notes', vars.lead_id] })
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+// ─── Tasks (create) ──────────────────────────────────────────────────────────
+
+export function useCreateTask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (task: {
+      type: string
+      description?: string | null
+      due_at?: string | null
+      owner_user_id?: string | null
+      opportunity_id?: string | null
+      lead_id?: string | null
+    }) => {
+      const { data, error } = await supabase()
+        .from('tasks')
+        .insert({ status: 'open', ...task })
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      toast.success('Task created')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}

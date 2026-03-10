@@ -425,6 +425,19 @@ export interface Payment {
   method: string | null
 }
 
+export type LeadNoteSection = 'general' | 'call' | 'design' | 'site_visit' | 'objections'
+
+export interface LeadNote {
+  id: string
+  lead_id: string
+  section: LeadNoteSection
+  body: string
+  author_id: string | null
+  created_at: string
+  updated_at: string
+  author?: { id: string; full_name: string | null; avatar_url: string | null } | null
+}
+
 export interface Task {
   id: string
   opportunity_id: string | null

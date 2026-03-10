@@ -48,6 +48,7 @@ import {
   ChevronUp,
   Trash2,
   Wrench,
+  Plus,
 } from 'lucide-react'
 import { formatDistanceToNow, format, addDays, isFuture } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -61,9 +62,13 @@ import ProjectSummaryCard from '@/components/crm/ProjectSummaryCard'
 import DiscoveryAnswersCard from '@/components/crm/DiscoveryAnswersCard'
 import AIInsightsPanel from '@/components/crm/AIInsightsPanel'
 import { parseLeadNotes } from '@/lib/crm/utils'
-import { useMeet1Notes } from '@/lib/crm/hooks'
+import { useMeet1Notes, useCreateTask, useProfiles, useUpdateOpportunity, useCreateOpportunity } from '@/lib/crm/hooks'
+import { useCurrentProfile } from '@/lib/crm/current-profile'
+import { STAGES, STAGE_ORDER } from '@/lib/crm/stages'
+import LeadNotesTab from '@/components/crm/LeadNotesTab'
+import type { OpportunityWithLead, OpportunityStage, Booking, MessageLog, Invoice, Task } from '@/lib/crm/types'
 
-type Tab = 'contact' | 'opportunities' | 'bookings' | 'messages' | 'invoices' | 'tasks' | 'activity' | 'fitting'
+type Tab = 'contact' | 'opportunities' | 'bookings' | 'messages' | 'invoices' | 'tasks' | 'notes' | 'activity' | 'fitting'
 
 export default function LeadDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -127,6 +132,7 @@ export default function LeadDetailPage() {
     { key: 'messages', label: 'Messages', icon: <MessageSquare size={14} />, count: messages.length },
     { key: 'invoices', label: 'Invoices', icon: <FileText size={14} />, count: invoices.length },
     { key: 'tasks', label: 'Tasks', icon: <CheckSquare size={14} />, count: tasks.length },
+    { key: 'notes', label: 'Notes', icon: <FileText size={14} /> },
     { key: 'fitting', label: 'Fitting', icon: <Wrench size={14} /> },
   ]
 
@@ -151,10 +157,16 @@ export default function LeadDetailPage() {
   }
 
   const statusColors: Record<string, string> = {
-    new: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
-    contacted: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
-    lost: 'bg-red-50 text-red-600 ring-1 ring-red-200',
+    new:            'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
+    contacted:      'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+    qualified:      'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+    proposal_sent:  'bg-purple-50 text-purple-700 ring-1 ring-purple-200',
+    won:            'bg-green-50 text-green-700 ring-1 ring-green-200',
+    lost:           'bg-red-50 text-red-600 ring-1 ring-red-200',
+    on_hold:        'bg-[var(--warm-50)] text-[var(--warm-500)] ring-1 ring-[var(--warm-200)]',
   }
+
+  const LEAD_STATUSES = ['new', 'contacted', 'qualified', 'proposal_sent', 'won', 'lost', 'on_hold'] as const
 
   return (
     <div>
@@ -197,9 +209,15 @@ export default function LeadDetailPage() {
                 <div className="flex-1 min-w-0">
                   <h1 className="font-heading text-xl font-semibold text-[var(--warm-900)] truncate">{lead.name}</h1>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${statusColors[lead.status]}`}>
-                      {lead.status}
-                    </span>
+                    <select
+                      value={lead.status}
+                      onChange={e => updateLead.mutate({ id: lead.id, status: e.target.value as typeof lead.status })}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize cursor-pointer border-0 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] ${statusColors[lead.status] ?? statusColors.new}`}
+                    >
+                      {LEAD_STATUSES.map(s => (
+                        <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                      ))}
+                    </select>
                     {scoreLoading ? (
                       <span className="inline-flex items-center gap-1 text-[10px] text-[var(--warm-400)]">
                         <Loader2 size={9} className="animate-spin" /> Scoring
@@ -428,11 +446,12 @@ export default function LeadDetailPage() {
                     />
                   </div>
                 )}
-                {activeTab === 'opportunities' && <OpportunitiesTab opportunities={leadOpportunities} />}
+                {activeTab === 'opportunities' && <OpportunitiesTab opportunities={leadOpportunities} leadId={id} />}
                 {activeTab === 'bookings' && <BookingsTab bookings={bookings} leadName={lead?.name ?? ''} />}
-                {activeTab === 'messages' && <MessagesTab messages={messages} leadId={id} />}
+                {activeTab === 'messages' && <MessagesTab messages={messages} leadId={id} preferredChannel={lead?.preferred_channel ?? null} />}
                 {activeTab === 'invoices' && <InvoicesTab invoices={invoices} />}
-                {activeTab === 'tasks' && <TasksTab tasks={tasks} />}
+                {activeTab === 'tasks' && <TasksTab tasks={tasks} leadId={id} primaryOppId={primaryOpp?.id ?? null} />}
+                {activeTab === 'notes' && <LeadNotesTab leadId={id} existingNotes={lead?.notes ?? null} />}
                 {activeTab === 'fitting' && <FittingTab opportunityIds={leadOpportunities.map(o => o.id)} />}
               </motion.div>
             </AnimatePresence>
@@ -622,37 +641,150 @@ function ContactTab({ lead }: { lead: NonNullable<ReturnType<typeof useLead>['da
 
 // ─── Opportunities Tab ───────────────────────────────────────────────────────
 
-import type { OpportunityWithLead } from '@/lib/crm/types'
+function OpportunitiesTab({ opportunities, leadId }: { opportunities: OpportunityWithLead[]; leadId: string }) {
+  const createOpp = useCreateOpportunity()
 
-function OpportunitiesTab({ opportunities }: { opportunities: OpportunityWithLead[] }) {
-  if (opportunities.length === 0) {
-    return <EmptyTab message="No opportunities linked to this lead" />
+  return (
+    <div>
+      <div className="divide-y divide-[var(--warm-50)]">
+        {opportunities.map((opp) => (
+          <OpportunityCard key={opp.id} opp={opp} />
+        ))}
+      </div>
+
+      {opportunities.length === 0 && (
+        <div className="p-6 text-center text-sm text-[var(--warm-400)]">No opportunities yet.</div>
+      )}
+
+      <div className="p-4 border-t border-[var(--warm-100)]">
+        <button
+          onClick={() => createOpp.mutate({ lead_id: leadId, stage: 'new_lead' as OpportunityStage })}
+          disabled={createOpp.isPending}
+          className="flex items-center gap-1.5 text-xs font-medium text-[var(--brand)] hover:opacity-80 disabled:opacity-50 transition-opacity"
+        >
+          {createOpp.isPending ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+          New opportunity
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function OpportunityCard({ opp }: { opp: OpportunityWithLead }) {
+  const updateOpp = useUpdateOpportunity()
+  const [editingValue, setEditingValue] = useState(false)
+  const [valueInput, setValueInput] = useState(String(opp.value_estimate ?? ''))
+  const [lostReason, setLostReason] = useState(opp.lost_reason ?? '')
+  const [confirmStage, setConfirmStage] = useState<OpportunityStage | null>(null)
+
+  function handleStageSelect(stage: OpportunityStage) {
+    if (stage === opp.stage) return
+    setConfirmStage(stage)
+  }
+
+  function applyStageChange(withAutomations: boolean) {
+    if (!confirmStage) return
+    if (withAutomations) {
+      // Use the same PATCH endpoint the pipeline board uses — automations fire server-side
+      updateOpp.mutate({ id: opp.id, stage: confirmStage })
+    } else {
+      updateOpp.mutate({ id: opp.id, stage: confirmStage })
+    }
+    setConfirmStage(null)
   }
 
   return (
-    <div className="divide-y divide-[var(--warm-50)]">
-      {opportunities.map((opp) => (
-        <div key={opp.id} className="p-4 flex items-center justify-between">
-          <div>
-            <StatusBadge stage={opp.stage} />
-            {opp.value_estimate != null && (
-              <span className="ml-3 text-sm font-medium text-[var(--warm-700)]">
-                £{opp.value_estimate.toLocaleString('en-GB')}
-              </span>
-            )}
+    <div className="p-4 space-y-3">
+      {/* Stage + value row */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Stage dropdown */}
+        <select
+          value={opp.stage}
+          onChange={e => handleStageSelect(e.target.value as OpportunityStage)}
+          className="text-xs font-medium border border-[var(--warm-200)] rounded-lg px-2 py-1 focus:outline-none focus:border-[var(--brand)] bg-white"
+        >
+          {STAGE_ORDER.map(s => (
+            <option key={s} value={s}>{STAGES[s]?.label ?? s}</option>
+          ))}
+        </select>
+
+        {/* Value estimate */}
+        {editingValue ? (
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-[var(--warm-400)]">£</span>
+            <input
+              autoFocus
+              type="number"
+              value={valueInput}
+              onChange={e => setValueInput(e.target.value)}
+              onBlur={() => {
+                const v = parseFloat(valueInput)
+                if (!isNaN(v)) updateOpp.mutate({ id: opp.id, value_estimate: v })
+                setEditingValue(false)
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                if (e.key === 'Escape') setEditingValue(false)
+              }}
+              className="w-24 px-2 py-0.5 text-xs border border-[var(--brand)] rounded-lg focus:outline-none"
+            />
           </div>
-          <span className="text-xs text-[var(--warm-400)]">
-            Updated {formatDistanceToNow(new Date(opp.updated_at), { addSuffix: true })}
-          </span>
+        ) : (
+          <button
+            onClick={() => { setEditingValue(true); setValueInput(String(opp.value_estimate ?? '')) }}
+            className="text-xs font-semibold text-[var(--green-700)] bg-[var(--green-50)] px-2 py-0.5 rounded-full hover:bg-[var(--green-100)] transition-colors"
+          >
+            {opp.value_estimate != null ? `£${opp.value_estimate.toLocaleString('en-GB')}` : '+ Add value'}
+          </button>
+        )}
+
+        <span className="text-[10px] text-[var(--warm-400)] ml-auto">
+          Updated {formatDistanceToNow(new Date(opp.updated_at), { addSuffix: true })}
+        </span>
+      </div>
+
+      {/* Lost reason */}
+      {opp.stage === 'lost' && (
+        <div>
+          <label className="text-[10px] text-[var(--warm-400)] font-medium">Lost reason</label>
+          <input
+            value={lostReason}
+            onChange={e => setLostReason(e.target.value)}
+            onBlur={() => updateOpp.mutate({ id: opp.id, lost_reason: (lostReason || null) as import('@/lib/crm/types').LostReason | null })}
+            placeholder="Why was this lost?"
+            className="w-full mt-0.5 px-2.5 py-1.5 text-xs border border-[var(--warm-200)] rounded-lg focus:outline-none focus:border-[var(--brand)]"
+          />
         </div>
-      ))}
+      )}
+
+      {/* Stage change confirmation */}
+      {confirmStage && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+          <p className="text-xs font-medium text-amber-800">
+            Change stage to <strong>{STAGES[confirmStage]?.label ?? confirmStage}</strong>?
+          </p>
+          <p className="text-[11px] text-amber-700">This may trigger automations (emails, tasks, invoices).</p>
+          <div className="flex gap-2">
+            <button onClick={() => applyStageChange(true)}
+              className="px-3 py-1 text-xs font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+              Confirm + automations
+            </button>
+            <button onClick={() => applyStageChange(false)}
+              className="px-3 py-1 text-xs font-medium bg-white border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50">
+              Change only
+            </button>
+            <button onClick={() => setConfirmStage(null)}
+              className="px-3 py-1 text-xs text-[var(--warm-500)] hover:text-[var(--warm-700)]">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 // ─── Bookings Tab ────────────────────────────────────────────────────────────
-
-import type { Booking } from '@/lib/crm/types'
 
 function BookingsTab({ bookings, leadName }: { bookings: Booking[]; leadName: string }) {
   if (bookings.length === 0) {
@@ -731,9 +863,7 @@ function BookingsTab({ bookings, leadName }: { bookings: Booking[]; leadName: st
 
 // ─── Messages Tab ────────────────────────────────────────────────────────────
 
-import type { MessageLog } from '@/lib/crm/types'
-
-function MessagesTab({ messages, leadId }: { messages: MessageLog[]; leadId: string }) {
+function MessagesTab({ messages, leadId, preferredChannel }: { messages: MessageLog[]; leadId: string; preferredChannel?: string | null }) {
   const { data: emailMessages = [] } = useEmailMessagesByLead(leadId)
   const { data: emailEvents = [] } = useEmailEventsByLead(leadId)
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -785,10 +915,6 @@ function MessagesTab({ messages, leadId }: { messages: MessageLog[]; leadId: str
     })),
   ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 
-  if (unified.length === 0) {
-    return <EmptyTab message="No messages yet" />
-  }
-
   const channelColors: Record<string, string> = {
     email: 'bg-blue-50 text-blue-700',
     sms: 'bg-amber-50 text-amber-700',
@@ -796,7 +922,11 @@ function MessagesTab({ messages, leadId }: { messages: MessageLog[]; leadId: str
   }
 
   return (
-    <div className="space-y-2 p-4">
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto space-y-2 p-4">
+        {unified.length === 0 && (
+          <p className="text-sm text-[var(--warm-400)] text-center py-8">No messages yet</p>
+        )}
       {/* Engagement stats */}
       {(opens > 0 || clicks > 0) && (
         <div className="flex items-center gap-4 px-3 py-2 rounded-lg bg-[var(--warm-25)] border border-[var(--warm-100)] mb-1">
@@ -908,13 +1038,81 @@ function MessagesTab({ messages, leadId }: { messages: MessageLog[]; leadId: str
           </div>
         )
       })}
+      </div>
+      <InlineComposeBar leadId={leadId} preferredChannel={preferredChannel} />
+    </div>
+  )
+}
+
+// ─── Inline Compose Bar ──────────────────────────────────────────────────────
+
+const COMPOSE_CHANNELS = [
+  { value: 'email',    label: 'Email' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'sms',      label: 'SMS' },
+] as const
+
+function InlineComposeBar({ leadId, preferredChannel }: { leadId: string; preferredChannel?: string | null }) {
+  const sendMessage = useSendMessage()
+  const defaultChannel = COMPOSE_CHANNELS.find(c => c.value === preferredChannel)?.value ?? 'email'
+  const [channel, setChannel] = useState<'email' | 'whatsapp' | 'sms'>(defaultChannel as 'email' | 'whatsapp' | 'sms')
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+
+  async function handleSend() {
+    if (!body.trim()) return
+    await sendMessage.mutateAsync({
+      lead_id: leadId,
+      channel,
+      body: body.trim(),
+      subject: channel === 'email' ? subject.trim() || undefined : undefined,
+    })
+    setBody('')
+    setSubject('')
+  }
+
+  return (
+    <div className="border-t border-[var(--warm-100)] bg-white p-3 space-y-2 shrink-0">
+      <div className="flex items-center gap-2">
+        <select
+          value={channel}
+          onChange={e => setChannel(e.target.value as typeof channel)}
+          className="text-[11px] font-medium border border-[var(--warm-200)] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[var(--brand)] bg-white shrink-0"
+        >
+          {COMPOSE_CHANNELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+        </select>
+        {channel === 'email' && (
+          <input
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            placeholder="Subject"
+            className="flex-1 text-xs border border-[var(--warm-200)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[var(--brand)]"
+          />
+        )}
+      </div>
+      <div className="flex gap-2">
+        <textarea
+          value={body}
+          onChange={e => setBody(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSend() }}
+          placeholder={`Quick ${channel} message… (⌘↵ to send)`}
+          rows={2}
+          className="flex-1 text-sm border border-[var(--warm-200)] rounded-xl px-3 py-2 focus:outline-none focus:border-[var(--brand)] resize-none"
+        />
+        <button
+          onClick={handleSend}
+          disabled={!body.trim() || sendMessage.isPending}
+          className="px-3 py-2 bg-[var(--brand)] text-white text-xs font-medium rounded-xl hover:opacity-90 disabled:opacity-40 transition-opacity flex items-center gap-1 self-end"
+        >
+          {sendMessage.isPending ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+          Send
+        </button>
+      </div>
     </div>
   )
 }
 
 // ─── Invoices Tab ────────────────────────────────────────────────────────────
-
-import type { Invoice } from '@/lib/crm/types'
 
 function InvoicesTab({ invoices }: { invoices: Invoice[] }) {
   if (invoices.length === 0) {
@@ -952,46 +1150,132 @@ function InvoicesTab({ invoices }: { invoices: Invoice[] }) {
 
 // ─── Tasks Tab ───────────────────────────────────────────────────────────────
 
-import type { Task } from '@/lib/crm/types'
+const TASK_TYPES = ['call_back', 'send_quote', 'follow_up', 'site_visit', 'send_contract', 'other'] as const
 
-function TasksTab({ tasks }: { tasks: Task[] }) {
+function TasksTab({ tasks, leadId, primaryOppId }: { tasks: Task[]; leadId: string; primaryOppId: string | null }) {
   const updateTask = useUpdateTask()
+  const createTask = useCreateTask()
+  const { data: profiles = [] } = useProfiles()
+  const { profile: currentProfile } = useCurrentProfile()
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({
+    type: 'follow_up',
+    description: '',
+    due_at: format(addDays(new Date(), 1), 'yyyy-MM-dd'),
+    owner_user_id: currentProfile?.id ?? '',
+    link_to: 'opportunity' as 'opportunity' | 'lead',
+  })
 
-  if (tasks.length === 0) {
-    return <EmptyTab message="No tasks" />
+  async function handleCreate() {
+    await createTask.mutateAsync({
+      type: form.type,
+      description: form.description || null,
+      due_at: form.due_at ? new Date(form.due_at).toISOString() : null,
+      owner_user_id: form.owner_user_id || null,
+      opportunity_id: form.link_to === 'opportunity' ? primaryOppId : null,
+      lead_id: form.link_to === 'lead' ? leadId : null,
+    })
+    setShowForm(false)
+    setForm(f => ({ ...f, description: '', type: 'follow_up' }))
   }
 
   return (
-    <div className="divide-y divide-[var(--warm-50)]">
-      {tasks.map((t) => (
-        <div key={t.id} className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => updateTask.mutate({ id: t.id, status: t.status === 'open' ? 'done' : 'open' })}
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                t.status === 'done'
-                  ? 'bg-[var(--green-600)] border-[var(--green-600)] text-white'
-                  : 'border-[var(--warm-300)] hover:border-[var(--green-500)]'
-              }`}
-            >
-              {t.status === 'done' && <CheckSquare size={12} />}
-            </button>
+    <div>
+      {/* Add task button / form */}
+      <div className="p-4 border-b border-[var(--warm-100)]">
+        {!showForm ? (
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-[var(--brand)] hover:opacity-80 transition-opacity"
+          >
+            <Plus size={13} /> Add task
+          </button>
+        ) : (
+          <div className="space-y-3 bg-[var(--warm-50)] rounded-xl p-3">
+            <p className="text-[11px] font-semibold text-[var(--warm-600)]">New task</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] text-[var(--warm-400)] font-medium">Type</label>
+                <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
+                  className="w-full mt-0.5 px-2 py-1.5 text-xs border border-[var(--warm-200)] rounded-lg focus:outline-none focus:border-[var(--brand)] bg-white capitalize">
+                  {TASK_TYPES.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] text-[var(--warm-400)] font-medium">Due date</label>
+                <input type="date" value={form.due_at} onChange={e => setForm(f => ({ ...f, due_at: e.target.value }))}
+                  className="w-full mt-0.5 px-2 py-1.5 text-xs border border-[var(--warm-200)] rounded-lg focus:outline-none focus:border-[var(--brand)] bg-white" />
+              </div>
+              <div>
+                <label className="text-[10px] text-[var(--warm-400)] font-medium">Assignee</label>
+                <select value={form.owner_user_id} onChange={e => setForm(f => ({ ...f, owner_user_id: e.target.value }))}
+                  className="w-full mt-0.5 px-2 py-1.5 text-xs border border-[var(--warm-200)] rounded-lg focus:outline-none focus:border-[var(--brand)] bg-white">
+                  <option value="">Unassigned</option>
+                  {profiles.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] text-[var(--warm-400)] font-medium">Link to</label>
+                <select value={form.link_to} onChange={e => setForm(f => ({ ...f, link_to: e.target.value as 'opportunity' | 'lead' }))}
+                  className="w-full mt-0.5 px-2 py-1.5 text-xs border border-[var(--warm-200)] rounded-lg focus:outline-none focus:border-[var(--brand)] bg-white">
+                  <option value="opportunity">Primary opportunity</option>
+                  <option value="lead">Lead only</option>
+                </select>
+              </div>
+            </div>
             <div>
-              <span className={`text-sm ${t.status === 'done' ? 'text-[var(--warm-400)] line-through' : 'text-[var(--warm-800)]'}`}>
-                {t.type}
-              </span>
-              {t.description && (
-                <p className="text-xs text-[var(--warm-400)] mt-0.5">{t.description}</p>
-              )}
+              <label className="text-[10px] text-[var(--warm-400)] font-medium">Description (optional)</label>
+              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                rows={2} placeholder="Add details…"
+                className="w-full mt-0.5 px-2 py-1.5 text-xs border border-[var(--warm-200)] rounded-lg focus:outline-none focus:border-[var(--brand)] resize-none bg-white" />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowForm(false)} className="px-3 py-1.5 text-xs text-[var(--warm-500)] hover:text-[var(--warm-700)]">Cancel</button>
+              <button onClick={handleCreate} disabled={createTask.isPending}
+                className="px-3 py-1.5 text-xs font-medium bg-[var(--brand)] text-white rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-1">
+                {createTask.isPending && <Loader2 size={11} className="animate-spin" />}
+                Create task
+              </button>
             </div>
           </div>
-          {t.due_at && (
-            <span className="text-xs text-[var(--warm-400)]">
-              {format(new Date(t.due_at), 'dd MMM')}
-            </span>
-          )}
+        )}
+      </div>
+
+      {tasks.length === 0 && !showForm ? (
+        <EmptyTab message="No tasks" />
+      ) : (
+        <div className="divide-y divide-[var(--warm-50)]">
+          {tasks.map((t) => (
+            <div key={t.id} className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => updateTask.mutate({ id: t.id, status: t.status === 'open' ? 'done' : 'open' })}
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
+                    t.status === 'done'
+                      ? 'bg-[var(--green-600)] border-[var(--green-600)] text-white'
+                      : 'border-[var(--warm-300)] hover:border-[var(--green-500)]'
+                  }`}
+                >
+                  {t.status === 'done' && <CheckSquare size={12} />}
+                </button>
+                <div>
+                  <span className={`text-sm capitalize ${t.status === 'done' ? 'text-[var(--warm-400)] line-through' : 'text-[var(--warm-800)]'}`}>
+                    {t.type.replace('_', ' ')}
+                  </span>
+                  {t.description && (
+                    <p className="text-xs text-[var(--warm-400)] mt-0.5">{t.description}</p>
+                  )}
+                </div>
+              </div>
+              {t.due_at && (
+                <span className="text-xs text-[var(--warm-400)] shrink-0">
+                  {format(new Date(t.due_at), 'dd MMM')}
+                </span>
+              )}
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   )
 }
