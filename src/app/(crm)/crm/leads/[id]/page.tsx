@@ -189,7 +189,7 @@ export default function LeadDetailPage() {
   const LEAD_STATUSES = ['new', 'contacted', 'qualified', 'proposal_sent', 'won', 'lost', 'on_hold'] as const
 
   return (
-    <div>
+    <div className="w-full">
       {/* Top bar */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -474,7 +474,7 @@ export default function LeadDetailPage() {
         </div>
 
         {/* Right column — tabbed content */}
-        <div className="flex-1 min-w-0 border-2 border-red-500">
+        <div className="flex-1 min-w-0">
           {/* Tabs with sliding underline.
               On screens < sm: only primary tabs are shown inline; secondary tabs
               are accessible via a "More" dropdown to prevent horizontal overflow. */}
