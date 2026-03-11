@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Bell, X, User, CreditCard, ArrowRight, Clock, Mail, CheckSquare } from 'lucide-react'
+import { Bell, X, User, CreditCard, ArrowRight, Clock, Mail, CheckSquare, Settings2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
@@ -16,16 +16,59 @@ interface Notification {
   read: boolean
 }
 
+const PREF_KEY = 'crm_notif_prefs'
+
+const DEFAULT_PREFS: Record<Notification['type'], boolean> = {
+  new_lead: true,
+  payment: true,
+  stage_change: true,
+  email_reply: true,
+  task_due: true,
+}
+
+const PREF_LABELS: Record<Notification['type'], string> = {
+  new_lead: 'New enquiries',
+  payment: 'Payments received',
+  stage_change: 'Stage changes',
+  email_reply: 'Email replies',
+  task_due: 'Overdue tasks',
+}
+
 export default function NotificationCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [open, setOpen] = useState(false)
+  const [showPrefs, setShowPrefs] = useState(false)
+  const [prefs, setPrefs] = useState<Record<Notification['type'], boolean>>(() => {
+    // Lazy initialiser — runs once on mount, avoids a setState-in-effect
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(PREF_KEY) : null
+      if (stored) return { ...DEFAULT_PREFS, ...JSON.parse(stored) }
+    } catch {}
+    return DEFAULT_PREFS
+  })
   const [showPopup, setShowPopup] = useState<Notification | null>(null)
   const popupTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
+  function togglePref(type: Notification['type']) {
+    setPrefs((prev) => {
+      const next = { ...prev, [type]: !prev[type] }
+      try { localStorage.setItem(PREF_KEY, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
   const unreadCount = notifications.filter((n) => !n.read).length
 
   const addNotification = useCallback((n: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
+    // Respect per-type preferences — read from localStorage directly so the
+    // callback doesn't need prefs in its dependency array (avoids re-subscribing Realtime)
+    try {
+      const stored = localStorage.getItem(PREF_KEY)
+      const p: Record<string, boolean> = stored ? { ...DEFAULT_PREFS, ...JSON.parse(stored) } : DEFAULT_PREFS
+      if (p[n.type] === false) return
+    } catch {}
+
     const notif: Notification = {
       ...n,
       id: crypto.randomUUID(),
@@ -140,7 +183,7 @@ export default function NotificationCenter() {
       {/* Bell button */}
       <div className="relative" ref={panelRef}>
         <button
-          onClick={() => { setOpen(!open); if (!open) markAllRead() }}
+          onClick={() => { setOpen((v) => { if (v) setShowPrefs(false); return !v }); if (!open) markAllRead() }}
           className="relative p-2 text-[var(--warm-400)] hover:text-[var(--warm-600)] hover:bg-[var(--warm-50)] rounded-xl transition-all"
         >
           <Bell size={16} />
@@ -154,48 +197,94 @@ export default function NotificationCenter() {
         {/* Dropdown panel */}
         {open && (
           <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl border border-[var(--warm-100)] shadow-2xl z-50 animate-scale-in overflow-hidden">
+            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--warm-100)]">
-              <h3 className="text-sm font-semibold text-[var(--warm-800)]">Notifications</h3>
-              {notifications.length > 0 && (
-                <button onClick={markAllRead} className="text-[10px] text-[var(--warm-400)] hover:text-[var(--warm-600)]">
-                  Mark all read
+              <h3 className="text-sm font-semibold text-[var(--warm-800)]">
+                {showPrefs ? 'Notification Preferences' : 'Notifications'}
+              </h3>
+              <div className="flex items-center gap-2">
+                {!showPrefs && notifications.length > 0 && (
+                  <button onClick={markAllRead} className="text-[10px] text-[var(--warm-400)] hover:text-[var(--warm-600)]">
+                    Mark all read
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowPrefs((v) => !v)}
+                  className={`p-1 rounded-lg transition-colors ${showPrefs ? 'text-[var(--green-600)] bg-[var(--green-50)]' : 'text-[var(--warm-400)] hover:text-[var(--warm-600)] hover:bg-[var(--warm-50)]'}`}
+                  title="Notification preferences"
+                >
+                  <Settings2 size={13} />
                 </button>
-              )}
+              </div>
             </div>
 
-            <div className="max-h-[400px] overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Bell size={20} className="text-[var(--warm-200)] mx-auto mb-2" />
-                  <p className="text-xs text-[var(--warm-400)]">No notifications yet</p>
-                </div>
-              ) : (
-                notifications.map((n) => {
-                  const tc = typeConfig[n.type]
-                  return (
-                    <Link
-                      key={n.id}
-                      href={n.link}
-                      onClick={() => setOpen(false)}
-                      className={`flex items-start gap-3 px-4 py-3 hover:bg-[var(--warm-50)] transition-colors border-b border-[var(--warm-50)] ${!n.read ? 'bg-[var(--green-50)]/30' : ''}`}
+            {/* Preferences panel */}
+            {showPrefs ? (
+              <div className="p-4 space-y-1">
+                <p className="text-[10px] text-[var(--warm-400)] mb-3">
+                  Choose which events trigger notifications and popup alerts.
+                </p>
+                {(Object.keys(PREF_LABELS) as Notification['type'][]).map((type) => (
+                  <label
+                    key={type}
+                    className="flex items-center justify-between py-2 px-1 rounded-lg hover:bg-[var(--warm-50)] cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-6 h-6 rounded-md ${typeConfig[type].color} flex items-center justify-center`}>
+                        {typeConfig[type].icon}
+                      </div>
+                      <span className="text-xs text-[var(--warm-700)]">{PREF_LABELS[type]}</span>
+                    </div>
+                    <button
+                      role="switch"
+                      aria-checked={prefs[type]}
+                      onClick={() => togglePref(type)}
+                      className={`relative w-8 h-4.5 rounded-full transition-colors shrink-0 ${prefs[type] ? 'bg-[var(--green-500)]' : 'bg-[var(--warm-200)]'}`}
+                      style={{ height: '18px', width: '32px' }}
                     >
-                      <div className={`w-8 h-8 rounded-lg ${tc.color} flex items-center justify-center shrink-0 mt-0.5`}>
-                        {tc.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-[var(--warm-800)]">{n.title}</p>
-                        <p className="text-[11px] text-[var(--warm-500)] truncate">{n.body}</p>
-                        <p className="text-[9px] text-[var(--warm-300)] mt-0.5 flex items-center gap-1">
-                          <Clock size={8} />
-                          {formatDistanceToNow(n.createdAt, { addSuffix: true })}
-                        </p>
-                      </div>
-                      {!n.read && <div className="w-2 h-2 rounded-full bg-[var(--green-500)] shrink-0 mt-2" />}
-                    </Link>
-                  )
-                })
-              )}
-            </div>
+                      <span
+                        className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-transform ${prefs[type] ? 'translate-x-[14px]' : 'translate-x-0.5'}`}
+                      />
+                    </button>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              /* Notifications list */
+              <div className="max-h-[400px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Bell size={20} className="text-[var(--warm-200)] mx-auto mb-2" />
+                    <p className="text-xs text-[var(--warm-400)]">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => {
+                    const tc = typeConfig[n.type]
+                    return (
+                      <Link
+                        key={n.id}
+                        href={n.link}
+                        onClick={() => setOpen(false)}
+                        className={`flex items-start gap-3 px-4 py-3 hover:bg-[var(--warm-50)] transition-colors border-b border-[var(--warm-50)] ${!n.read ? 'bg-[var(--green-50)]/30' : ''}`}
+                      >
+                        <div className={`w-8 h-8 rounded-lg ${tc.color} flex items-center justify-center shrink-0 mt-0.5`}>
+                          {tc.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-[var(--warm-800)]">{n.title}</p>
+                          <p className="text-[11px] text-[var(--warm-500)] truncate">{n.body}</p>
+                          <p className="text-[9px] text-[var(--warm-300)] mt-0.5 flex items-center gap-1">
+                            <Clock size={8} />
+                            {formatDistanceToNow(n.createdAt, { addSuffix: true })}
+                          </p>
+                        </div>
+                        {!n.read && <div className="w-2 h-2 rounded-full bg-[var(--green-500)] shrink-0 mt-2" />}
+                      </Link>
+                    )
+                  })
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

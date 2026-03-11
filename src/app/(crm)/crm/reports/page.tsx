@@ -137,29 +137,90 @@ function RevenueReport({ opportunities, months, onExport }: { opportunities: Opp
       </div>
 
       {/* Bar chart */}
-      <div className="bg-white rounded-xl border border-[var(--warm-100)] p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-[var(--warm-800)]">Monthly Revenue</h3>
-          <button
-            onClick={() => onExport(['Month', 'Revenue', 'Deals'], data.map((d) => [d.month, String(d.revenue), String(d.count)]))}
-            className="flex items-center gap-1 text-[10px] text-[var(--warm-400)] hover:text-[var(--warm-600)]"
-          >
-            <Download size={10} /> CSV
-          </button>
-        </div>
-        <div className="flex items-end gap-2 h-48">
-          {data.map((d, i) => (
-            <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[9px] text-[var(--warm-400)]">£{(d.revenue / 1000).toFixed(1)}k</span>
-              <motion.div
-                className="w-full bg-[var(--green-500)] rounded-t-md"
-                initial={{ height: 0 }}
-                animate={{ height: `${Math.max((d.revenue / maxRevenue) * 100, 2)}%` }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-              />
-              <span className="text-[9px] text-[var(--warm-400)] mt-1">{d.month.split(' ')[0]}</span>
-            </div>
+      <RevenueBarChart data={data} maxRevenue={maxRevenue} onExport={onExport} />
+    </div>
+  )
+}
+
+// ─── Revenue Bar Chart ───────────────────────────────────────────────────────
+
+function RevenueBarChart({
+  data,
+  maxRevenue,
+  onExport,
+}: {
+  data: { month: string; revenue: number; count: number }[]
+  maxRevenue: number
+  onExport: (h: string[], r: string[][]) => void
+}) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+
+  // 4 evenly-spaced Y-axis ticks from 0 to maxRevenue
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(maxRevenue * f))
+
+  return (
+    <div className="bg-white rounded-xl border border-[var(--warm-100)] p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-[var(--warm-800)]">Monthly Revenue</h3>
+        <button
+          onClick={() => onExport(['Month', 'Revenue', 'Deals'], data.map((d) => [d.month, String(d.revenue), String(d.count)]))}
+          className="flex items-center gap-1 text-[10px] text-[var(--warm-400)] hover:text-[var(--warm-600)]"
+        >
+          <Download size={10} /> CSV
+        </button>
+      </div>
+
+      <div className="flex gap-3">
+        {/* Y-axis labels */}
+        <div className="flex flex-col-reverse justify-between h-48 pb-5 shrink-0">
+          {yTicks.map((tick) => (
+            <span key={tick} className="text-[9px] text-[var(--warm-300)] font-mono leading-none">
+              £{tick >= 1000 ? `${(tick / 1000).toFixed(tick % 1000 === 0 ? 0 : 1)}k` : tick}
+            </span>
           ))}
+        </div>
+
+        {/* Chart area */}
+        <div className="flex-1 relative">
+          {/* Horizontal grid lines */}
+          <div className="absolute inset-0 bottom-5 flex flex-col-reverse justify-between pointer-events-none">
+            {yTicks.map((tick) => (
+              <div key={tick} className="w-full border-t border-[var(--warm-100)]" />
+            ))}
+          </div>
+
+          {/* Bars */}
+          <div className="flex items-end gap-1.5 h-48 pb-5">
+            {data.map((d, i) => (
+              <div
+                key={d.month}
+                className="relative flex-1 flex flex-col items-center gap-0"
+                onMouseEnter={() => setHoveredIdx(i)}
+                onMouseLeave={() => setHoveredIdx(null)}
+              >
+                {/* Tooltip */}
+                {hoveredIdx === i && (
+                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-10 bg-[var(--warm-900)] text-white text-[10px] rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg pointer-events-none">
+                    <div className="font-semibold">£{d.revenue.toLocaleString('en-GB')}</div>
+                    <div className="text-[var(--warm-300)]">{d.count} deal{d.count !== 1 ? 's' : ''} · {d.month}</div>
+                    {/* Arrow */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[var(--warm-900)]" />
+                  </div>
+                )}
+
+                <motion.div
+                  className={`w-full rounded-t-md transition-colors ${hoveredIdx === i ? 'bg-[var(--green-600)]' : 'bg-[var(--green-500)]'}`}
+                  initial={{ height: 0 }}
+                  animate={{ height: `${Math.max((d.revenue / maxRevenue) * 100, d.revenue > 0 ? 2 : 0)}%` }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                  style={{ minHeight: d.revenue > 0 ? 4 : 0 }}
+                />
+                <span className="text-[9px] text-[var(--warm-400)] mt-1 truncate w-full text-center">
+                  {d.month.split(' ')[0]}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

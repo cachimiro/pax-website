@@ -16,6 +16,7 @@
   --orange-50: #FFF8F0;
 
   --warm-white: #FAF9F7;
+  --warm-25: #FDFCFB;
   --warm-50: #F5F4F2;
   --warm-100: #EDECE9;
   --warm-200: #D8D6D2;
@@ -24,6 +25,10 @@
   --warm-700: #4A4843;
   --warm-800: #2D2B28;
   --warm-900: #1A1917;
+
+  /* Brand aliases — used throughout CRM components */
+  --brand: var(--green-600);
+  --brand-light: var(--green-100);
 
   --background: var(--warm-white);
   --foreground: var(--warm-900);
@@ -57,6 +62,7 @@
   --color-orange-50: var(--orange-50);
 
   --color-warm-white: var(--warm-white);
+  --color-warm-25: var(--warm-25);
   --color-warm-50: var(--warm-50);
   --color-warm-100: var(--warm-100);
   --color-warm-200: var(--warm-200);

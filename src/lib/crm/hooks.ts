@@ -68,9 +68,13 @@ export function useProfile(id: string) {
 
 // ─── Leads ───────────────────────────────────────────────────────────────────
 
-export function useLeads(filters?: { status?: string; owner_user_id?: string; deleted?: boolean }) {
+export function useLeads(
+  filters?: { status?: string; owner_user_id?: string; deleted?: boolean },
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ['leads', filters],
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
       let query = supabase()
         .from('leads')
@@ -219,9 +223,13 @@ export function usePermanentDeleteLead() {
 
 // ─── Opportunities ──────────────────────────────────────────────────────────
 
-export function useOpportunities(filters?: { stage?: OpportunityStage; owner_user_id?: string }) {
+export function useOpportunities(
+  filters?: { stage?: OpportunityStage; owner_user_id?: string },
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ['opportunities', filters],
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
       let query = supabase()
         .from('opportunities')
@@ -412,9 +420,13 @@ export function useRescheduleBooking() {
 
 // ─── Tasks ───────────────────────────────────────────────────────────────────
 
-export function useTasks(filters?: { status?: string; owner_user_id?: string }) {
+export function useTasks(
+  filters?: { status?: string; owner_user_id?: string },
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ['tasks', filters],
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
       let query = supabase()
         .from('tasks')
@@ -484,12 +496,31 @@ export function useUpdateTask() {
           }
           const targetStage = autoMoveMap[data.type]
           if (targetStage) {
+            // Build KPI timestamp updates to match useMoveOpportunityStage behaviour
+            const now = new Date().toISOString()
+            const stageUpdates: Partial<Opportunity> = { stage: targetStage, updated_at: now }
+            if (targetStage === 'qualified')        stageUpdates.call1_completed_at        = now
+            if (targetStage === 'proposal_agreed')  stageUpdates.call2_completed_at        = now
+            if (targetStage === 'fitter_assigned')  stageUpdates.onboarding_completed_at   = now
+
             const { error: moveErr } = await supabase()
               .from('opportunities')
-              .update({ stage: targetStage, updated_at: new Date().toISOString() })
+              .update(stageUpdates)
               .eq('id', data.opportunity_id)
             if (!moveErr) {
+              // Log the stage change
+              const { data: { user } } = await supabase().auth.getUser()
+              await supabase().from('stage_log').insert({
+                opportunity_id: data.opportunity_id,
+                to_stage: targetStage,
+                changed_by: user?.id,
+              })
+
+              // Run automations (non-blocking — same pattern as useMoveOpportunityStage)
+              runStageAutomations(supabase(), data.opportunity_id, targetStage).catch(console.error)
+
               qc.invalidateQueries({ queryKey: ['opportunities'] })
+              qc.invalidateQueries({ queryKey: ['stage_log', data.opportunity_id] })
               toast.success(`Auto-moved to ${targetStage.replace(/_/g, ' ')}`, { duration: 4000 })
             }
           }
@@ -938,6 +969,7 @@ export function useSignature() {
     queryFn: async () => {
       const res = await fetch('/api/crm/signature')
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed to load signature')
       return data.signature
     },
   })

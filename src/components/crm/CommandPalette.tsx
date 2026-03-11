@@ -35,9 +35,9 @@ export default function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  const { data: leads = [] } = useLeads()
-  const { data: opportunities = [] } = useOpportunities()
-  const { data: tasks = [] } = useTasks({ status: 'open' })
+  const { data: leads = [] } = useLeads(undefined, { enabled: open })
+  const { data: opportunities = [] } = useOpportunities(undefined, { enabled: open })
+  const { data: tasks = [] } = useTasks({ status: 'open' }, { enabled: open })
 
   // Open/close with Cmd+K
   useEffect(() => {

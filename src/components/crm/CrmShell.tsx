@@ -53,7 +53,7 @@ export default function CrmShell({ profile, children }: CrmShellProps) {
           </main>
         </div>
 
-        <MobileBottomNav />
+        <MobileBottomNav profile={profile} />
       </div>
     </AIPreferencesProvider>
   )

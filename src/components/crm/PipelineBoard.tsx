@@ -26,7 +26,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { OpportunityStage, OpportunityWithLead, LostReason } from '@/lib/crm/types'
 import { assessOpportunityRisk, type RiskLevel } from '@/lib/crm/risk'
 import { useAIPreferences } from '@/lib/crm/ai-preferences'
-import { TrendingUp, Users, AlertTriangle, PoundSterling, ChevronDown } from 'lucide-react'
+import { TrendingUp, Users, AlertTriangle, PoundSterling, ChevronDown, Search, X } from 'lucide-react'
 
 function isAdjacentForward(from: OpportunityStage, to: OpportunityStage): boolean {
   const fromIdx = STAGE_ORDER.indexOf(from)
@@ -59,6 +59,7 @@ export default function PipelineBoard() {
   // Designer filter (admin only — non-admins only see their own)
   const { data: allProfiles = [] } = useProfiles()
   const [designerFilter, setDesignerFilter] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Build designer lookup map: userId → { color, initial }
   const designerMap = useMemo(() => {
@@ -113,11 +114,16 @@ export default function PipelineBoard() {
   const { prefs } = useAIPreferences()
 
   const activeOpportunity = activeId ? opportunities.find((o) => o.id === activeId) ?? null : null
-  const filteredOpportunities = useMemo(() =>
-    designerFilter
+  const filteredOpportunities = useMemo(() => {
+    let result = designerFilter
       ? opportunities.filter((o) => o.owner_user_id === designerFilter)
-      : opportunities,
-  [opportunities, designerFilter])
+      : opportunities
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((o) => o.lead?.name?.toLowerCase().includes(q))
+    }
+    return result
+  }, [opportunities, designerFilter, searchQuery])
 
   const grouped = useMemo(() => {
     const map: Record<OpportunityStage, OpportunityWithLead[]> = {} as Record<OpportunityStage, OpportunityWithLead[]>
@@ -151,11 +157,15 @@ export default function PipelineBoard() {
     const opp = opportunities.find((o) => o.id === oppId)
     if (!opp) return
 
-    // Optimistic cache update
-    qc.setQueryData(['opportunities', undefined], (old: OpportunityWithLead[] | undefined) => {
-      if (!old) return old
-      return old.map((o) => o.id === oppId ? { ...o, stage: toStage, updated_at: new Date().toISOString() } : o)
-    })
+    // Optimistic cache update — use setQueriesData to cover both admin (undefined filter)
+    // and non-admin ({ owner_user_id }) cache keys without needing to know which is active.
+    qc.setQueriesData(
+      { queryKey: ['opportunities'] },
+      (old: OpportunityWithLead[] | undefined) => {
+        if (!old) return old
+        return old.map((o) => o.id === oppId ? { ...o, stage: toStage, updated_at: new Date().toISOString() } : o)
+      }
+    )
 
     const leadName = opp.lead?.name ?? 'Opportunity'
     toast.success(`${leadName} moved to ${toStage.replace(/_/g, ' ')}`)
@@ -244,7 +254,7 @@ export default function PipelineBoard() {
     <>
       {/* Stats header */}
       <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 mb-5 card-hover-border">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-8">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-[var(--warm-400)] font-semibold mb-1">Pipeline Value</p>
@@ -284,6 +294,26 @@ export default function PipelineBoard() {
                   <p className="text-[10px] text-[var(--warm-400)]">Lost</p>
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* Lead name search */}
+          <div className="relative flex-shrink-0">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--warm-300)] pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search leads…"
+              className="pl-7 pr-7 py-1.5 text-xs border border-[var(--warm-200)] rounded-lg bg-[var(--warm-50)] focus:bg-white focus:border-[var(--green-500)] focus:outline-none w-40 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--warm-300)] hover:text-[var(--warm-500)]"
+              >
+                <X size={11} />
+              </button>
             )}
           </div>
         </div>

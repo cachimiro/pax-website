@@ -18,6 +18,8 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/crm/leads': 'Leads',
   '/crm/calendar': 'Calendar',
   '/crm/tasks': 'Tasks',
+  '/crm/fittings': 'Fittings',
+  '/crm/reports': 'Reports',
   '/crm/settings': 'Settings',
 }
 

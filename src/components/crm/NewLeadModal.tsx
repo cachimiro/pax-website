@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X } from 'lucide-react'
 import { useCreateLead, useCreateOpportunity } from '@/lib/crm/hooks'
+import { useCurrentProfile } from '@/lib/crm/current-profile'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/crm/Button'
 import ModalWrapper from '@/components/crm/ModalWrapper'
@@ -56,6 +57,7 @@ interface NewLeadModalProps {
 
 export default function NewLeadModal({ onClose }: NewLeadModalProps) {
   const router = useRouter()
+  const { profile } = useCurrentProfile()
   const createLead = useCreateLead()
   const createOpportunity = useCreateOpportunity()
 
@@ -74,11 +76,12 @@ export default function NewLeadModal({ onClose }: NewLeadModalProps) {
     const { value_estimate, ...leadData } = data
     const numericValue = value_estimate ? parseFloat(value_estimate) : null
 
-    // Create lead
+    // Create lead — default owner to the current user
     const lead = await createLead.mutateAsync({
       ...leadData,
       email: leadData.email || null,
       status: 'new',
+      owner_user_id: profile?.id ?? null,
     })
 
     // Auto-create opportunity

@@ -70,6 +70,25 @@ export default function PipelineColumn({ stage, groupLabel, groupStages, groupCo
             </div>
           )}
         </div>
+
+        {/* Sub-stage breakdown — only shown when the column groups multiple stages */}
+        {hasMultipleStages && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {groupStages!.map((s) => {
+              const count = opportunities.filter((o) => o.stage === s).length
+              return (
+                <span
+                  key={s}
+                  className={`inline-flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-white/60 ${config.textColor} opacity-80`}
+                  title={STAGES[s]?.label}
+                >
+                  {STAGES[s]?.label.replace(/^(Meet \d |Design & |Fitting |Visit |On |Sign-Off )/, '')}
+                  <span className="font-bold">{count}</span>
+                </span>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Drop zone body */}

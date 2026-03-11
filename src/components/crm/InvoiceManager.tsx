@@ -53,7 +53,7 @@ export default function InvoiceManager({ opportunityId }: InvoiceManagerProps) {
 
     await supabase
       .from('invoices')
-      .update({ status: 'paid', paid_at: new Date().toISOString() })
+      .update({ status: 'paid' })
       .eq('id', invoiceId)
 
     const { data: opp } = await supabase

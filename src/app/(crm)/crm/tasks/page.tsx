@@ -4,19 +4,7 @@ import { useState } from 'react'
 import { useTasks, useUpdateTask } from '@/lib/crm/hooks'
 import { useCurrentProfile } from '@/lib/crm/current-profile'
 import { format, isPast, isToday } from 'date-fns'
-import { CheckSquare, Check, Filter, ChevronDown, Clock, AlertTriangle, GripVertical } from 'lucide-react'
-import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragStartEvent,
-  type DragEndEvent,
-} from '@dnd-kit/core'
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { CheckSquare, Check, Filter, ChevronDown, Clock, AlertTriangle } from 'lucide-react'
 import EmptyState from '@/components/crm/EmptyState'
 
 export default function TasksPage() {
@@ -89,7 +77,7 @@ export default function TasksPage() {
   )
 }
 
-// ─── Sortable task sections ──────────────────────────────────────────────────
+// ─── Task sections ───────────────────────────────────────────────────────────
 
 interface TaskSection {
   label: string
@@ -99,103 +87,38 @@ interface TaskSection {
 }
 
 function TaskSections({ sections, updateTask }: { sections: TaskSection[]; updateTask: ReturnType<typeof useUpdateTask> }) {
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  )
-
-  const allTasks = sections.flatMap(s => s.tasks)
-  const activeTask = activeId ? allTasks.find(t => t.id === activeId) : null
-
-  function handleDragStart(event: DragStartEvent) {
-    setActiveId(event.active.id as string)
-  }
-
-  function handleDragEnd(_event: DragEndEvent) {
-    setActiveId(null)
-    // Visual reorder only — no backend persistence for task order
-  }
-
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="space-y-6">
-        {sections.map((section) => (
-          <div key={section.label}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`w-2 h-2 rounded-full ${section.accent}`} />
-              <h3 className={`text-xs font-semibold uppercase tracking-wider ${section.color}`}>
-                {section.label}
-              </h3>
-              <span className="text-[10px] text-[var(--warm-300)] bg-[var(--warm-50)] px-1.5 py-0.5 rounded-full">
-                {section.tasks.length}
-              </span>
-            </div>
-            <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] divide-y divide-[var(--warm-50)] overflow-hidden card-hover-border">
-              <SortableContext items={section.tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                {section.tasks.map((task) => (
-                  <SortableTaskRow key={task.id} task={task} updateTask={updateTask} />
-                ))}
-              </SortableContext>
-            </div>
+    <div className="space-y-6">
+      {sections.map((section) => (
+        <div key={section.label}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-2 h-2 rounded-full ${section.accent}`} />
+            <h3 className={`text-xs font-semibold uppercase tracking-wider ${section.color}`}>
+              {section.label}
+            </h3>
+            <span className="text-[10px] text-[var(--warm-300)] bg-[var(--warm-50)] px-1.5 py-0.5 rounded-full">
+              {section.tasks.length}
+            </span>
           </div>
-        ))}
-      </div>
-
-      <DragOverlay>
-        {activeTask ? (
-          <div className="pipeline-drag-overlay bg-white rounded-xl border border-[var(--green-500)]/30 px-5 py-3.5 shadow-xl">
-            <div className="flex items-center gap-3">
-              <GripVertical size={14} className="text-[var(--warm-300)]" />
-              <p className="text-sm text-[var(--warm-800)]">{activeTask.type.replace(/_/g, ' ')}</p>
-            </div>
+          <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] divide-y divide-[var(--warm-50)] overflow-hidden card-hover-border">
+            {section.tasks.map((task) => (
+              <TaskRow key={task.id} task={task} updateTask={updateTask} />
+            ))}
           </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        </div>
+      ))}
+    </div>
   )
 }
 
-function SortableTaskRow({ task, updateTask }: { task: { id: string; type: string; description: string | null; status: string; due_at: string | null }; updateTask: ReturnType<typeof useUpdateTask> }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  }
-
+function TaskRow({ task, updateTask }: { task: { id: string; type: string; description: string | null; status: string; due_at: string | null }; updateTask: ReturnType<typeof useUpdateTask> }) {
   const isOverdue = task.status === 'open' && task.due_at && isPast(new Date(task.due_at)) && !isToday(new Date(task.due_at))
   const isDone = task.status === 'done'
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="relative flex items-center gap-3 px-5 py-3.5 group hover:bg-[var(--warm-50)]/50 transition-colors"
-    >
+    <div className="relative flex items-center gap-3 px-5 py-3.5 group hover:bg-[var(--warm-50)]/50 transition-colors">
       {/* Priority accent bar */}
       <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${isOverdue ? 'bg-red-400' : isDone ? 'bg-emerald-400' : 'bg-transparent'}`} />
-
-      {/* Drag handle */}
-      <button
-        {...listeners}
-        {...attributes}
-        className="p-0.5 text-[var(--warm-200)] hover:text-[var(--warm-400)] cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-      >
-        <GripVertical size={14} />
-      </button>
 
       {/* Checkbox */}
       <button

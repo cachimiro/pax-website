@@ -149,7 +149,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="font-heading text-xl font-semibold text-[var(--warm-900)]">Dashboard</h1>
-          <p className="text-sm text-[var(--warm-500)] mt-0.5">Website tracking & pipeline analytics</p>
+          <p className="text-sm text-[var(--warm-500)] mt-0.5">Pipeline overview & website analytics</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -182,13 +182,23 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* CRM Metrics — primary hero section */}
+      <CrmMetrics />
+
       {/* AI Daily Briefing */}
       <DailyBriefing />
 
-      {/* CRM Metrics */}
-      <CrmMetrics />
+      {/* Website Analytics section */}
+      <div className="flex items-center gap-3 mb-5 mt-2">
+        <div className="flex-1 h-px bg-[var(--warm-100)]" />
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--warm-300)] flex items-center gap-1.5">
+          <Globe size={11} />
+          Website Analytics
+        </span>
+        <div className="flex-1 h-px bg-[var(--warm-100)]" />
+      </div>
 
-      {/* Website Analytics Tabs */}
+      {/* Analytics Tabs */}
       <div className="relative flex items-center gap-1 mb-6 overflow-x-auto pb-px -mx-1 px-1 border-b border-[var(--warm-100)]">
         {TABS.map((t) => (
           <button
@@ -245,30 +255,56 @@ export default function DashboardPage() {
   )
 }
 
+function deltaBadge(current: number, prior: number, format: 'currency' | 'percent' | 'count' = 'count') {
+  if (prior === 0 && current === 0) return null
+  if (prior === 0) return <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">New</span>
+  const pct = Math.round(((current - prior) / prior) * 100)
+  const up = pct >= 0
+  const label = `${up ? '+' : ''}${pct}%`
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${up ? 'text-emerald-600 bg-emerald-50' : 'text-red-500 bg-red-50'}`}>
+      {up ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
+      {label}
+    </span>
+  )
+}
+
 function CrmMetrics() {
   const { data: opportunities = [] } = useOpportunities()
   const { data: leads = [] } = useLeads()
   const { data: tasks = [] } = useTasks({ status: 'open' })
 
   const now = new Date()
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+  const weekAgo    = new Date(now.getTime() - 7  * 24 * 60 * 60 * 1000)
+  const monthAgo   = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+  const twoWeekAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+  const twoMonthAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
 
   // Pipeline value (active opportunities)
   const activeStages = new Set(['new_enquiry', 'call1_scheduled', 'qualified', 'call2_scheduled', 'proposal_agreed', 'awaiting_deposit', 'deposit_paid', 'fitting_confirmed', 'fitter_assigned', 'fitting_in_progress', 'fitting_complete', 'sign_off_pending'])
   const activeOpps = opportunities.filter((o) => activeStages.has(o.stage))
   const pipelineValue = activeOpps.reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
+  // Prior pipeline: opps that were active and updated in the prior 30d window
+  const priorActiveOpps = opportunities.filter((o) => {
+    const updated = new Date(o.updated_at)
+    return activeStages.has(o.stage) && updated >= twoMonthAgo && updated < monthAgo
+  })
+  const priorPipelineValue = priorActiveOpps.reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
 
   // Revenue (complete opportunities)
   const completeOpps = opportunities.filter((o) => o.stage === 'complete')
   const revenueThisMonth = completeOpps
     .filter((o) => new Date(o.updated_at) >= monthAgo)
     .reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
+  const revenueLastMonth = completeOpps
+    .filter((o) => { const d = new Date(o.updated_at); return d >= twoMonthAgo && d < monthAgo })
+    .reduce((sum, o) => sum + (o.value_estimate ?? 0), 0)
 
-  // Leads this week
+  // Leads this week vs prior week
   const leadsThisWeek = leads.filter((l) => new Date(l.created_at) >= weekAgo).length
+  const leadsLastWeek = leads.filter((l) => { const d = new Date(l.created_at); return d >= twoWeekAgo && d < weekAgo }).length
 
-  // Conversion rate (complete / total non-lost)
+  // Conversion rate (complete / total non-lost) — all time, no delta (stable metric)
   const totalClosed = opportunities.filter((o) => o.stage === 'complete' || o.stage === 'lost').length
   const wonCount = completeOpps.length
   const conversionRate = totalClosed > 0 ? Math.round((wonCount / totalClosed) * 100) : 0
@@ -276,20 +312,65 @@ function CrmMetrics() {
   // Open tasks
   const overdueTasks = tasks.filter((t) => t.due_at && new Date(t.due_at) < now).length
 
-  const metrics = [
-    { label: 'Pipeline Value', value: `£${(pipelineValue / 1000).toFixed(1)}k`, icon: <DollarSign size={14} />, color: 'text-emerald-600 bg-emerald-50', tooltip: 'Total estimated value of all active opportunities (excludes lost and complete).' },
-    { label: 'Revenue (30d)', value: `£${(revenueThisMonth / 1000).toFixed(1)}k`, icon: <TrendingUp size={14} />, color: 'text-blue-600 bg-blue-50', tooltip: 'Sum of completed deal values in the last 30 days.' },
-    { label: 'Leads (7d)', value: String(leadsThisWeek), icon: <Users size={14} />, color: 'text-purple-600 bg-purple-50', tooltip: 'Number of new leads created in the last 7 days.' },
-    { label: 'Win Rate', value: `${conversionRate}%`, icon: <Target size={14} />, color: 'text-amber-600 bg-amber-50', tooltip: 'Percentage of opportunities won vs total closed (won + lost). All time.' },
-    { label: 'Open Tasks', value: `${tasks.length}${overdueTasks > 0 ? ` (${overdueTasks} overdue)` : ''}`, icon: <CheckSquare size={14} />, color: overdueTasks > 0 ? 'text-red-600 bg-red-50' : 'text-[var(--warm-600)] bg-[var(--warm-50)]', tooltip: 'Tasks with status "open". Overdue = past their due date.' },
+  const metrics: {
+    label: string
+    value: string
+    icon: React.ReactNode
+    color: string
+    tooltip: string
+    delta: React.ReactNode
+  }[] = [
+    {
+      label: 'Pipeline Value',
+      value: `£${(pipelineValue / 1000).toFixed(1)}k`,
+      icon: <DollarSign size={14} />,
+      color: 'text-emerald-600 bg-emerald-50',
+      tooltip: 'Total estimated value of all active opportunities (excludes lost and complete).',
+      delta: deltaBadge(pipelineValue, priorPipelineValue),
+    },
+    {
+      label: 'Revenue (30d)',
+      value: `£${(revenueThisMonth / 1000).toFixed(1)}k`,
+      icon: <TrendingUp size={14} />,
+      color: 'text-blue-600 bg-blue-50',
+      tooltip: 'Sum of completed deal values in the last 30 days.',
+      delta: deltaBadge(revenueThisMonth, revenueLastMonth),
+    },
+    {
+      label: 'Leads (7d)',
+      value: String(leadsThisWeek),
+      icon: <Users size={14} />,
+      color: 'text-purple-600 bg-purple-50',
+      tooltip: 'New leads in the last 7 days vs the prior 7 days.',
+      delta: deltaBadge(leadsThisWeek, leadsLastWeek),
+    },
+    {
+      label: 'Win Rate',
+      value: `${conversionRate}%`,
+      icon: <Target size={14} />,
+      color: 'text-amber-600 bg-amber-50',
+      tooltip: 'Percentage of opportunities won vs total closed (won + lost). All time.',
+      delta: null,
+    },
+    {
+      label: 'Open Tasks',
+      value: `${tasks.length}${overdueTasks > 0 ? ` (${overdueTasks} overdue)` : ''}`,
+      icon: <CheckSquare size={14} />,
+      color: overdueTasks > 0 ? 'text-red-600 bg-red-50' : 'text-[var(--warm-600)] bg-[var(--warm-50)]',
+      tooltip: 'Tasks with status "open". Overdue = past their due date.',
+      delta: null,
+    },
   ]
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
       {metrics.map((m) => (
         <div key={m.label} className="bg-white rounded-xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-4" title={m.tooltip}>
-          <div className={`inline-flex p-1.5 rounded-lg ${m.color} mb-2`}>
-            {m.icon}
+          <div className="flex items-start justify-between mb-2">
+            <div className={`inline-flex p-1.5 rounded-lg ${m.color}`}>
+              {m.icon}
+            </div>
+            {m.delta}
           </div>
           <div className="text-lg font-bold text-[var(--warm-800)]">{m.value}</div>
           <div className="text-[10px] text-[var(--warm-400)] uppercase tracking-wider">{m.label}</div>

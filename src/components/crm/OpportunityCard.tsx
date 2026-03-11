@@ -1,13 +1,15 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { formatDistanceToNow, differenceInDays } from 'date-fns'
-import { GripVertical, Phone, Mail, MessageSquare, ChevronRight, AlertCircle, Wrench, Timer, Clipboard } from 'lucide-react'
+import { formatDistanceToNow, differenceInDays, addDays } from 'date-fns'
+import { GripVertical, Phone, Mail, MessageSquare, ChevronRight, AlertCircle, Wrench, Timer, Clipboard, Plus, Clock } from 'lucide-react'
 import type { OpportunityWithLead } from '@/lib/crm/types'
 import type { RiskLevel } from '@/lib/crm/risk'
 import type { FittingInfo } from './PipelineBoard'
 import { STAGES, STAGE_ORDER } from '@/lib/crm/stages'
+import { useCreateTask, useUpdateLead } from '@/lib/crm/hooks'
 import Link from 'next/link'
 
 interface OpportunityCardProps {
@@ -60,6 +62,54 @@ export default function OpportunityCard({ opportunity, isDragging: isDraggingOve
     id: opportunity.id,
     data: { stage: opportunity.stage },
   })
+
+  const createTask = useCreateTask()
+  const updateLead = useUpdateLead()
+
+  // Inline task form state
+  const [showTaskForm, setShowTaskForm] = useState(false)
+  const [taskDesc, setTaskDesc] = useState('')
+  const taskInputRef = useRef<HTMLInputElement>(null)
+
+  // Snooze popover state
+  const [showSnooze, setShowSnooze] = useState(false)
+  const snoozeRef = useRef<HTMLDivElement>(null)
+
+  // Close snooze popover on outside click
+  useEffect(() => {
+    if (!showSnooze) return
+    function handleClick(e: MouseEvent) {
+      if (snoozeRef.current && !snoozeRef.current.contains(e.target as Node)) {
+        setShowSnooze(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showSnooze])
+
+  // Focus task input when form opens
+  useEffect(() => {
+    if (showTaskForm) requestAnimationFrame(() => taskInputRef.current?.focus())
+  }, [showTaskForm])
+
+  function handleCreateTask(e: React.FormEvent) {
+    e.preventDefault()
+    if (!taskDesc.trim()) return
+    createTask.mutate({
+      type: 'manual',
+      description: taskDesc.trim(),
+      opportunity_id: opportunity.id,
+      lead_id: opportunity.lead_id,
+    })
+    setTaskDesc('')
+    setShowTaskForm(false)
+  }
+
+  function handleSnooze(days: number) {
+    const until = addDays(new Date(), days).toISOString()
+    updateLead.mutate({ id: opportunity.lead_id, snoozed_until: until })
+    setShowSnooze(false)
+  }
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -180,21 +230,56 @@ export default function OpportunityCard({ opportunity, isDragging: isDraggingOve
         {fittingInfo && <FittingBadge info={fittingInfo} />}
 
         {/* Quick actions row */}
-        <div className="flex items-center justify-between mt-2 ml-7 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className={`flex items-center justify-between mt-2 ml-7 transition-opacity ${showTaskForm || showSnooze ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
           <div className="flex items-center gap-1">
             {opportunity.lead?.phone && (
-              <button className="p-1 rounded text-[var(--warm-300)] hover:text-[var(--green-600)] hover:bg-[var(--green-50)] transition-colors" title="Call">
+              <a href={`tel:${opportunity.lead.phone}`} onClick={(e) => e.stopPropagation()} className="p-1 rounded text-[var(--warm-300)] hover:text-[var(--green-600)] hover:bg-[var(--green-50)] transition-colors" title="Call">
                 <Phone size={11} />
-              </button>
+              </a>
             )}
             {opportunity.lead?.email && (
-              <button className="p-1 rounded text-[var(--warm-300)] hover:text-[var(--green-600)] hover:bg-[var(--green-50)] transition-colors" title="Email">
+              <a href={`mailto:${opportunity.lead.email}`} onClick={(e) => e.stopPropagation()} className="p-1 rounded text-[var(--warm-300)] hover:text-[var(--green-600)] hover:bg-[var(--green-50)] transition-colors" title="Email">
                 <Mail size={11} />
-              </button>
+              </a>
             )}
-            <button className="p-1 rounded text-[var(--warm-300)] hover:text-[var(--green-600)] hover:bg-[var(--green-50)] transition-colors" title="Message">
-              <MessageSquare size={11} />
+            {opportunity.lead?.phone && (
+              <a href={`https://wa.me/${opportunity.lead.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="p-1 rounded text-[var(--warm-300)] hover:text-[var(--green-600)] hover:bg-[var(--green-50)] transition-colors" title="WhatsApp">
+                <MessageSquare size={11} />
+              </a>
+            )}
+
+            {/* Add task */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowTaskForm((v) => !v); setShowSnooze(false) }}
+              className={`p-1 rounded transition-colors ${showTaskForm ? 'text-[var(--green-600)] bg-[var(--green-50)]' : 'text-[var(--warm-300)] hover:text-[var(--green-600)] hover:bg-[var(--green-50)]'}`}
+              title="Add task"
+            >
+              <Plus size={11} />
             </button>
+
+            {/* Snooze */}
+            <div className="relative" ref={snoozeRef}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowSnooze((v) => !v); setShowTaskForm(false) }}
+                className={`p-1 rounded transition-colors ${showSnooze ? 'text-amber-600 bg-amber-50' : 'text-[var(--warm-300)] hover:text-amber-500 hover:bg-amber-50'}`}
+                title="Snooze"
+              >
+                <Clock size={11} />
+              </button>
+              {showSnooze && (
+                <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-[var(--warm-100)] rounded-xl shadow-lg p-1.5 flex flex-col gap-0.5 min-w-[90px]">
+                  {[1, 3, 7].map((d) => (
+                    <button
+                      key={d}
+                      onClick={(e) => { e.stopPropagation(); handleSnooze(d) }}
+                      className="text-left px-2.5 py-1.5 text-[11px] text-[var(--warm-700)] hover:bg-[var(--warm-50)] rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      {d === 1 ? 'Tomorrow' : `${d} days`}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Quick-move button */}
@@ -208,6 +293,30 @@ export default function OpportunityCard({ opportunity, isDragging: isDraggingOve
             </button>
           )}
         </div>
+
+        {/* Inline task creation form */}
+        {showTaskForm && (
+          <form
+            onSubmit={handleCreateTask}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-2 ml-7 flex items-center gap-1.5"
+          >
+            <input
+              ref={taskInputRef}
+              value={taskDesc}
+              onChange={(e) => setTaskDesc(e.target.value)}
+              placeholder="Task description…"
+              className="flex-1 px-2 py-1 text-[11px] border border-[var(--warm-200)] rounded-lg focus:border-[var(--green-500)] focus:outline-none bg-[var(--warm-50)]"
+            />
+            <button
+              type="submit"
+              disabled={!taskDesc.trim() || createTask.isPending}
+              className="px-2 py-1 text-[10px] font-medium bg-[var(--green-600)] text-white rounded-lg hover:bg-[var(--green-700)] disabled:opacity-40 transition-colors"
+            >
+              Add
+            </button>
+          </form>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[var(--warm-50)]">

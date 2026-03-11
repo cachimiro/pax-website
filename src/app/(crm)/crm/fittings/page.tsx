@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   Wrench, Loader2, AlertCircle, User, Calendar, MapPin,
@@ -67,6 +68,15 @@ function formatDate(d: string) {
 }
 
 export default function FittingsPage() {
+  return (
+    <Suspense>
+      <FittingsPageInner />
+    </Suspense>
+  )
+}
+
+function FittingsPageInner() {
+  const searchParams = useSearchParams()
   const [opportunities, setOpportunities] = useState<OpportunityForFitting[]>([])
   const [subcontractors, setSubcontractors] = useState<SubcontractorRow[]>([])
   const [allJobs, setAllJobs] = useState<FittingJobRow[]>([])
@@ -144,6 +154,20 @@ export default function FittingsPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  // Open a specific job when navigated from the lead detail Fitting tab (?job=<id>)
+  useEffect(() => {
+    const jobId = searchParams.get('job')
+    if (!jobId || loading || allJobs.length === 0) return
+    const job = allJobs.find(j => j.id === jobId)
+    if (!job) return
+    setSelectedJobId(jobId)
+    // Switch to the tab that contains this job
+    if (['completed', 'signed_off', 'approved'].includes(job.status)) setTab('completed')
+    else if (job.status === 'open_board') setTab('board')
+    else if (job.status === 'offered') setTab('offered')
+    else if (['assigned', 'claimed', 'accepted', 'in_progress'].includes(job.status)) setTab('active')
+  }, [searchParams, allJobs, loading])
+
   const unassigned = opportunities.filter(o => !o.fitting_job)
   const offeredJobs = allJobs.filter(j => j.status === 'offered')
   const activeJobs = allJobs.filter(j => ['assigned', 'claimed', 'accepted', 'in_progress'].includes(j.status))
@@ -180,9 +204,9 @@ export default function FittingsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <StatCard label="Unassigned" value={unassigned.length} color="text-amber-600" />
-        {offeredJobs.length > 0 && <StatCard label="Offered" value={offeredJobs.length} color="text-purple-600" />}
+        <StatCard label="Offered" value={offeredJobs.length} color="text-purple-600" />
         <StatCard label="Active Jobs" value={activeJobs.length} color="text-blue-600" />
-        {boardJobs.length > 0 && <StatCard label="Open Board" value={boardJobs.length} color="text-yellow-600" />}
+        <StatCard label="Open Board" value={boardJobs.length} color="text-yellow-600" />
         <StatCard label="Completed" value={completedJobs.length} color="text-green-600" />
       </div>
 

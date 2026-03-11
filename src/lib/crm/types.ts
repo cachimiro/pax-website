@@ -210,6 +210,7 @@ export interface Opportunity {
   created_at: string
   updated_at: string
   call1_completed_at: string | null
+  call2_completed_at: string | null
   deposit_paid_at: string | null
   onboarding_completed_at: string | null
   completed_at: string | null

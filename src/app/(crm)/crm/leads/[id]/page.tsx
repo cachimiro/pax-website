@@ -62,7 +62,7 @@ import ProjectSummaryCard from '@/components/crm/ProjectSummaryCard'
 import DiscoveryAnswersCard from '@/components/crm/DiscoveryAnswersCard'
 import AIInsightsPanel from '@/components/crm/AIInsightsPanel'
 import { parseLeadNotes } from '@/lib/crm/utils'
-import { useMeet1Notes, useCreateTask, useProfiles, useUpdateOpportunity, useCreateOpportunity } from '@/lib/crm/hooks'
+import { useMeet1Notes, useCreateTask, useProfiles, useUpdateOpportunity, useCreateOpportunity, useMoveOpportunityStage } from '@/lib/crm/hooks'
 import { useCurrentProfile } from '@/lib/crm/current-profile'
 import { STAGES, STAGE_ORDER } from '@/lib/crm/stages'
 import LeadNotesTab from '@/components/crm/LeadNotesTab'
@@ -76,6 +76,20 @@ export default function LeadDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>('activity')
   const [tabUnderline, setTabUnderline] = useState({ left: 0, width: 0 })
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const [moreTabOpen, setMoreTabOpen] = useState(false)
+  const moreTabRef = useRef<HTMLDivElement>(null)
+
+  // Close "More" dropdown on outside click
+  useEffect(() => {
+    if (!moreTabOpen) return
+    function handleClick(e: MouseEvent) {
+      if (moreTabRef.current && !moreTabRef.current.contains(e.target as Node)) {
+        setMoreTabOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [moreTabOpen])
   const [composeState, setComposeState] = useState<{ open: boolean; channel: MessageChannel; body: string; subject?: string; intent?: string } | null>(null)
 
   useEffect(() => {
@@ -390,38 +404,120 @@ export default function LeadDetailPage() {
 
         {/* Right column — tabbed content */}
         <div className="flex-1 min-w-0">
-          {/* Tabs with sliding underline */}
-          <div className="relative flex items-center gap-1 mb-5 overflow-x-auto pb-px -mx-1 px-1 border-b border-[var(--warm-100)]">
-            {tabs.map((t) => (
-              <button
-                key={t.key}
-                ref={(el) => { tabRefs.current[t.key] = el }}
-                onClick={() => setActiveTab(t.key)}
-                className={`
-                  flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors
-                  ${activeTab === t.key
-                    ? 'text-[var(--green-700)]'
-                    : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'
-                  }
-                `}
-              >
-                {t.icon}
-                {t.label}
-                {t.count != null && t.count > 0 && (
-                  <span className={`ml-0.5 text-[10px] rounded-full px-1.5 py-0.5 ${
-                    activeTab === t.key ? 'bg-[var(--green-100)] text-[var(--green-700)]' : 'bg-[var(--warm-100)] text-[var(--warm-500)]'
-                  }`}>
-                    {t.count}
-                  </span>
-                )}
-              </button>
-            ))}
-            <motion.div
-              className="absolute bottom-0 h-[2px] bg-[var(--green-600)] rounded-full"
-              animate={{ left: tabUnderline.left, width: tabUnderline.width }}
-              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            />
-          </div>
+          {/* Tabs with sliding underline.
+              On screens < sm: only primary tabs are shown inline; secondary tabs
+              are accessible via a "More" dropdown to prevent horizontal overflow. */}
+          {(() => {
+            const PRIMARY_TABS: Tab[] = ['activity', 'contact', 'opportunities', 'messages']
+            const primaryTabs = tabs.filter((t) => PRIMARY_TABS.includes(t.key))
+            const secondaryTabs = tabs.filter((t) => !PRIMARY_TABS.includes(t.key))
+            const activeIsSecondary = secondaryTabs.some((t) => t.key === activeTab)
+
+            return (
+              <div className="relative flex items-center gap-1 mb-5 pb-px -mx-1 px-1 border-b border-[var(--warm-100)]">
+                {/* Primary tabs — always visible */}
+                {primaryTabs.map((t) => (
+                  <button
+                    key={t.key}
+                    ref={(el) => { tabRefs.current[t.key] = el }}
+                    onClick={() => setActiveTab(t.key)}
+                    className={`
+                      flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors
+                      ${activeTab === t.key ? 'text-[var(--green-700)]' : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'}
+                    `}
+                  >
+                    {t.icon}
+                    {t.label}
+                    {t.count != null && t.count > 0 && (
+                      <span className={`ml-0.5 text-[10px] rounded-full px-1.5 py-0.5 ${
+                        activeTab === t.key ? 'bg-[var(--green-100)] text-[var(--green-700)]' : 'bg-[var(--warm-100)] text-[var(--warm-500)]'
+                      }`}>
+                        {t.count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+
+                {/* Secondary tabs — always visible on sm+, hidden behind "More" on xs */}
+                {secondaryTabs.map((t) => (
+                  <button
+                    key={t.key}
+                    ref={(el) => { tabRefs.current[t.key] = el }}
+                    onClick={() => setActiveTab(t.key)}
+                    className={`
+                      hidden sm:flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors
+                      ${activeTab === t.key ? 'text-[var(--green-700)]' : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'}
+                    `}
+                  >
+                    {t.icon}
+                    {t.label}
+                    {t.count != null && t.count > 0 && (
+                      <span className={`ml-0.5 text-[10px] rounded-full px-1.5 py-0.5 ${
+                        activeTab === t.key ? 'bg-[var(--green-100)] text-[var(--green-700)]' : 'bg-[var(--warm-100)] text-[var(--warm-500)]'
+                      }`}>
+                        {t.count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+
+                {/* "More" dropdown — only visible on xs screens */}
+                <div className="relative sm:hidden ml-auto" ref={moreTabRef}>
+                  <button
+                    onClick={() => setMoreTabOpen((v) => !v)}
+                    className={`flex items-center gap-1 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors rounded-lg ${
+                      activeIsSecondary
+                        ? 'text-[var(--green-700)] bg-[var(--green-50)]'
+                        : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'
+                    }`}
+                  >
+                    {activeIsSecondary
+                      ? tabs.find((t) => t.key === activeTab)?.label
+                      : 'More'}
+                    <ChevronDown size={11} className={`transition-transform ${moreTabOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {moreTabOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute right-0 top-full mt-1 z-50 bg-white border border-[var(--warm-100)] rounded-xl shadow-lg py-1 min-w-[140px]"
+                      >
+                        {secondaryTabs.map((t) => (
+                          <button
+                            key={t.key}
+                            onClick={() => { setActiveTab(t.key); setMoreTabOpen(false) }}
+                            className={`w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium transition-colors ${
+                              activeTab === t.key
+                                ? 'text-[var(--green-700)] bg-[var(--green-50)]'
+                                : 'text-[var(--warm-600)] hover:bg-[var(--warm-50)]'
+                            }`}
+                          >
+                            {t.icon}
+                            {t.label}
+                            {t.count != null && t.count > 0 && (
+                              <span className="ml-auto text-[10px] rounded-full px-1.5 py-0.5 bg-[var(--warm-100)] text-[var(--warm-500)]">
+                                {t.count}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Sliding underline indicator */}
+                <motion.div
+                  className="absolute bottom-0 h-[2px] bg-[var(--green-600)] rounded-full"
+                  animate={{ left: tabUnderline.left, width: tabUnderline.width }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                />
+              </div>
+            )
+          })()}
 
           {/* Tab content */}
           <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] card-hover-border">
@@ -659,7 +755,7 @@ function OpportunitiesTab({ opportunities, leadId }: { opportunities: Opportunit
 
       <div className="p-4 border-t border-[var(--warm-100)]">
         <button
-          onClick={() => createOpp.mutate({ lead_id: leadId, stage: 'new_lead' as OpportunityStage })}
+          onClick={() => createOpp.mutate({ lead_id: leadId, stage: 'new_enquiry' as OpportunityStage })}
           disabled={createOpp.isPending}
           className="flex items-center gap-1.5 text-xs font-medium text-[var(--brand)] hover:opacity-80 disabled:opacity-50 transition-opacity"
         >
@@ -673,6 +769,7 @@ function OpportunitiesTab({ opportunities, leadId }: { opportunities: Opportunit
 
 function OpportunityCard({ opp }: { opp: OpportunityWithLead }) {
   const updateOpp = useUpdateOpportunity()
+  const moveStage = useMoveOpportunityStage()
   const [editingValue, setEditingValue] = useState(false)
   const [valueInput, setValueInput] = useState(String(opp.value_estimate ?? ''))
   const [lostReason, setLostReason] = useState(opp.lost_reason ?? '')
@@ -686,9 +783,10 @@ function OpportunityCard({ opp }: { opp: OpportunityWithLead }) {
   function applyStageChange(withAutomations: boolean) {
     if (!confirmStage) return
     if (withAutomations) {
-      // Use the same PATCH endpoint the pipeline board uses — automations fire server-side
-      updateOpp.mutate({ id: opp.id, stage: confirmStage })
+      // Full move: KPI timestamps + stage_log + automations (emails, tasks, invoices)
+      moveStage.mutate({ id: opp.id, stage: confirmStage })
     } else {
+      // Silent move: update stage only — no automations, no stage log entry
       updateOpp.mutate({ id: opp.id, stage: confirmStage })
     }
     setConfirmStage(null)
@@ -1340,7 +1438,7 @@ function FittingTab({ opportunityIds }: { opportunityIds: string[] }) {
   return (
     <div className="space-y-3">
       {jobs.map(job => (
-        <Link key={job.id} href="/crm/fittings" className="block bg-white rounded-xl border border-[var(--warm-100)] p-4 hover:border-[var(--warm-200)] transition-colors">
+        <Link key={job.id} href={`/crm/fittings?job=${job.id}`} className="block bg-white rounded-xl border border-[var(--warm-100)] p-4 hover:border-[var(--warm-200)] transition-colors">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Wrench size={14} className="text-[var(--warm-400)]" />

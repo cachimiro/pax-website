@@ -89,7 +89,7 @@ export default function CalendarPage() {
         .from('tasks')
         .select('id, opportunity_id, type, description, status, due_at, owner_user_id')
         .not('due_at', 'is', null)
-        .in('status', ['open', 'in_progress'])
+        .eq('status', 'open')
         .order('due_at', { ascending: false })
         .limit(100)
       return data ?? []
@@ -483,6 +483,26 @@ export default function CalendarPage() {
                       {/* Time rows */}
                       {isLoading ? (
                         <div className="p-8 text-center text-sm text-[var(--warm-300)]">Loading...</div>
+                      ) : viewMode === 'week' && weekEventCount === 0 ? (
+                        <div className="relative">
+                          {HOURS.map((hour) => (
+                            <div key={hour} className={`grid ${gridCols} border-b border-[var(--warm-50)] min-h-[64px]`}>
+                              <div className="p-2 text-right pr-3">
+                                <span className="text-[10px] text-[var(--warm-300)] font-mono">
+                                  {String(hour).padStart(2, '0')}:00
+                                </span>
+                              </div>
+                              {displayDays.map((day) => (
+                                <div key={day.toISOString()} className="border-l border-[var(--warm-50)]" />
+                              ))}
+                            </div>
+                          ))}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <p className="text-sm text-[var(--warm-300)] bg-white/80 px-4 py-2 rounded-xl">
+                              No events this week — bookings and tasks will appear here
+                            </p>
+                          </div>
+                        </div>
                       ) : (
                         HOURS.map((hour) => (
                           <div key={hour} className={`grid ${gridCols} border-b border-[var(--warm-50)] min-h-[64px] relative`}>

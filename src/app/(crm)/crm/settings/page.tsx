@@ -911,6 +911,28 @@ function IntegrationsSection() {
           </div>
         </div>
 
+        {/* Feature-impact callout — shows what is currently unavailable */}
+        <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-amber-50 border border-amber-200 mb-4">
+          <AlertTriangle size={13} className="text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[11px] font-semibold text-amber-700 mb-1">These features are unavailable until you connect</p>
+            <ul className="space-y-0.5">
+              {[
+                'Sending emails from your own address',
+                'Receiving lead replies in the CRM',
+                'Google Meet links on bookings',
+                'Calendar sync for appointments',
+                'Email open & click tracking',
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-1.5 text-[11px] text-amber-600">
+                  <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
         <p className="text-xs text-[var(--warm-500)] leading-relaxed mb-5">
           Connect your Google account to unlock branded email sending, inbox sync, calendar integration, and engagement tracking.
         </p>

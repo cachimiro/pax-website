@@ -31,11 +31,15 @@ export default function DailyBriefing({ userName }: DailyBriefingProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
-  // Check localStorage for today's dismissal
+  // Check localStorage for today's dismissal; clean up keys from previous days
   useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
     const stored = localStorage.getItem(DISMISS_KEY)
-    if (stored === new Date().toISOString().split('T')[0]) {
+    if (stored === today) {
       setDismissed(true)
+    } else if (stored) {
+      // Stale key from a previous day — remove it so it doesn't accumulate
+      localStorage.removeItem(DISMISS_KEY)
     }
   }, [])
 

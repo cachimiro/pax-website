@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { useLeads, useOpportunities, useSoftDeleteLead, useRestoreLead, usePermanentDeleteLead } from '@/lib/crm/hooks'
+import { useState, useMemo, useCallback } from 'react'
+import { useLeads, useOpportunities, useSoftDeleteLead, useRestoreLead, usePermanentDeleteLead, useUpdateLead, useProfiles } from '@/lib/crm/hooks'
 import { useCurrentProfile } from '@/lib/crm/current-profile'
 import { formatDistanceToNow, differenceInHours } from 'date-fns'
-import { Search, Filter, Plus, ChevronDown, Mail, Phone, MapPin, Users, Zap, Trash2, RotateCcw, Upload } from 'lucide-react'
+import { Search, Filter, Plus, ChevronDown, ChevronUp, Mail, Phone, MapPin, Users, Zap, Trash2, RotateCcw, Upload, CheckSquare, Square, X, UserCheck, Tag, Download } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import CsvImportModal from '@/components/crm/CsvImportModal'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -40,6 +43,11 @@ export default function LeadsPage() {
   const restoreLead = useRestoreLead()
   const permanentDelete = usePermanentDeleteLead()
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkAssignId, setBulkAssignId] = useState('')
+  const [bulkStatus, setBulkStatus] = useState('')
+  const qc = useQueryClient()
+  const { data: profiles = [] } = useProfiles()
   const { data: opportunities = [] } = useOpportunities(isAdmin ? undefined : ownerFilter)
   const { suggestionsOn } = useAIPreferences()
 
@@ -86,6 +94,74 @@ export default function LeadsPage() {
       setSortField(field)
       setSortDir('asc')
     }
+  }
+
+  // ── Bulk selection helpers ──────────────────────────────────────────────────
+  const allFilteredIds = filtered.map((l) => l.id)
+  const allSelected = allFilteredIds.length > 0 && allFilteredIds.every((id) => selectedIds.has(id))
+  const someSelected = selectedIds.size > 0
+
+  function toggleSelect(id: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    setSelectedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(allFilteredIds))
+  }
+
+  function clearSelection() { setSelectedIds(new Set()) }
+
+  async function bulkTrash() {
+    const ids = [...selectedIds]
+    await Promise.all(ids.map((id) =>
+      createClient().from('leads').update({ deleted_at: new Date().toISOString() }).eq('id', id)
+    ))
+    qc.invalidateQueries({ queryKey: ['leads'] })
+    toast.success(`${ids.length} lead${ids.length !== 1 ? 's' : ''} moved to trash`)
+    clearSelection()
+  }
+
+  async function bulkAssign() {
+    if (!bulkAssignId) return
+    const ids = [...selectedIds]
+    await Promise.all(ids.map((id) =>
+      createClient().from('leads').update({ owner_user_id: bulkAssignId }).eq('id', id)
+    ))
+    qc.invalidateQueries({ queryKey: ['leads'] })
+    toast.success(`${ids.length} lead${ids.length !== 1 ? 's' : ''} assigned`)
+    setBulkAssignId('')
+    clearSelection()
+  }
+
+  async function bulkSetStatus() {
+    if (!bulkStatus) return
+    const ids = [...selectedIds]
+    await Promise.all(ids.map((id) =>
+      createClient().from('leads').update({ status: bulkStatus }).eq('id', id)
+    ))
+    qc.invalidateQueries({ queryKey: ['leads'] })
+    toast.success(`${ids.length} lead${ids.length !== 1 ? 's' : ''} updated`)
+    setBulkStatus('')
+    clearSelection()
+  }
+
+  function bulkExportCsv() {
+    const rows = filtered.filter((l) => selectedIds.has(l.id))
+    const header = ['Name', 'Email', 'Phone', 'Postcode', 'Status', 'Project Type', 'Created']
+    const lines = [
+      header.join(','),
+      ...rows.map((l) => [
+        `"${l.name}"`, l.email ?? '', l.phone ?? '',
+        l.postcode ?? '', l.status, l.project_type ?? '',
+        new Date(l.created_at).toLocaleDateString('en-GB'),
+      ].join(',')),
+    ]
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `leads-${new Date().toISOString().split('T')[0]}.csv`; a.click()
+    URL.revokeObjectURL(url)
   }
 
   const statusColors: Record<string, string> = {
@@ -189,15 +265,105 @@ export default function LeadsPage() {
             }
           />
         ) : (
+          <>
+          {/* Bulk action toolbar */}
+          {someSelected && (
+            <div className="flex items-center gap-2 flex-wrap px-4 py-2.5 mb-2 bg-[var(--green-50)] border border-[var(--green-200)] rounded-xl">
+              <span className="text-xs font-semibold text-[var(--green-700)] mr-1">
+                {selectedIds.size} selected
+              </span>
+
+              {/* Assign owner — admin only */}
+              {isAdmin && (
+                <div className="flex items-center gap-1">
+                  <select
+                    value={bulkAssignId}
+                    onChange={(e) => setBulkAssignId(e.target.value)}
+                    className="text-xs border border-[var(--warm-200)] rounded-lg px-2 py-1 bg-white focus:outline-none focus:border-[var(--green-500)]"
+                  >
+                    <option value="">Assign to…</option>
+                    {profiles.map((p) => (
+                      <option key={p.id} value={p.id}>{p.full_name}</option>
+                    ))}
+                  </select>
+                  {bulkAssignId && (
+                    <button onClick={bulkAssign} className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-[var(--green-600)] text-white rounded-lg hover:bg-[var(--green-700)] transition-colors">
+                      <UserCheck size={11} /> Apply
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Change status */}
+              <div className="flex items-center gap-1">
+                <select
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value)}
+                  className="text-xs border border-[var(--warm-200)] rounded-lg px-2 py-1 bg-white focus:outline-none focus:border-[var(--green-500)]"
+                >
+                  <option value="">Set status…</option>
+                  <option value="new">New</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="lost">Lost</option>
+                </select>
+                {bulkStatus && (
+                  <button onClick={bulkSetStatus} className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-[var(--green-600)] text-white rounded-lg hover:bg-[var(--green-700)] transition-colors">
+                    <Tag size={11} /> Apply
+                  </button>
+                )}
+              </div>
+
+              {/* Export CSV */}
+              <button
+                onClick={bulkExportCsv}
+                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-[var(--warm-200)] bg-white text-[var(--warm-700)] rounded-lg hover:bg-[var(--warm-50)] transition-colors"
+              >
+                <Download size={11} /> Export CSV
+              </button>
+
+              {/* Trash */}
+              <button
+                onClick={bulkTrash}
+                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-red-200 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+              >
+                <Trash2 size={11} /> Trash
+              </button>
+
+              {/* Clear */}
+              <button onClick={clearSelection} className="ml-auto p-1 text-[var(--warm-400)] hover:text-[var(--warm-600)]">
+                <X size={13} />
+              </button>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[var(--warm-100)] bg-[var(--warm-50)]/50">
+                  {/* Select-all checkbox */}
+                  <th className="w-10 pl-4 py-3">
+                    <button
+                      onClick={toggleSelectAll}
+                      className="text-[var(--warm-300)] hover:text-[var(--green-600)] transition-colors"
+                      title={allSelected ? 'Deselect all' : 'Select all'}
+                    >
+                      {allSelected
+                        ? <CheckSquare size={14} className="text-[var(--green-600)]" />
+                        : <Square size={14} />
+                      }
+                    </button>
+                  </th>
                   <th
                     onClick={() => toggleSort('name')}
                     className="text-left px-5 py-3 text-[10px] font-semibold text-[var(--warm-500)] uppercase tracking-wider cursor-pointer hover:text-[var(--warm-700)] transition-colors"
                   >
-                    Name {sortField === 'name' && (sortDir === 'asc' ? '↑' : '↓')}
+                    <span className="inline-flex items-center gap-1">
+                      Name
+                      {sortField === 'name' && (sortDir === 'asc'
+                        ? <ChevronUp size={11} />
+                        : <ChevronDown size={11} />
+                      )}
+                    </span>
                   </th>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold text-[var(--warm-500)] uppercase tracking-wider hidden md:table-cell">
                     Contact
@@ -212,7 +378,13 @@ export default function LeadsPage() {
                     onClick={() => toggleSort('status')}
                     className="text-left px-4 py-3 text-[10px] font-semibold text-[var(--warm-500)] uppercase tracking-wider cursor-pointer hover:text-[var(--warm-700)] transition-colors"
                   >
-                    Status {sortField === 'status' && (sortDir === 'asc' ? '↑' : '↓')}
+                    <span className="inline-flex items-center gap-1">
+                      Status
+                      {sortField === 'status' && (sortDir === 'asc'
+                        ? <ChevronUp size={11} />
+                        : <ChevronDown size={11} />
+                      )}
+                    </span>
                   </th>
                   {suggestionsOn && Object.keys(nextActionMap).length > 0 && (
                     <th className="text-left px-4 py-3 text-[10px] font-semibold text-[var(--warm-500)] uppercase tracking-wider hidden xl:table-cell">
@@ -223,7 +395,13 @@ export default function LeadsPage() {
                     onClick={() => toggleSort('created_at')}
                     className="text-left px-4 py-3 text-[10px] font-semibold text-[var(--warm-500)] uppercase tracking-wider cursor-pointer hover:text-[var(--warm-700)] transition-colors hidden sm:table-cell"
                   >
-                    Created {sortField === 'created_at' && (sortDir === 'asc' ? '↑' : '↓')}
+                    <span className="inline-flex items-center gap-1">
+                      Created
+                      {sortField === 'created_at' && (sortDir === 'asc'
+                        ? <ChevronUp size={11} />
+                        : <ChevronDown size={11} />
+                      )}
+                    </span>
                   </th>
                   <th className="w-20" />
                 </tr>
@@ -236,8 +414,15 @@ export default function LeadsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2, delay: Math.min(i * 0.03, 0.3) }}
                     onClick={() => router.push(`/crm/leads/${lead.id}`)}
-                    className={`border-b border-[var(--warm-50)] hover:bg-[var(--warm-50)]/50 active:bg-[var(--green-50)]/50 transition-all group cursor-pointer ${i % 2 === 1 ? 'bg-[var(--warm-50)]/30' : ''}`}
+                    className={`border-b border-[var(--warm-50)] hover:bg-[var(--warm-50)]/50 active:bg-[var(--green-50)]/50 transition-all group cursor-pointer ${selectedIds.has(lead.id) ? 'bg-[var(--green-50)]/40' : i % 2 === 1 ? 'bg-[var(--warm-50)]/30' : ''}`}
                   >
+                    {/* Row checkbox */}
+                    <td className="w-10 pl-4 py-3.5" onClick={(e) => toggleSelect(lead.id, e)}>
+                      {selectedIds.has(lead.id)
+                        ? <CheckSquare size={14} className="text-[var(--green-600)]" />
+                        : <Square size={14} className="text-[var(--warm-200)] group-hover:text-[var(--warm-400)] transition-colors" />
+                      }
+                    </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         {/* Left accent on hover */}
@@ -352,6 +537,7 @@ export default function LeadsPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
