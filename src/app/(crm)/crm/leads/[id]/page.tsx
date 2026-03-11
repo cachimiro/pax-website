@@ -19,10 +19,10 @@ import {
   useEmailMessagesByLead,
   useEmailEventsByLead,
   useSoftDeleteLead,
+  useMessageTemplates,
 } from '@/lib/crm/hooks'
 import { createClient } from '@/lib/supabase/client'
-import StatusBadge from '@/components/crm/StatusBadge'
-import ActivityTimeline from '@/components/crm/ActivityTimeline'
+
 import PostCallCard from '@/components/crm/PostCallCard'
 import { useAIScore, useAISuggestion, useAIActivitySummary } from '@/lib/crm/ai-hooks'
 import {
@@ -37,7 +37,7 @@ import {
   User,
   Edit3,
   X,
-  Zap,
+
   Activity,
   Target,
   Brain,
@@ -55,7 +55,7 @@ import {
 import { formatDistanceToNow, format, addDays, isFuture } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { toast } from 'sonner'
+
 import SmartActions from '@/components/crm/SmartActions'
 import SendConfirmation from '@/components/crm/SendConfirmation'
 import { useAIPreferences } from '@/lib/crm/ai-preferences'
@@ -68,16 +68,20 @@ import { useMeet1Notes, useCreateTask, useProfiles, useUpdateOpportunity, useCre
 import { useCurrentProfile } from '@/lib/crm/current-profile'
 import { STAGES, STAGE_ORDER } from '@/lib/crm/stages'
 import LeadNotesTab from '@/components/crm/LeadNotesTab'
-import type { OpportunityWithLead, OpportunityStage, Booking, MessageLog, Invoice, Task } from '@/lib/crm/types'
+import OverviewTab from '@/components/crm/OverviewTab'
+import StageProgressBar from '@/components/crm/StageProgressBar'
+import CallLogForm from '@/components/crm/CallLogForm'
+import type { OpportunityWithLead, OpportunityStage, Booking, MessageLog, Invoice, Task, Payment } from '@/lib/crm/types'
 
-type Tab = 'contact' | 'opportunities' | 'bookings' | 'messages' | 'invoices' | 'tasks' | 'notes' | 'activity' | 'fitting'
+type Tab = 'overview' | 'contact' | 'pipeline' | 'comms' | 'money' | 'tasks' | 'notes' | 'fitting'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export default function LeadDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<Tab>('activity')
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [showCallLog, setShowCallLog] = useState(false)
   const [tabUnderline, setTabUnderline] = useState({ left: 0, width: 0 })
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const [moreTabOpen, setMoreTabOpen] = useState(false)
@@ -150,15 +154,14 @@ export default function LeadDetailPage() {
   )
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number; draftCount?: number }[] = [
-    { key: 'activity', label: 'Activity', icon: <Activity size={14} />, count: stageLog.length + messages.length },
-    { key: 'contact', label: 'Contact', icon: <User size={14} /> },
-    { key: 'opportunities', label: 'Opportunities', icon: <FileText size={14} />, count: leadOpportunities.length },
-    { key: 'bookings', label: 'Bookings', icon: <Calendar size={14} />, count: bookings.length },
-    { key: 'messages', label: 'Messages', icon: <MessageSquare size={14} />, count: messages.length, draftCount: messageDrafts.length },
-    { key: 'invoices', label: 'Invoices', icon: <FileText size={14} />, count: invoices.length },
-    { key: 'tasks', label: 'Tasks', icon: <CheckSquare size={14} />, count: tasks.length },
-    { key: 'notes', label: 'Notes', icon: <FileText size={14} /> },
-    { key: 'fitting', label: 'Fitting', icon: <Wrench size={14} /> },
+    { key: 'overview',  label: 'Overview',  icon: <Activity size={14} />,      count: stageLog.length + messages.length },
+    { key: 'contact',   label: 'Contact',   icon: <User size={14} /> },
+    { key: 'pipeline',  label: 'Pipeline',  icon: <Target size={14} />,         count: leadOpportunities.length },
+    { key: 'comms',     label: 'Comms',     icon: <MessageSquare size={14} />,  count: messages.length + bookings.length, draftCount: messageDrafts.length },
+    { key: 'money',     label: 'Money',     icon: <FileText size={14} />,       count: invoices.length },
+    { key: 'tasks',     label: 'Tasks',     icon: <CheckSquare size={14} />,    count: tasks.length },
+    { key: 'notes',     label: 'Notes',     icon: <FileText size={14} /> },
+    { key: 'fitting',   label: 'Fitting',   icon: <Wrench size={14} /> },
   ]
 
   if (isLoading) {
@@ -311,6 +314,27 @@ export default function LeadDetailPage() {
                   </button>
                 )}
               </div>
+
+              {/* Log call button — only when phone exists */}
+              {lead.phone && (
+                <div className="mt-2">
+                  {!showCallLog ? (
+                    <button
+                      onClick={() => setShowCallLog(true)}
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-[var(--warm-500)] hover:text-[var(--warm-700)] border border-dashed border-[var(--warm-200)] hover:border-[var(--warm-300)] rounded-xl transition-colors"
+                    >
+                      <Phone size={11} /> Log call
+                    </button>
+                  ) : (
+                    <CallLogForm
+                      leadId={id}
+                      existingNotes={lead.notes}
+                      primaryOppId={primaryOpp?.id ?? null}
+                      onClose={() => setShowCallLog(false)}
+                    />
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Project summary */}
@@ -379,7 +403,7 @@ export default function LeadDetailPage() {
                 </div>
                 {lead.snoozed_until && isFuture(new Date(lead.snoozed_until)) ? (
                   <button
-                    onClick={() => updateLead.mutate({ id: lead.id, snoozed_until: null } as any)}
+                    onClick={() => updateLead.mutate({ id: lead.id, snoozed_until: null as unknown as string })}
                     className="text-[10px] font-medium text-amber-600 hover:text-amber-700 transition-colors"
                   >
                     Snoozed until {format(new Date(lead.snoozed_until), 'dd MMM')} — Unsnooze
@@ -398,7 +422,7 @@ export default function LeadDetailPage() {
                           updateLead.mutate({
                             id: lead.id,
                             snoozed_until: addDays(new Date(), opt.days).toISOString(),
-                          } as any)
+                          })
                         }
                         className="px-2 py-0.5 text-[10px] font-medium text-[var(--warm-500)] hover:text-[var(--green-700)] hover:bg-[var(--green-50)] rounded-md transition-colors"
                       >
@@ -420,7 +444,7 @@ export default function LeadDetailPage() {
               On screens < sm: only primary tabs are shown inline; secondary tabs
               are accessible via a "More" dropdown to prevent horizontal overflow. */}
           {(() => {
-            const PRIMARY_TABS: Tab[] = ['activity', 'contact', 'opportunities', 'messages']
+            const PRIMARY_TABS: Tab[] = ['overview', 'contact', 'pipeline', 'comms', 'money', 'tasks']
             const primaryTabs = tabs.filter((t) => PRIMARY_TABS.includes(t.key))
             const secondaryTabs = tabs.filter((t) => !PRIMARY_TABS.includes(t.key))
             const activeIsSecondary = secondaryTabs.some((t) => t.key === activeTab)
@@ -548,24 +572,31 @@ export default function LeadDetailPage() {
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.15 }}
               >
-                {activeTab === 'contact' && <ContactTab lead={lead} />}
-                {activeTab === 'activity' && (
-                  <div className="p-6">
-                    <ActivityTimeline
-                      stageLog={stageLog}
-                      messages={messages}
-                      tasks={tasks}
-                      bookings={bookings}
-                      payments={payments}
-                      leadCreatedAt={lead.created_at}
-                      emailMessages={emailMessages}
-                    />
-                  </div>
+                {activeTab === 'overview' && (
+                  <OverviewTab
+                    stageLog={stageLog}
+                    messages={messages}
+                    tasks={tasks}
+                    bookings={bookings}
+                    payments={payments}
+                    leadCreatedAt={lead.created_at}
+                    emailMessages={emailMessages}
+                    onAddTask={() => setActiveTab('tasks')}
+                  />
                 )}
-                {activeTab === 'opportunities' && <OpportunitiesTab opportunities={leadOpportunities} leadId={id} />}
-                {activeTab === 'bookings' && <BookingsTab bookings={bookings} leadName={lead?.name ?? ''} />}
-                {activeTab === 'messages' && <MessagesTab messages={messages} drafts={messageDrafts} leadId={id} preferredChannel={lead?.preferred_channel ?? null} />}
-                {activeTab === 'invoices' && <InvoicesTab invoices={invoices} />}
+                {activeTab === 'contact' && <ContactTab lead={lead} />}
+                {activeTab === 'pipeline' && <OpportunitiesTab opportunities={leadOpportunities} leadId={id} />}
+                {activeTab === 'comms' && (
+                  <CommsTab
+                    messages={messages}
+                    drafts={messageDrafts}
+                    leadId={id}
+                    preferredChannel={lead?.preferred_channel ?? null}
+                    bookings={bookings}
+                    leadName={lead?.name ?? ''}
+                  />
+                )}
+                {activeTab === 'money' && <MoneyTab invoices={invoices} payments={payments} />}
                 {activeTab === 'tasks' && <TasksTab tasks={tasks} leadId={id} primaryOppId={primaryOpp?.id ?? null} />}
                 {activeTab === 'notes' && <LeadNotesTab leadId={id} existingNotes={lead?.notes ?? null} />}
                 {activeTab === 'fitting' && <FittingTab opportunityIds={leadOpportunities.map(o => o.id)} />}
@@ -611,9 +642,16 @@ function ContactTab({ lead }: { lead: NonNullable<ReturnType<typeof useLead>['da
   const { fields: noteChips, remainder: noteRemainder } = parseLeadNotes(lead.notes)
 
   // Per-field inline edit state
-  type EditableField = 'name' | 'email' | 'phone' | 'postcode' | 'notes_remainder'
+  type EditableField = 'name' | 'email' | 'phone' | 'postcode' | 'notes_remainder' | 'address' | 'call_time' | 'relationship'
   const [editingField, setEditingField] = useState<EditableField | null>(null)
   const [fieldValue, setFieldValue] = useState('')
+
+  // Chip-based fields stored inside notes
+  const CHIP_FIELDS: Record<string, string> = { address: 'Address', call_time: 'Call time', relationship: 'Relationship' }
+
+  function getChipValue(chipLabel: string): string | null {
+    return noteChips.find(c => c.label.toLowerCase() === chipLabel.toLowerCase())?.value ?? null
+  }
 
   function startEdit(field: EditableField, current: string | null) {
     setEditingField(field)
@@ -622,14 +660,21 @@ function ContactTab({ lead }: { lead: NonNullable<ReturnType<typeof useLead>['da
 
   function commitEdit(field: EditableField) {
     if (editingField !== field) return
-    // Rebuild notes: replace remainder portion, keep parsed lines intact
-    let patch: Record<string, string | null> = {}
+    const patch: Record<string, string | null> = {}
+
     if (field === 'notes_remainder') {
-      // Reconstruct notes: parsed lines + new remainder
-      const parsedLines = noteChips.map(c => `${c.label}: ${c.value}`).join('\n')
-      patch.notes = fieldValue.trim()
-        ? `${parsedLines}\n${fieldValue.trim()}`
-        : parsedLines || null
+      // Reconstruct notes: all chips + new remainder
+      const allChips = noteChips.map(c => `${c.label}: ${c.value}`).join('\n')
+      patch.notes = fieldValue.trim() ? `${allChips}\n${fieldValue.trim()}` : allChips || null
+    } else if (field in CHIP_FIELDS) {
+      // Update or remove a chip inside notes
+      const chipLabel = CHIP_FIELDS[field]
+      const otherChips = noteChips.filter(c => c.label.toLowerCase() !== chipLabel.toLowerCase())
+      const newChips = fieldValue.trim()
+        ? [...otherChips, { label: chipLabel, value: fieldValue.trim() }]
+        : otherChips
+      const chipsStr = newChips.map(c => `${c.label}: ${c.value}`).join('\n')
+      patch.notes = chipsStr ? `${chipsStr}${noteRemainder ? '\n' + noteRemainder : ''}` : noteRemainder || null
     } else {
       patch[field] = fieldValue.trim() || null
       if (field === 'name') patch[field] = fieldValue.trim() || lead.name
@@ -644,18 +689,11 @@ function ContactTab({ lead }: { lead: NonNullable<ReturnType<typeof useLead>['da
 
   const INPUT_CLS = 'w-full px-2.5 py-1.5 text-sm border border-[var(--green-300)] rounded-lg focus:border-[var(--green-500)] focus:outline-none bg-white shadow-sm'
 
-  function InlineField({
-    field, label, icon, value, multiline,
-  }: {
-    field: EditableField
-    label: string
-    icon: React.ReactNode
-    value: string | null
-    multiline?: boolean
-  }) {
+  // Render helper — not a component, just a function returning JSX to avoid "component created during render" lint error
+  function renderInlineField(field: EditableField, label: string, icon: React.ReactNode, value: string | null, multiline?: boolean) {
     const isEditing = editingField === field
     return (
-      <div className="group">
+      <div key={field} className="group">
         <label className="flex items-center gap-1.5 text-[10px] font-medium text-[var(--warm-400)] uppercase tracking-wider mb-1">
           {icon} {label}
         </label>
@@ -705,10 +743,10 @@ function ContactTab({ lead }: { lead: NonNullable<ReturnType<typeof useLead>['da
       <h3 className="text-xs font-semibold text-[var(--warm-500)] uppercase tracking-wider">Contact Details</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <InlineField field="name"     label="Name"     icon={<User size={11} />}    value={lead.name} />
-        <InlineField field="email"    label="Email"    icon={<Mail size={11} />}    value={lead.email} />
-        <InlineField field="phone"    label="Phone"    icon={<Phone size={11} />}   value={lead.phone} />
-        <InlineField field="postcode" label="Postcode" icon={<MapPin size={11} />}  value={lead.postcode} />
+        {renderInlineField('name',     'Name',     <User size={11} />,    lead.name)}
+        {renderInlineField('email',    'Email',    <Mail size={11} />,    lead.email)}
+        {renderInlineField('phone',    'Phone',    <Phone size={11} />,   lead.phone)}
+        {renderInlineField('postcode', 'Postcode', <MapPin size={11} />,  lead.postcode)}
       </div>
 
       {/* Read-only fields */}
@@ -723,6 +761,44 @@ function ContactTab({ lead }: { lead: NonNullable<ReturnType<typeof useLead>['da
             <p className="text-sm text-[var(--warm-700)] capitalize">{value ?? '—'}</p>
           </div>
         ))}
+      </div>
+
+      {/* Extended contact fields */}
+      <div className="pt-2 border-t border-[var(--warm-50)]">
+        <h3 className="text-xs font-semibold text-[var(--warm-500)] uppercase tracking-wider mb-4">Additional Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {renderInlineField('address', 'Address', <MapPin size={11} />, getChipValue('Address'))}
+          <div>
+            <label className="flex items-center gap-1.5 text-[10px] font-medium text-[var(--warm-400)] uppercase tracking-wider mb-1">
+              <Clock size={11} /> Preferred Call Time
+            </label>
+            {editingField === 'call_time' ? (
+              <select
+                autoFocus
+                value={fieldValue}
+                onChange={e => setFieldValue(e.target.value)}
+                onBlur={() => commitEdit('call_time')}
+                className="w-full px-2.5 py-1.5 text-sm border border-[var(--green-300)] rounded-lg focus:border-[var(--green-500)] focus:outline-none bg-white shadow-sm"
+              >
+                <option value="">— clear —</option>
+                <option value="Morning (9–12)">Morning (9–12)</option>
+                <option value="Afternoon (12–5)">Afternoon (12–5)</option>
+                <option value="Evening (5–8)">Evening (5–8)</option>
+                <option value="Any">Any</option>
+              </select>
+            ) : (
+              <button onClick={() => startEdit('call_time', getChipValue('Call time'))} className="w-full text-left flex items-center gap-2 group/val">
+                <span className={`text-sm flex-1 ${getChipValue('Call time') ? 'text-[var(--warm-800)]' : 'text-[var(--warm-300)] italic'}`}>
+                  {getChipValue('Call time') || 'Click to add'}
+                </span>
+                <Edit3 size={11} className="text-[var(--warm-300)] opacity-0 group-hover/val:opacity-100 transition-opacity shrink-0" />
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="mt-5">
+          {renderInlineField('relationship', 'Relationship Notes', <FileText size={11} />, getChipValue('Relationship'), true)}
+        </div>
       </div>
 
       {/* Notes — chips + editable remainder */}
@@ -743,13 +819,7 @@ function ContactTab({ lead }: { lead: NonNullable<ReturnType<typeof useLead>['da
           </div>
         )}
 
-        <InlineField
-          field="notes_remainder"
-          label="Additional notes"
-          icon={<FileText size={11} />}
-          value={noteRemainder || null}
-          multiline
-        />
+        {renderInlineField('notes_remainder', 'Additional notes', <FileText size={11} />, noteRemainder || null, true)}
       </div>
     </div>
   )
@@ -813,6 +883,9 @@ function OpportunityCard({ opp }: { opp: OpportunityWithLead }) {
 
   return (
     <div className="p-4 space-y-3">
+      {/* Stage progress bar */}
+      <StageProgressBar stage={opp.stage} />
+
       {/* Stage + value row */}
       <div className="flex items-center gap-3 flex-wrap">
         {/* Stage dropdown */}
@@ -898,6 +971,45 @@ function OpportunityCard({ opp }: { opp: OpportunityWithLead }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Comms Tab (Messages + Bookings merged) ───────────────────────────────────
+
+function CommsTab({ messages, drafts, leadId, preferredChannel, bookings, leadName }: {
+  messages: MessageLog[]
+  drafts?: import('@/lib/crm/hooks').MessageDraft[]
+  leadId: string
+  preferredChannel?: string | null
+  bookings: Booking[]
+  leadName: string
+}) {
+  const [bookingsOpen, setBookingsOpen] = useState(bookings.length > 0)
+
+  return (
+    <div>
+      {/* Bookings section — collapsible */}
+      {bookings.length > 0 && (
+        <div className="border-b border-[var(--warm-100)]">
+          <button
+            onClick={() => setBookingsOpen(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-[var(--warm-600)] hover:bg-[var(--warm-50)] transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <Calendar size={12} /> Bookings ({bookings.length})
+            </span>
+            {bookingsOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
+          {bookingsOpen && (
+            <div className="pb-2">
+              <BookingsTab bookings={bookings} leadName={leadName} />
+            </div>
+          )}
+        </div>
+      )}
+      {/* Messages thread */}
+      <MessagesTab messages={messages} drafts={drafts} leadId={leadId} preferredChannel={preferredChannel} />
     </div>
   )
 }
@@ -1218,10 +1330,25 @@ const COMPOSE_CHANNELS = [
 
 function InlineComposeBar({ leadId, preferredChannel }: { leadId: string; preferredChannel?: string | null }) {
   const sendMessage = useSendMessage()
+  const { data: templates = [] } = useMessageTemplates()
   const defaultChannel = COMPOSE_CHANNELS.find(c => c.value === preferredChannel)?.value ?? 'email'
   const [channel, setChannel] = useState<'email' | 'whatsapp' | 'sms'>(defaultChannel as 'email' | 'whatsapp' | 'sms')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
+  const [showTemplates, setShowTemplates] = useState(false)
+  const templateRef = useRef<HTMLDivElement>(null)
+
+  // Close template picker on outside click
+  useEffect(() => {
+    if (!showTemplates) return
+    function handler(e: MouseEvent) {
+      if (templateRef.current && !templateRef.current.contains(e.target as Node)) setShowTemplates(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showTemplates])
+
+  const channelTemplates = templates.filter(t => t.channels.includes(channel as import('@/lib/crm/types').MessageChannel) && t.active)
 
   async function handleSend() {
     if (!body.trim()) return
@@ -1253,6 +1380,49 @@ function InlineComposeBar({ leadId, preferredChannel }: { leadId: string; prefer
             className="flex-1 text-xs border border-[var(--warm-200)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[var(--brand)]"
           />
         )}
+        {/* Template picker */}
+        <div className="relative shrink-0" ref={templateRef}>
+          <button
+            onClick={() => setShowTemplates(v => !v)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-lg border transition-colors ${
+              showTemplates
+                ? 'bg-[var(--green-50)] text-[var(--green-700)] border-[var(--green-200)]'
+                : 'bg-white text-[var(--warm-500)] border-[var(--warm-200)] hover:border-[var(--warm-300)]'
+            }`}
+          >
+            <FileText size={11} /> Templates
+          </button>
+          <AnimatePresence>
+            {showTemplates && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.12 }}
+                className="absolute right-0 bottom-full mb-1.5 z-50 bg-white border border-[var(--warm-100)] rounded-xl shadow-lg py-1.5 min-w-[220px] max-h-60 overflow-y-auto"
+              >
+                {channelTemplates.length === 0 ? (
+                  <p className="px-3 py-2 text-xs text-[var(--warm-400)]">No templates for this channel.</p>
+                ) : (
+                  channelTemplates.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        setBody(t.body)
+                        if (channel === 'email') setSubject(t.subject ?? '')
+                        setShowTemplates(false)
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs text-[var(--warm-700)] hover:bg-[var(--warm-50)] transition-colors"
+                    >
+                      <p className="font-medium">{t.name}</p>
+                      {t.subject && <p className="text-[var(--warm-400)] truncate">{t.subject}</p>}
+                    </button>
+                  ))
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
       <div className="flex gap-2">
         <textarea
@@ -1272,6 +1442,54 @@ function InlineComposeBar({ leadId, preferredChannel }: { leadId: string; prefer
           Send
         </button>
       </div>
+    </div>
+  )
+}
+
+// ─── Money Tab (Invoices + Payments merged) ───────────────────────────────────
+
+function MoneyTab({ invoices, payments }: { invoices: Invoice[]; payments: Payment[] }) {
+  const totalInvoiced = invoices.reduce((s, inv) => s + inv.amount, 0)
+  const totalPaid = payments.reduce((s, p) => s + p.amount, 0)
+
+  return (
+    <div>
+      {/* Summary bar */}
+      {invoices.length > 0 && (
+        <div className="flex items-center gap-6 px-5 py-3 border-b border-[var(--warm-100)] bg-[var(--warm-50)]/50">
+          <div>
+            <p className="text-[10px] font-medium text-[var(--warm-400)] uppercase tracking-wider">Invoiced</p>
+            <p className="text-sm font-semibold text-[var(--warm-800)]">£{totalInvoiced.toLocaleString('en-GB')}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-medium text-[var(--warm-400)] uppercase tracking-wider">Paid</p>
+            <p className="text-sm font-semibold text-emerald-700">£{totalPaid.toLocaleString('en-GB')}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-medium text-[var(--warm-400)] uppercase tracking-wider">Outstanding</p>
+            <p className={`text-sm font-semibold ${totalInvoiced - totalPaid > 0 ? 'text-amber-600' : 'text-[var(--warm-400)]'}`}>
+              £{(totalInvoiced - totalPaid).toLocaleString('en-GB')}
+            </p>
+          </div>
+        </div>
+      )}
+      <InvoicesTab invoices={invoices} />
+      {payments.length > 0 && (
+        <div className="border-t border-[var(--warm-100)]">
+          <p className="px-5 py-3 text-[10px] font-semibold text-[var(--warm-500)] uppercase tracking-wider">Payments</p>
+          <div className="divide-y divide-[var(--warm-50)]">
+            {payments.map(p => (
+              <div key={p.id} className="px-5 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-[var(--warm-800)]">£{p.amount.toLocaleString('en-GB')}</p>
+                  {p.method && <p className="text-xs text-[var(--warm-400)] capitalize">{p.method}</p>}
+                </div>
+                <span className="text-xs text-[var(--warm-400)]">{format(new Date(p.paid_at), 'dd MMM yyyy')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

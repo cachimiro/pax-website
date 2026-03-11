@@ -15,6 +15,10 @@ const KNOWN_KEYS: Record<string, string> = {
   location: 'Location',
   'whatsapp opt-in': 'WhatsApp',
   'whatsapp': 'WhatsApp',
+  // Extended contact fields
+  address: 'Address',
+  'call time': 'Call time',
+  relationship: 'Relationship',
 }
 
 export interface ParsedLeadNotes {
