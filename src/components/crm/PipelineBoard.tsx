@@ -80,9 +80,9 @@ export default function PipelineBoard() {
     supabase
       .from('fitting_jobs')
       .select('opportunity_id, status, scheduled_date, offer_expires_at, subcontractors(name)')
-      .not('status', 'in', '("cancelled")')
-      .then(({ data }) => {
-        if (!data) return
+      .neq('status', 'cancelled')
+      .then(({ data, error }) => {
+        if (error || !data) return // table may not exist yet
         const map: Record<string, FittingInfo> = {}
         for (const j of data) {
           const subRaw = j.subcontractors as unknown

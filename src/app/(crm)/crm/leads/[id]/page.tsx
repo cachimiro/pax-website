@@ -70,6 +70,8 @@ import type { OpportunityWithLead, OpportunityStage, Booking, MessageLog, Invoic
 
 type Tab = 'contact' | 'opportunities' | 'bookings' | 'messages' | 'invoices' | 'tasks' | 'notes' | 'activity' | 'fitting'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export default function LeadDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -99,13 +101,19 @@ export default function LeadDetailPage() {
     }
   }, [activeTab])
 
-  const { data: lead, isLoading } = useLead(id)
+  // Guard: if id is not a valid UUID, redirect rather than fire 400s against Supabase
+  const isValidId = UUID_RE.test(id ?? '')
+  useEffect(() => {
+    if (!isValidId) router.replace('/crm/leads')
+  }, [isValidId, router])
+
+  const { data: lead, isLoading } = useLead(isValidId ? id : '')
   const { data: opportunities = [] } = useOpportunities()
-  const { data: bookings = [] } = useBookingsByLead(id)
-  const { data: messages = [] } = useMessageLogs(id)
-  const { data: invoices = [] } = useInvoicesByLead(id)
-  const { data: tasks = [] } = useTasksByLead(id)
-  const { data: emailMessages = [] } = useEmailMessagesByLead(id)
+  const { data: bookings = [] } = useBookingsByLead(isValidId ? id : '')
+  const { data: messages = [] } = useMessageLogs(isValidId ? id : '')
+  const { data: invoices = [] } = useInvoicesByLead(isValidId ? id : '')
+  const { data: tasks = [] } = useTasksByLead(isValidId ? id : '')
+  const { data: emailMessages = [] } = useEmailMessagesByLead(isValidId ? id : '')
 
   const leadOpportunities = opportunities.filter((o) => o.lead_id === id)
   const opportunityIds = leadOpportunities.map((o) => o.id)

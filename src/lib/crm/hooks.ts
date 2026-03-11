@@ -325,12 +325,24 @@ export function useMoveOpportunityStage() {
       if (stage === 'fitter_assigned') updates.onboarding_completed_at = new Date().toISOString()
       if (stage === 'qualified') updates.call1_completed_at = new Date().toISOString()
 
-      const { data, error } = await supabase()
+      let { data, error } = await supabase()
         .from('opportunities')
         .update(updates)
         .eq('id', id)
         .select()
         .single()
+
+      // Retry without KPI timestamp columns if they don't exist yet (migration pending)
+      if (error?.code === '42703') {
+        const safeUpdates: Partial<Opportunity> = { stage }
+        if (lost_reason) safeUpdates.lost_reason = lost_reason;
+        ({ data, error } = await supabase()
+          .from('opportunities')
+          .update(safeUpdates)
+          .eq('id', id)
+          .select()
+          .single())
+      }
       if (error) throw error
 
       // Log stage change
@@ -503,10 +515,17 @@ export function useUpdateTask() {
             if (targetStage === 'proposal_agreed')  stageUpdates.call2_completed_at        = now
             if (targetStage === 'fitter_assigned')  stageUpdates.onboarding_completed_at   = now
 
-            const { error: moveErr } = await supabase()
+            let { error: moveErr } = await supabase()
               .from('opportunities')
               .update(stageUpdates)
               .eq('id', data.opportunity_id)
+            // Retry without KPI timestamp columns if they don't exist yet
+            if (moveErr?.code === '42703') {
+              ;({ error: moveErr } = await supabase()
+                .from('opportunities')
+                .update({ stage: targetStage, updated_at: now })
+                .eq('id', data.opportunity_id))
+            }
             if (!moveErr) {
               // Log the stage change
               const { data: { user } } = await supabase().auth.getUser()
@@ -644,7 +663,7 @@ export function useMessageLogs(leadId: string) {
         .select('*')
         .eq('lead_id', leadId)
         .order('sent_at', { ascending: false })
-      if (error) throw error
+      if (error) return [] as MessageLog[] // table may not exist in all environments
       return data as MessageLog[]
     },
     enabled: !!leadId,
@@ -765,7 +784,7 @@ export function useEmailThreadsByLead(leadId: string) {
         .select('*')
         .eq('lead_id', leadId)
         .order('last_message_at', { ascending: false })
-      if (error) throw error
+      if (error) return [] as EmailThread[] // table may not exist in all environments
       return data as EmailThread[]
     },
     enabled: !!leadId,
@@ -781,7 +800,7 @@ export function useEmailMessagesByLead(leadId: string) {
         .select('*')
         .eq('lead_id', leadId)
         .order('received_at', { ascending: true })
-      if (error) throw error
+      if (error) return [] as EmailMessage[] // table may not exist in all environments
       return data as EmailMessage[]
     },
     enabled: !!leadId,
@@ -797,7 +816,7 @@ export function useEmailEventsByLead(leadId: string) {
         .select('*')
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false })
-      if (error) throw error
+      if (error) return [] as EmailEvent[] // table may not exist in all environments
       return data as EmailEvent[]
     },
     enabled: !!leadId,
