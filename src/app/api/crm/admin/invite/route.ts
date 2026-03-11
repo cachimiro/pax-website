@@ -39,7 +39,56 @@ export async function POST(req: NextRequest) {
   const { count } = await admin.from('profiles').select('*', { count: 'exact', head: true })
   const color = DESIGNER_COLORS[(count ?? 0) % DESIGNER_COLORS.length]
 
-  // Send Supabase invite — creates auth.users entry and sends email
+  // Check if this email already has a CRM profile (true duplicate)
+  // We must do this before calling inviteUserByEmail because Supabase auth
+  // shares a single user pool — fitter portal users live there too.
+  const { data: existingUsers } = await admin.auth.admin.listUsers()
+  const existingAuthUser = existingUsers?.users?.find(
+    (u) => u.email?.toLowerCase() === email.toLowerCase()
+  )
+
+  if (existingAuthUser) {
+    // Check if they already have a CRM profile
+    const { data: existingProfile } = await admin
+      .from('profiles')
+      .select('id, role')
+      .eq('id', existingAuthUser.id)
+      .single()
+
+    if (existingProfile) {
+      return NextResponse.json(
+        { error: `This email already has a CRM account (${existingProfile.role}).` },
+        { status: 409 }
+      )
+    }
+
+    // Auth user exists (e.g. fitter portal) but no CRM profile — create the profile
+    // and send a password reset so they can set a password for CRM access.
+    const { error: profileError } = await admin.from('profiles').insert({
+      id: existingAuthUser.id,
+      full_name,
+      role,
+      color,
+      active: true,
+      onboarding_complete: false,
+      invited_by: user.id,
+    })
+
+    if (profileError) {
+      return NextResponse.json({ error: profileError.message }, { status: 500 })
+    }
+
+    // Send password reset so they can log in to the CRM
+    await admin.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/crm/onboarding` },
+    })
+
+    return NextResponse.json({ success: true, userId: existingAuthUser.id, existing_user: true })
+  }
+
+  // New user — send standard Supabase invite email
   const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { full_name, role },
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/crm/onboarding`,

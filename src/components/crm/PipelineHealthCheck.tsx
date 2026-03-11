@@ -24,10 +24,34 @@ import { format } from 'date-fns'
 
 export default function PipelineHealthCheck() {
   const { healthCheckOn } = useAIPreferences()
-  const { data: report, isLoading, error, refetch } = useAIPipelineHealth(healthCheckOn)
+  // Never auto-fire — only run when the user explicitly requests it
+  const [runRequested, setRunRequested] = useState(false)
+  const { data: report, isLoading, error, refetch } = useAIPipelineHealth(
+    healthCheckOn && runRequested
+  )
   const [expanded, setExpanded] = useState(false)
 
   if (!healthCheckOn) return null
+
+  // Idle — show a prompt to run the check
+  if (!runRequested) {
+    return (
+      <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Activity size={14} className="text-[var(--warm-400)]" />
+            <span className="text-xs text-[var(--warm-500)]">AI pipeline health check</span>
+          </div>
+          <button
+            onClick={() => setRunRequested(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-[var(--green-600)] hover:text-[var(--green-700)] bg-[var(--green-50)] hover:bg-[var(--green-100)] px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <Activity size={11} /> Run check
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   // Loading
   if (isLoading) {
@@ -35,7 +59,7 @@ export default function PipelineHealthCheck() {
       <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5">
         <div className="flex items-center gap-2">
           <Loader2 size={14} className="animate-spin text-[var(--green-500)]" />
-          <span className="text-xs text-[var(--warm-400)]">Analysing pipeline health...</span>
+          <span className="text-xs text-[var(--warm-400)]">Analysing pipeline health…</span>
         </div>
         <div className="mt-3 space-y-2">
           <div className="h-3 bg-[var(--warm-50)] rounded w-3/4 shimmer" />
@@ -53,7 +77,7 @@ export default function PipelineHealthCheck() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Activity size={14} className="text-[var(--warm-300)]" />
-            <span className="text-xs text-[var(--warm-400)]">Health check unavailable</span>
+            <span className="text-xs text-[var(--warm-400)]">Health check timed out</span>
           </div>
           <button
             onClick={() => refetch()}
