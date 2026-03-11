@@ -56,9 +56,27 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (existingProfile) {
-      const msg = existingProfile.onboarding_complete
-        ? `This email already has an active CRM account.`
-        : `This email already has a pending CRM invite. Use "Resend invite" in Settings → Users.`
+      // If the account is inactive, reactivate it and resend the invite
+      const { data: fullProfile } = await admin
+        .from('profiles')
+        .select('active, onboarding_complete')
+        .eq('id', existingAuthUser.id)
+        .single()
+
+      if (fullProfile?.active === false) {
+        await admin.from('profiles').update({
+          active: true,
+          full_name,
+          role,
+          onboarding_complete: false,
+        }).eq('id', existingAuthUser.id)
+        await sendInviteEmail(admin, existingAuthUser.email!, full_name, role, redirectTo)
+        return NextResponse.json({ success: true, userId: existingAuthUser.id, reactivated: true })
+      }
+
+      const msg = fullProfile?.onboarding_complete === false
+        ? `This email already has a pending CRM invite. Use "Resend invite" in Settings → Users.`
+        : `This email already has an active CRM account.`
       return NextResponse.json({ error: msg }, { status: 409 })
     }
 
