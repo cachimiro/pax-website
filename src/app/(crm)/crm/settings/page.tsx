@@ -180,6 +180,21 @@ function UsersSection() {
     }
   }
 
+  async function handleResendInvite(userId: string) {
+    try {
+      const res = await fetch('/api/crm/admin/resend-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed')
+      toast.success(`Invite resent to ${data.email}`)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to resend invite')
+    }
+  }
+
   async function handleRemove(userId: string) {
     if (!confirm('Deactivate this user? They will lose CRM access.')) return
     setRemovingId(userId)
@@ -450,8 +465,16 @@ function UsersSection() {
               </div>
             )}
             {profile.onboarding_complete === false && (
-              <div className="mt-2 px-2 py-1 bg-amber-50 rounded-lg text-[10px] text-amber-600 font-medium inline-block">
-                Awaiting onboarding
+              <div className="mt-2 flex items-center gap-2">
+                <div className="px-2 py-1 bg-amber-50 rounded-lg text-[10px] text-amber-600 font-medium">
+                  Awaiting onboarding
+                </div>
+                <button
+                  onClick={() => handleResendInvite(profile.id)}
+                  className="px-2 py-1 bg-[var(--warm-100)] hover:bg-[var(--warm-200)] rounded-lg text-[10px] text-[var(--warm-600)] font-medium transition-colors"
+                >
+                  Resend invite
+                </button>
               </div>
             )}
           </div>

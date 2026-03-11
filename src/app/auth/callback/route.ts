@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Exchange failed or no code — send to login with an error hint
-  return NextResponse.redirect(`${origin}/crm/login?error=link_expired`)
+  // Exchange failed or no code — redirect to the correct portal's login
+  const isFitterFlow = next.startsWith('/fitter')
+  const errorDest = isFitterFlow ? '/fitter/login?error=link_expired' : '/crm/login?error=link_expired'
+  return NextResponse.redirect(`${origin}${errorDest}`)
 }

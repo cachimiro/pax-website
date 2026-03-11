@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
   // --- Fitter portal routes ---
   const isFitterRoute = pathname.startsWith('/fitter')
   if (isFitterRoute) {
-    const isFitterPublic = pathname === '/fitter/login' || pathname.startsWith('/fitter/activate')
+    const isFitterPublic = pathname === '/fitter/login' || pathname.startsWith('/fitter/activate') || pathname.startsWith('/fitter/reset-password')
     if (!isFitterPublic && !user) {
       const url = request.nextUrl.clone()
       url.pathname = '/fitter/login'

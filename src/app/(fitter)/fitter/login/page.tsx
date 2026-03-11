@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react'
 
-export default function FitterLoginPage() {
+function FitterLoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -13,6 +13,11 @@ export default function FitterLoginPage() {
   const [mode, setMode] = useState<'login' | 'reset'>('login')
   const [resetSent, setResetSent] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const urlParam = searchParams.get('error')
+  const resetSuccess = searchParams.get('reset') === 'success'
+  const linkExpired = urlParam === 'link_expired'
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -79,6 +84,18 @@ export default function FitterLoginPage() {
           </div>
 
           <div className="p-6">
+            {resetSuccess && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 flex items-start gap-2">
+                <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+                Password updated. You can now sign in with your new password.
+              </div>
+            )}
+            {linkExpired && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 flex items-start gap-2">
+                <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                That link has expired or already been used. Request a new one below.
+              </div>
+            )}
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
                 <AlertTriangle size={16} className="mt-0.5 shrink-0" /> {error}
@@ -148,5 +165,13 @@ export default function FitterLoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function FitterLoginPage() {
+  return (
+    <Suspense>
+      <FitterLoginForm />
+    </Suspense>
   )
 }
