@@ -51,15 +51,15 @@ export async function POST(req: NextRequest) {
   if (existingAuthUser) {
     const { data: existingProfile } = await admin
       .from('profiles')
-      .select('id, role')
+      .select('id, role, onboarding_complete')
       .eq('id', existingAuthUser.id)
       .single()
 
     if (existingProfile) {
-      return NextResponse.json(
-        { error: `This email already has a CRM account (${existingProfile.role}).` },
-        { status: 409 }
-      )
+      const msg = existingProfile.onboarding_complete
+        ? `This email already has an active CRM account.`
+        : `This email already has a pending CRM invite. Use "Resend invite" in Settings → Users.`
+      return NextResponse.json({ error: msg }, { status: 409 })
     }
 
     const { error: profileError } = await admin.from('profiles').insert({
