@@ -317,10 +317,10 @@ export default function LeadDetailPage() {
       </div>
 
       {/* ── Two-column body ──────────────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 items-start w-full">
 
-        {/* Left column — unified side panel, sticky within the scrolling main */}
-        <div className="w-full lg:w-[340px] lg:shrink-0">
+        {/* Left column — unified side panel */}
+        <div className="min-w-0">
           <div className="lg:sticky lg:top-0 space-y-0">
 
             {/* ── Unified Side Panel ─────────────────────────────────── */}
