@@ -329,6 +329,15 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--warm-300);
 }
 
+/* Pipeline board: hide native scrollbar (replaced by sticky phantom scrollbar) */
+.pipeline-board-scroll::-webkit-scrollbar {
+  display: none;
+}
+.pipeline-board-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 /* Number count-up animation */
 @keyframes numberPop {
   0% { transform: translateY(4px); opacity: 0; }

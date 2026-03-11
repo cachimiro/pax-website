@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -55,6 +55,51 @@ export default function PipelineBoard() {
   )
   const moveStage = useMoveOpportunityStage()
   const qc = useQueryClient()
+
+  // Refs for syncing the sticky bottom scrollbar with the board
+  const boardRef = useRef<HTMLDivElement>(null)
+  const scrollbarRef = useRef<HTMLDivElement>(null)
+  const scrollbarInnerRef = useRef<HTMLDivElement>(null)
+  const isSyncingRef = useRef(false)
+
+  // Keep the phantom scrollbar width in sync with board scroll width
+  useEffect(() => {
+    const board = boardRef.current
+    const inner = scrollbarInnerRef.current
+    if (!board || !inner) return
+    const sync = () => { inner.style.width = `${board.scrollWidth}px` }
+    sync()
+    const ro = new ResizeObserver(sync)
+    ro.observe(board)
+    return () => ro.disconnect()
+  }, [])
+
+  // Sync scroll position bidirectionally
+  useEffect(() => {
+    const board = boardRef.current
+    const bar = scrollbarRef.current
+    if (!board || !bar) return
+
+    function onBoardScroll() {
+      if (isSyncingRef.current) return
+      isSyncingRef.current = true
+      bar!.scrollLeft = board!.scrollLeft
+      isSyncingRef.current = false
+    }
+    function onBarScroll() {
+      if (isSyncingRef.current) return
+      isSyncingRef.current = true
+      board!.scrollLeft = bar!.scrollLeft
+      isSyncingRef.current = false
+    }
+
+    board.addEventListener('scroll', onBoardScroll, { passive: true })
+    bar.addEventListener('scroll', onBarScroll, { passive: true })
+    return () => {
+      board.removeEventListener('scroll', onBoardScroll)
+      bar.removeEventListener('scroll', onBarScroll)
+    }
+  }, [])
 
   // Designer filter (admin only — non-admins only see their own)
   const { data: allProfiles = [] } = useProfiles()
@@ -365,7 +410,7 @@ export default function PipelineBoard() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-fade flex-1 min-h-0 items-stretch">
+        <div ref={boardRef} className="pipeline-board-scroll flex gap-3 overflow-x-auto pb-0 -mx-1 px-1 flex-1 min-h-0 items-stretch">
           {PIPELINE_GROUPS.map((group) => {
             // Collect all opportunities in this group's stages
             const groupOpps = group.stages.flatMap((stage) => grouped[stage] ?? [])
@@ -402,6 +447,15 @@ export default function PipelineBoard() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Sticky scrollbar — always visible at the bottom of the board area */}
+      <div
+        ref={scrollbarRef}
+        className="flex-shrink-0 overflow-x-auto -mx-1 px-1"
+        style={{ height: 12 }}
+      >
+        <div ref={scrollbarInnerRef} style={{ height: 1 }} />
+      </div>
 
       {pendingMove && (
         <StageTransitionModal
