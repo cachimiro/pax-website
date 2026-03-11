@@ -87,6 +87,8 @@ function BookingFlowInner() {
     whatsappOptIn: boolean;
     date: string;
     time: string;
+    designerId: string;
+    designerName: string;
   };
 
   const getInitialFormData = (): FormData => {
@@ -113,6 +115,8 @@ function BookingFlowInner() {
       whatsappOptIn: false,
       date: '',
       time: '',
+      designerId: '',
+      designerName: '',
     };
 
     // Try to restore from localStorage (client-side only)
@@ -430,9 +434,11 @@ function BookingFlowInner() {
           {step === 8 && (
             <CalendarScreen
               packageChoice={formData.packageChoice}
-              onNext={async (date, time) => {
+              onNext={async (date, time, designerId, designerName) => {
                 updateField('date', date);
                 updateField('time', time);
+                updateField('designerId', designerId);
+                updateField('designerName', designerName);
                 trackEvent('consult_submit', {
                   package: formData.packageChoice,
                   room: formData.room,
@@ -505,14 +511,15 @@ function BookingFlowInner() {
                         whatsappOptIn: formData.whatsappOptIn,
                         date,
                         time,
+                        designer_id: designerId || undefined,
                         ...tracking,
                       }),
                     });
-                    if (bookingRes.ok) {
+                    // Use the designer name chosen by the customer
+                    if (designerName) setAssignedDesigner(designerName);
+                    else if (bookingRes.ok) {
                       const bookingData = await bookingRes.json();
-                      if (bookingData.designer_name) {
-                        setAssignedDesigner(bookingData.designer_name);
-                      }
+                      if (bookingData.designer_name) setAssignedDesigner(bookingData.designer_name);
                     }
                   }
                 } catch {

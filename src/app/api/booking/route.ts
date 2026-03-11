@@ -27,6 +27,7 @@ const bookingSchema = z.object({
   whatsappOptIn: z.boolean().optional(),
   date: z.string().min(1),
   time: z.string().min(1),
+  designer_id: z.string().uuid().optional(), // customer-chosen designer from booking flow
   // Attribution
   visitor_id: z.string().optional(),
   utm_source: z.string().optional(),
@@ -116,9 +117,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Assign owner based on postcode
+    // Assign owner: use customer's chosen designer if provided, otherwise auto-assign by postcode
     let ownerId: string | null = null
-    if (data.postcode) {
+    if (data.designer_id) {
+      ownerId = data.designer_id
+    } else if (data.postcode) {
       try {
         ownerId = await assignOwner(supabase, data.postcode)
       } catch {
