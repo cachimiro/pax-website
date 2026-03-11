@@ -58,8 +58,8 @@ export async function updateSession(request: NextRequest) {
 
   // --- CRM routes ---
   const isCrmRoute = pathname.startsWith('/crm')
-  const isAuthRoute = ['/crm/login', '/crm/mfa-setup', '/crm/mfa-verify'].some(
-    (route) => pathname === route
+  const isAuthRoute = ['/crm/login', '/crm/mfa-setup', '/crm/mfa-verify', '/crm/onboarding'].some(
+    (route) => pathname === route || pathname.startsWith('/crm/onboarding')
   )
 
   if (!isCrmRoute) {

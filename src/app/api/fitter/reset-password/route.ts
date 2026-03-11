@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     await admin.auth.admin.generateLink({
       type: 'recovery',
       email: authUser.email!,
-      options: { redirectTo: `${baseUrl}/fitter/login` },
+      options: { redirectTo: `${baseUrl}/auth/callback?next=/fitter/login` },
     })
   }
 

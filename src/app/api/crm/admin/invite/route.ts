@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     await admin.auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/crm/onboarding` },
+      options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/crm/onboarding` },
     })
 
     return NextResponse.json({ success: true, userId: existingAuthUser.id, existing_user: true })
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
   // New user — send standard Supabase invite email
   const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { full_name, role },
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/crm/onboarding`,
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/crm/onboarding`,
   })
 
   if (inviteError) {

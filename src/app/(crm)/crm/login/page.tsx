@@ -1,19 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Lock, Mail, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import Button from '@/components/crm/Button'
+import { Suspense } from 'react'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  const linkError = searchParams.get('error')
+  const linkErrorMsg = linkError === 'link_expired'
+    ? 'Your invitation link has expired or already been used. Please ask an admin to resend your invite.'
+    : null
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -75,7 +82,14 @@ export default function LoginPage() {
         {/* Form card */}
         <div className="bg-white rounded-2xl shadow-2xl border border-white/10 p-8">
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* Error */}
+            {/* Link expired banner */}
+            {linkErrorMsg && (
+              <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 animate-scale-in">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <span>{linkErrorMsg}</span>
+              </div>
+            )}
+            {/* Auth error */}
             {error && (
               <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700 animate-scale-in">
                 <AlertCircle size={16} className="shrink-0" />
@@ -154,5 +168,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
