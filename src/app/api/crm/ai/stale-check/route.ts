@@ -20,21 +20,17 @@ interface StaleOpportunity {
  * Thresholds (days) before a lead is considered stale per stage:
  */
 const STALE_THRESHOLDS: Record<string, number> = {
-  new_enquiry:       2,
-  call1_scheduled:   3,
-  qualified:         5,
-  meet1_completed:   5,
-  design_created:    7,
-  quote_sent:        7,
-  visit_required:    7,
-  visit_scheduled:   3,
-  visit_completed:   5,
-  meet2_completed:   5,
-  deposit_pending:   7,
-  deposit_paid:      5,
-  fitting_confirmed: 14,
-  fitting_complete:  7,
-  on_hold:           30,
+  new_enquiry:          2,
+  call1_scheduled:      3,
+  qualified:            5,
+  call2_scheduled:      3,
+  proposal_agreed:      5,
+  awaiting_deposit:     7,
+  deposit_paid:         5,
+  onboarding_scheduled: 3,
+  onboarding_complete:  7,
+  production:           14,
+  installation:         7,
 }
 
 export async function GET(request: NextRequest) {
@@ -56,7 +52,7 @@ export async function GET(request: NextRequest) {
         owner_user_id,
         leads!inner(id, name)
       `)
-      .not('stage', 'in', '(won,lost)')
+      .not('stage', 'in', '(complete,lost)')
       .not('stage', 'is', null)
 
     if (ownerOnly) {
