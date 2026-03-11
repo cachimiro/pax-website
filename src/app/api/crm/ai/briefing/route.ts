@@ -80,6 +80,19 @@ export async function POST(request: NextRequest) {
     (b: any) => b.outcome === 'pending'
   )
 
+  // Build a name → lead_id lookup from the opportunities we already fetched
+  // so we can resolve AI-returned lead names to real UUIDs after generation
+  const leadNameToId: Record<string, string> = {}
+  for (const o of opportunities) {
+    const lead = (o as any).lead
+    if (lead?.name && lead?.id) {
+      leadNameToId[lead.name.toLowerCase()] = lead.id
+    }
+  }
+  for (const l of newLeads) {
+    if (l.name && l.id) leadNameToId[l.name.toLowerCase()] = l.id
+  }
+
   const totalValue = opportunities.reduce(
     (sum: number, o: any) => sum + (o.value_estimate ?? 0), 0
   )
@@ -125,7 +138,13 @@ Rules:
 Pipeline: ${opportunities.length} active opportunities, total value £${totalValue.toLocaleString('en-GB')}
 Stages: ${summariseStages(opportunities)}
 
-Overdue tasks: ${overdueTasks.length > 0 ? overdueTasks.map((t: any) => `${t.type}${t.description ? ': ' + t.description : ''}`).join(', ') : 'None'}
+Overdue tasks: ${overdueTasks.length > 0
+  ? overdueTasks.map((t: any) => {
+      const opp = opportunities.find((o: any) => o.id === t.opportunity_id)
+      const lead = (opp as any)?.lead
+      return `${lead?.name ?? 'Unknown'} (lead_id:${lead?.id ?? 'unknown'}) — ${t.type}${t.description ? ': ' + t.description : ''}`
+    }).join('; ')
+  : 'None'}
 Open tasks: ${tasks.length}
 
 Upcoming bookings (next 48h): ${upcomingBookings.length > 0 ? upcomingBookings.map((b: any) => `${b.type} with ${(b.opportunity as any)?.lead?.name ?? 'Unknown'} at ${b.scheduled_at}`).join(', ') : 'None'}
@@ -156,6 +175,20 @@ Generate the daily briefing.`
     const result = safeParseAIJson(raw)
     if (!result) return NextResponse.json({ error: 'AI returned invalid response' }, { status: 502 })
     result.generated_at = now.toISOString()
+
+    // Resolve lead_ids: the AI may hallucinate IDs — replace with real ones
+    // by matching the lead_name it returned against our name→id lookup
+    if (Array.isArray(result.urgent_items)) {
+      result.urgent_items = result.urgent_items.map((item: any) => {
+        const nameKey = (item.lead_name ?? '').toLowerCase()
+        // Use real ID from lookup; fall back to what AI returned only if it looks like a UUID
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        const resolvedId =
+          leadNameToId[nameKey] ??
+          (UUID_RE.test(item.lead_id ?? '') ? item.lead_id : null)
+        return { ...item, lead_id: resolvedId }
+      })
+    }
 
     return NextResponse.json(result)
   } catch (err: unknown) {

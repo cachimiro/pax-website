@@ -166,27 +166,33 @@ export default function DailyBriefing({ userName }: DailyBriefingProps) {
               {/* Urgent items */}
               {briefing.urgent_items?.length > 0 && (
                 <div className="space-y-1.5 mb-4">
-                  {briefing.urgent_items.map((item, i) => (
-                    <Link
-                      key={i}
-                      href={`/crm/leads/${item.lead_id}`}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:shadow-sm ${
-                        item.urgency === 'high'
-                          ? 'bg-red-50 border border-red-100 hover:border-red-200'
-                          : 'bg-amber-50 border border-amber-100 hover:border-amber-200'
-                      }`}
-                    >
-                      <AlertCircle size={12} className={item.urgency === 'high' ? 'text-red-500' : 'text-amber-500'} />
-                      <div className="flex-1 min-w-0">
-                        <span className={`text-[11px] font-semibold ${item.urgency === 'high' ? 'text-red-700' : 'text-amber-700'}`}>
-                          {item.lead_name}
-                        </span>
-                        <span className={`text-[11px] ml-1.5 ${item.urgency === 'high' ? 'text-red-600' : 'text-amber-600'}`}>
-                          — {item.action}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
+                  {briefing.urgent_items.map((item, i) => {
+                    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+                    const hasValidId = UUID_RE.test(item.lead_id ?? '')
+                    const cls = `flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all ${
+                      item.urgency === 'high'
+                        ? 'bg-red-50 border border-red-100 hover:border-red-200'
+                        : 'bg-amber-50 border border-amber-100 hover:border-amber-200'
+                    } ${hasValidId ? 'hover:shadow-sm cursor-pointer' : ''}`
+                    const inner = (
+                      <>
+                        <AlertCircle size={12} className={item.urgency === 'high' ? 'text-red-500' : 'text-amber-500'} />
+                        <div className="flex-1 min-w-0">
+                          <span className={`text-[11px] font-semibold ${item.urgency === 'high' ? 'text-red-700' : 'text-amber-700'}`}>
+                            {item.lead_name}
+                          </span>
+                          <span className={`text-[11px] ml-1.5 ${item.urgency === 'high' ? 'text-red-600' : 'text-amber-600'}`}>
+                            — {item.action}
+                          </span>
+                        </div>
+                      </>
+                    )
+                    return hasValidId ? (
+                      <Link key={i} href={`/crm/leads/${item.lead_id}`} className={cls}>{inner}</Link>
+                    ) : (
+                      <div key={i} className={cls}>{inner}</div>
+                    )
+                  })}
                 </div>
               )}
 
