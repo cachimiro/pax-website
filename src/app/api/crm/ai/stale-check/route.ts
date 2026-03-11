@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         stage,
-        stage_entered_at,
+        updated_at,
         owner_user_id,
         leads!inner(id, name)
       `)
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     for (const opp of opps ?? []) {
       const threshold = STALE_THRESHOLDS[opp.stage] ?? 14
-      const enteredAt = opp.stage_entered_at ? new Date(opp.stage_entered_at).getTime() : null
+      const enteredAt = opp.updated_at ? new Date(opp.updated_at).getTime() : null
       if (!enteredAt) continue
 
       const daysInStage = Math.floor((now - enteredAt) / (1000 * 60 * 60 * 24))
