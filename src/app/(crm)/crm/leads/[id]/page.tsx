@@ -474,7 +474,7 @@ export default function LeadDetailPage() {
         </div>
 
         {/* Right column — tabbed content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 border-2 border-red-500">
           {/* Tabs with sliding underline.
               On screens < sm: only primary tabs are shown inline; secondary tabs
               are accessible via a "More" dropdown to prevent horizontal overflow. */}
