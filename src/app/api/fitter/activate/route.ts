@@ -19,27 +19,30 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient()
 
-  // Verify subcontractor exists and is in invited state
   const { data: sub } = await admin
     .from('subcontractors')
-    .select('id, email, name, status, invite_token')
+    .select('id, email, name, status, invite_token, user_id')
     .eq('id', payload.subcontractor_id)
     .single()
 
   if (!sub) {
     return NextResponse.json({ error: 'Invitation not found' }, { status: 404 })
   }
-  if (sub.status === 'active') {
-    return NextResponse.json({ error: 'Account already activated. Please log in.' }, { status: 400 })
-  }
   if (sub.status === 'suspended') {
     return NextResponse.json({ error: 'This account has been suspended' }, { status: 403 })
   }
+
+  // Already fully activated — treat as success so the UI can redirect to login
+  if (sub.status === 'active' && sub.user_id) {
+    return NextResponse.json({ success: true, message: 'Account already activated. You can log in.' })
+  }
+
   if (sub.invite_token !== token) {
     return NextResponse.json({ error: 'Invalid invitation link' }, { status: 400 })
   }
 
-  // Create Supabase Auth account
+  let authUserId: string
+
   const { data: authUser, error: authError } = await admin.auth.admin.createUser({
     email: sub.email,
     password,
@@ -48,19 +51,31 @@ export async function POST(request: NextRequest) {
   })
 
   if (authError) {
-    // If user already exists, try to link
-    if (authError.message.includes('already been registered')) {
-      return NextResponse.json({ error: 'An account with this email already exists. Please contact PaxBespoke.' }, { status: 409 })
+    if (!authError.message.includes('already been registered')) {
+      return NextResponse.json({ error: authError.message }, { status: 500 })
     }
-    return NextResponse.json({ error: authError.message }, { status: 500 })
+
+    // Auth user already exists (double-submit or previous partial activation).
+    // Look them up by email, update their password, and complete the subcontractor row.
+    const { data: listRes } = await admin.auth.admin.listUsers()
+    const existing = listRes?.users?.find(u => u.email === sub.email)
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Account setup incomplete. Please contact PaxBespoke.' },
+        { status: 500 }
+      )
+    }
+    await admin.auth.admin.updateUserById(existing.id, { password })
+    authUserId = existing.id
+  } else {
+    authUserId = authUser.user.id
   }
 
-  // Update subcontractor with user_id
   await admin.from('subcontractors').update({
-    user_id: authUser.user.id,
+    user_id: authUserId,
     status: 'active',
     activated_at: new Date().toISOString(),
-    invite_token: null, // Clear token
+    invite_token: null,
   }).eq('id', sub.id)
 
   return NextResponse.json({ success: true, message: 'Account activated. You can now log in.' })
