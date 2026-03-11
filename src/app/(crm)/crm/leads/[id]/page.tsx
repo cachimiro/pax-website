@@ -319,9 +319,9 @@ export default function LeadDetailPage() {
       {/* ── Two-column body ──────────────────────────────────────────────── */}
       <div className="flex flex-col lg:flex-row gap-5 items-start">
 
-        {/* Left column — unified side panel */}
-        <div className="lg:w-[360px] lg:shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto scrollbar-fade">
-          <div className="space-y-0">
+        {/* Left column — unified side panel, sticky within the scrolling main */}
+        <div className="w-full lg:w-[340px] lg:shrink-0">
+          <div className="lg:sticky lg:top-0 space-y-0">
 
             {/* ── Unified Side Panel ─────────────────────────────────── */}
             <div className="bg-white border border-[var(--warm-100)] rounded-2xl overflow-hidden">
