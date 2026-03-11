@@ -3,6 +3,8 @@ import { getOpenAI, MODEL } from '@/lib/crm/openai'
 import { createClient } from '@/lib/supabase/server'
 import { BUSINESS_CONTEXT, PIPELINE_STAGES, STAGE_TARGETS, safeParseAIJson } from '@/lib/crm/ai-context'
 
+export const maxDuration = 60 // seconds — OpenAI calls need more than the 10s default
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -113,13 +115,15 @@ export async function POST(request: NextRequest) {
 
   const openai = getOpenAI()
 
+  // Compact context — full stage descriptions not needed for health analysis
+  const compactContext = `PaxBespoke: premium bespoke IKEA Pax wardrobes, UK-wide. Avg project £2k–£8k+.
+Packages: Budget (remote), Standard (site visit), Select (white-glove).
+Key stages: new_enquiry → call1_scheduled → qualified → design_created → quote_sent → [visit] → fitting_proposed → deposit_paid → fitting_confirmed → fitter_assigned → fitting_complete → complete. Also: on_hold, lost.
+${STAGE_TARGETS}`
+
   const systemPrompt = `You are a pipeline analyst for PaxBespoke. Produce a weekly pipeline health report.
 
-${BUSINESS_CONTEXT}
-
-${PIPELINE_STAGES}
-
-${STAGE_TARGETS}
+${compactContext}
 
 Respond with ONLY valid JSON, no markdown:
 {

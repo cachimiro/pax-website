@@ -216,13 +216,13 @@ export function useAIPipelineHealth(enabled: boolean) {
         headers: { 'Content-Type': 'application/json' },
         body: '{}',
       })
-      if (!res.ok) throw new Error('Pipeline health check failed')
+      if (!res.ok) throw new Error(`Pipeline health check failed (${res.status})`)
       return res.json()
     },
     enabled,
     staleTime: 60 * 60 * 1000, // 1 hour cache
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false, // don't retry — each attempt is a slow OpenAI call
   })
 }
 
