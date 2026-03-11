@@ -4,19 +4,41 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   Loader2, AlertCircle, ArrowLeft, MapPin, Calendar, Clock, Phone,
-  CheckCircle2, Circle, ChevronDown, ChevronRight, Save, Play, Camera, FileSignature
+  CheckCircle2, Circle, ChevronDown, ChevronRight, Save, Play, Camera, FileSignature,
+  Navigation, PoundSterling, Timer, FileText, Info, Package,
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { differenceInSeconds, parseISO } from 'date-fns'
 import {
   CHECKLIST_BEFORE, CHECKLIST_AFTER, initChecklist,
   type FittingJob, type ChecklistData, type ChecklistItem
 } from '@/lib/fitter/types'
 
-const STATUS_FLOW: Record<string, { next: string; label: string; color: string }> = {
-  assigned:    { next: 'accepted',    label: 'Accept Job',       color: 'bg-blue-600' },
-  accepted:    { next: 'in_progress', label: 'Start Fitting',    color: 'bg-amber-600' },
-  in_progress: { next: 'completed',   label: 'Mark Complete',    color: 'bg-green-600' },
+const STATUS_FLOW: Record<string, { next: string; label: string; color: string }[]> = {
+  assigned:    [{ next: 'accepted',    label: 'Accept Job',       color: 'bg-blue-600' }],
+  claimed:     [{ next: 'accepted',    label: 'Accept Job',       color: 'bg-blue-600' }],
+  accepted:    [{ next: 'en_route',    label: "I'm on my way",    color: 'bg-amber-500' },
+                { next: 'in_progress', label: 'Start Fitting',    color: 'bg-amber-600' }],
+  en_route:    [{ next: 'in_progress', label: 'Start Fitting',    color: 'bg-amber-600' }],
+  in_progress: [{ next: 'completed',   label: 'Mark Complete',    color: 'bg-green-600' }],
+}
+
+function ExpiryCountdown({ expiresAt }: { expiresAt: string }) {
+  const [secs, setSecs] = useState(() => differenceInSeconds(parseISO(expiresAt), new Date()))
+  useEffect(() => {
+    const t = setInterval(() => setSecs(differenceInSeconds(parseISO(expiresAt), new Date())), 1000)
+    return () => clearInterval(t)
+  }, [expiresAt])
+  if (secs <= 0) return <span className="text-red-600 text-xs font-semibold">Offer expired</span>
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  const s = secs % 60
+  return (
+    <span className={`text-xs font-mono font-semibold ${secs < 3600 ? 'text-red-600' : 'text-amber-600'}`}>
+      Expires in: {h > 0 ? `${h}h ` : ''}{String(m).padStart(2,'0')}m {String(s).padStart(2,'0')}s
+    </span>
+  )
 }
 
 function formatDate(d: string) {
@@ -161,19 +183,15 @@ export default function FitterJobDetailPage() {
     }
   }
 
-  async function advanceStatus() {
+  async function advanceStatus(nextStatus: string) {
     if (!job) return
-    const flow = STATUS_FLOW[job.status]
-    if (!flow) return
-
     setAdvancing(true)
     try {
-      // Save checklists first
       const res = await fetch(`/api/fitter/jobs/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: flow.next,
+          status: nextStatus,
           checklist_before: checkBefore,
           checklist_after: checkAfter,
         }),
@@ -209,10 +227,11 @@ export default function FitterJobDetailPage() {
 
   if (!job) return null
 
-  const flow = STATUS_FLOW[job.status]
+  const actions = STATUS_FLOW[job.status] ?? []
   const beforeCount = checkBefore.items.filter(i => i.checked).length
   const afterCount = checkAfter.items.filter(i => i.checked).length
   const isReadOnly = ['completed', 'signed_off', 'approved', 'rejected', 'cancelled'].includes(job.status)
+  const hasJobPack = job.scope_of_work || job.access_notes || job.parking_info || job.ikea_order_ref || job.special_instructions
 
   return (
     <div className="space-y-4 pb-6">
@@ -231,12 +250,47 @@ export default function FitterJobDetailPage() {
         </div>
       </div>
 
+      {/* Offer expiry countdown */}
+      {job.status === 'offered' && job.offer_expires_at && (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+          <Timer size={13} className="text-amber-500 shrink-0" />
+          <ExpiryCountdown expiresAt={job.offer_expires_at} />
+        </div>
+      )}
+
       {/* Job info */}
       <div className="bg-white rounded-xl border border-[var(--warm-100)] p-4 space-y-2">
+        {/* Fee + duration strip */}
+        {(job.fitting_fee != null || job.estimated_duration_hours > 0) && (
+          <div className="flex items-center gap-4 pb-2 border-b border-[var(--warm-50)]">
+            {job.fitting_fee != null && (
+              <div className="flex items-center gap-1.5">
+                <PoundSterling size={14} className="text-[var(--green-600)]" />
+                <span className="text-base font-bold text-[var(--green-700)]">£{Number(job.fitting_fee).toLocaleString('en-GB')}</span>
+              </div>
+            )}
+            {job.estimated_duration_hours > 0 && (
+              <div className="flex items-center gap-1.5 text-sm text-[var(--warm-500)]">
+                <Timer size={13} />
+                <span>{job.estimated_duration_hours}h estimated</span>
+              </div>
+            )}
+          </div>
+        )}
         {job.customer_address && (
-          <div className="flex items-center gap-2 text-sm text-[var(--warm-600)]">
-            <MapPin size={14} className="shrink-0 text-[var(--warm-400)]" />
-            {job.customer_address}
+          <div className="flex items-start gap-2 text-sm text-[var(--warm-600)]">
+            <MapPin size={14} className="shrink-0 text-[var(--warm-400)] mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <span>{job.customer_address}</span>
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.customer_address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-2 inline-flex items-center gap-1 text-xs text-blue-600 font-medium"
+              >
+                <Navigation size={10} /> Directions
+              </a>
+            </div>
           </div>
         )}
         {job.scheduled_date && (
@@ -292,20 +346,74 @@ export default function FitterJobDetailPage() {
         progress={afterCount / checkAfter.items.length}
       />
 
-      {/* Photos link */}
+      {/* Job pack */}
+      {hasJobPack && (
+        <div className="bg-white rounded-xl border border-[var(--warm-100)] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--warm-50)] flex items-center gap-2">
+            <FileText size={13} className="text-[var(--warm-400)]" />
+            <span className="text-xs font-semibold text-[var(--warm-600)] uppercase tracking-wider">Job Pack</span>
+          </div>
+          <div className="p-4 space-y-3">
+            {job.scope_of_work && (
+              <div>
+                <p className="text-[10px] font-semibold text-[var(--warm-400)] uppercase tracking-wider mb-1">Scope of Work</p>
+                <p className="text-sm text-[var(--warm-700)] whitespace-pre-wrap">{job.scope_of_work}</p>
+              </div>
+            )}
+            {job.access_notes && (
+              <div>
+                <p className="text-[10px] font-semibold text-[var(--warm-400)] uppercase tracking-wider mb-1">Access Notes</p>
+                <p className="text-sm text-[var(--warm-700)]">{job.access_notes}</p>
+              </div>
+            )}
+            {job.parking_info && (
+              <div>
+                <p className="text-[10px] font-semibold text-[var(--warm-400)] uppercase tracking-wider mb-1">Parking</p>
+                <p className="text-sm text-[var(--warm-700)]">{job.parking_info}</p>
+              </div>
+            )}
+            {job.ikea_order_ref && (
+              <div className="flex items-center gap-2">
+                <Package size={13} className="text-[var(--warm-400)]" />
+                <span className="text-xs text-[var(--warm-500)]">IKEA Ref:</span>
+                <span className="text-xs font-mono font-semibold text-[var(--warm-800)]">{job.ikea_order_ref}</span>
+              </div>
+            )}
+            {job.special_instructions && (
+              <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-lg p-3">
+                <Info size={13} className="text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-800">{job.special_instructions}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Photos link with thumbnails */}
       {!isReadOnly && (
         <Link href={`/fitter/job/${id}/photos`}
           className="flex items-center gap-3 bg-white rounded-xl border border-[var(--warm-100)] p-4 hover:border-[var(--green-300)] transition-colors">
-          <div className="w-10 h-10 rounded-lg bg-[var(--green-50)] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-[var(--green-50)] flex items-center justify-center shrink-0">
             <Camera size={20} className="text-[var(--green-600)]" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-[var(--warm-900)]">Photos & Videos</div>
             <div className="text-xs text-[var(--warm-500)]">
-              {(job.photos_before?.length || 0) + (job.photos_after?.length || 0)} photos, {job.videos?.length || 0} videos
+              {(job.photos_before?.length || 0) + (job.photos_after?.length || 0)} photos · {job.videos?.length || 0} videos
+              {(job.photos_before?.length || 0) < 5 && (
+                <span className="ml-1.5 text-amber-600 font-medium">· {5 - (job.photos_before?.length || 0)} before photos needed</span>
+              )}
             </div>
+            {/* Thumbnail strip */}
+            {(job.photos_before?.length > 0 || job.photos_after?.length > 0) && (
+              <div className="flex gap-1 mt-2 overflow-x-auto">
+                {[...(job.photos_before || []), ...(job.photos_after || [])].slice(0, 5).map((url, i) => (
+                  <img key={i} src={url} alt="" className="w-10 h-10 rounded-md object-cover shrink-0 border border-[var(--warm-100)]" />
+                ))}
+              </div>
+            )}
           </div>
-          <ChevronRight size={16} className="text-[var(--warm-300)]" />
+          <ChevronRight size={16} className="text-[var(--warm-300)] shrink-0" />
         </Link>
       )}
 
@@ -326,17 +434,28 @@ export default function FitterJobDetailPage() {
 
       {/* Action buttons */}
       {!isReadOnly && (
-        <div className="flex gap-3">
-          <button onClick={saveChecklists} disabled={saving}
-            className="flex-1 py-3 bg-white border border-[var(--warm-200)] text-[var(--warm-700)] text-sm font-medium rounded-xl hover:bg-[var(--warm-50)] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            Save Progress
-          </button>
-          {flow && (
-            <button onClick={advanceStatus} disabled={advancing}
-              className={`flex-1 py-3 ${flow.color} text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2`}>
-              {advancing ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-              {flow.label}
+        <div className="space-y-2">
+          <div className="flex gap-3">
+            <button onClick={saveChecklists} disabled={saving}
+              className="flex-1 py-3 bg-white border border-[var(--warm-200)] text-[var(--warm-700)] text-sm font-medium rounded-xl hover:bg-[var(--warm-50)] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              Save Progress
+            </button>
+            {/* Primary action — last in the actions array */}
+            {actions.length > 0 && (
+              <button onClick={() => advanceStatus(actions[actions.length - 1].next)} disabled={advancing}
+                className={`flex-1 py-3 ${actions[actions.length - 1].color} text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2`}>
+                {advancing ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+                {actions[actions.length - 1].label}
+              </button>
+            )}
+          </div>
+          {/* Secondary action (e.g. "I'm on my way" when accepted) */}
+          {actions.length > 1 && (
+            <button onClick={() => advanceStatus(actions[0].next)} disabled={advancing}
+              className={`w-full py-2.5 ${actions[0].color} text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2`}>
+              <Navigation size={14} />
+              {actions[0].label}
             </button>
           )}
         </div>
@@ -347,13 +466,17 @@ export default function FitterJobDetailPage() {
 
 function StatusBadge({ status }: { status: string }) {
   const badges: Record<string, { label: string; className: string }> = {
+    offered:     { label: 'Offer',       className: 'bg-amber-100 text-amber-700' },
     assigned:    { label: 'Assigned',    className: 'bg-blue-100 text-blue-700' },
+    claimed:     { label: 'Claimed',     className: 'bg-blue-100 text-blue-700' },
     accepted:    { label: 'Accepted',    className: 'bg-indigo-100 text-indigo-700' },
+    en_route:    { label: 'On the way',  className: 'bg-sky-100 text-sky-700' },
     in_progress: { label: 'In Progress', className: 'bg-amber-100 text-amber-700' },
     completed:   { label: 'Completed',   className: 'bg-green-100 text-green-700' },
     signed_off:  { label: 'Signed Off',  className: 'bg-emerald-100 text-emerald-700' },
     approved:    { label: 'Approved',    className: 'bg-teal-100 text-teal-700' },
     rejected:    { label: 'Rejected',    className: 'bg-red-100 text-red-700' },
+    cancelled:   { label: 'Cancelled',   className: 'bg-gray-100 text-gray-500' },
   }
   const b = badges[status] || badges.assigned
   return (

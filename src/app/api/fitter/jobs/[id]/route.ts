@@ -6,7 +6,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const VALID_TRANSITIONS: Record<string, string[]> = {
   assigned: ['accepted'],
   claimed: ['accepted'],
-  accepted: ['in_progress'],
+  accepted: ['en_route', 'in_progress'],
+  en_route: ['in_progress'],
   in_progress: ['completed'],
 }
 
@@ -124,6 +125,9 @@ export async function PATCH(
         )
       }
       updates.status = body.status
+      if (body.status === 'en_route') {
+        updates.en_route_at = new Date().toISOString()
+      }
       if (body.status === 'completed') {
         updates.completed_at = new Date().toISOString()
       }

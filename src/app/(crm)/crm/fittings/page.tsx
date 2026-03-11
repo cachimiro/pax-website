@@ -6,12 +6,14 @@ import { createClient } from '@/lib/supabase/client'
 import {
   Wrench, Loader2, AlertCircle, User, Calendar, MapPin,
   ChevronDown, ChevronRight, ExternalLink, Clock, CheckCircle2,
-  UserPlus, Clipboard
+  UserPlus, Clipboard, ChevronLeft,
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import FittingDetailPanel from '@/components/crm/FittingDetailPanel'
 import JobPackForm from '@/components/crm/JobPackForm'
+import FitterAvailabilityGrid from '@/components/crm/FitterAvailabilityGrid'
+import FitterStatsPanel from '@/components/crm/FitterStatsPanel'
 
 interface FittingJobRow {
   id: string
@@ -57,6 +59,7 @@ const STATUS_BADGES: Record<string, { label: string; className: string }> = {
   accepted:    { label: 'Accepted',    className: 'bg-indigo-100 text-indigo-700' },
   in_progress: { label: 'In Progress', className: 'bg-amber-100 text-amber-700' },
   completed:   { label: 'Completed',   className: 'bg-green-100 text-green-700' },
+  en_route:    { label: 'On the way',  className: 'bg-sky-100 text-sky-700' },
   signed_off:  { label: 'Signed Off',  className: 'bg-emerald-100 text-emerald-700' },
   approved:    { label: 'Approved',    className: 'bg-teal-100 text-teal-700' },
   rejected:    { label: 'Rejected',    className: 'bg-red-100 text-red-700' },
@@ -82,8 +85,9 @@ function FittingsPageInner() {
   const [allJobs, setAllJobs] = useState<FittingJobRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState<'unassigned' | 'offered' | 'active' | 'board' | 'completed'>('unassigned')
+  const [tab, setTab] = useState<'unassigned' | 'offered' | 'active' | 'board' | 'completed' | 'availability'>('unassigned')
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
+  const [statsFitter, setStatsFitter] = useState<{ id: string; name: string } | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -154,6 +158,33 @@ function FittingsPageInner() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  // Realtime: refresh jobs on any fitting_jobs change + toast on key transitions
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('crm-fittings-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'fitting_jobs' },
+        (payload) => {
+          const newStatus = (payload.new as { status?: string })?.status
+          const jobCode = (payload.new as { job_code?: string })?.job_code ?? 'Job'
+          if (newStatus === 'completed' || newStatus === 'signed_off') {
+            // Surface a browser notification if permitted
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+              new Notification(`${jobCode} ${newStatus === 'signed_off' ? 'signed off' : 'completed'}`, {
+                body: `Fitter has ${newStatus === 'signed_off' ? 'submitted sign-off' : 'marked the job complete'}`,
+              })
+            }
+          }
+          fetchData()
+        }
+      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'fitting_jobs' }, () => fetchData())
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [fetchData])
+
   // Open a specific job when navigated from the lead detail Fitting tab (?job=<id>)
   useEffect(() => {
     const jobId = searchParams.get('job')
@@ -165,12 +196,12 @@ function FittingsPageInner() {
     if (['completed', 'signed_off', 'approved'].includes(job.status)) setTab('completed')
     else if (job.status === 'open_board') setTab('board')
     else if (job.status === 'offered') setTab('offered')
-    else if (['assigned', 'claimed', 'accepted', 'in_progress'].includes(job.status)) setTab('active')
+    else if (['assigned', 'claimed', 'accepted', 'en_route', 'in_progress'].includes(job.status)) setTab('active')
   }, [searchParams, allJobs, loading])
 
   const unassigned = opportunities.filter(o => !o.fitting_job)
   const offeredJobs = allJobs.filter(j => j.status === 'offered')
-  const activeJobs = allJobs.filter(j => ['assigned', 'claimed', 'accepted', 'in_progress'].includes(j.status))
+  const activeJobs = allJobs.filter(j => ['assigned', 'claimed', 'accepted', 'en_route', 'in_progress'].includes(j.status))
   const boardJobs = allJobs.filter(j => j.status === 'open_board')
   const completedJobs = allJobs.filter(j => ['completed', 'signed_off', 'approved'].includes(j.status))
 
@@ -218,6 +249,7 @@ function FittingsPageInner() {
           { key: 'active' as const, label: `Active (${activeJobs.length})` },
           ...(boardJobs.length > 0 ? [{ key: 'board' as const, label: `Board (${boardJobs.length})` }] : []),
           { key: 'completed' as const, label: `Completed (${completedJobs.length})` },
+          { key: 'availability' as const, label: 'Availability' },
         ]).map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap px-2 ${
@@ -252,7 +284,7 @@ function FittingsPageInner() {
             <EmptyState icon={Clock} text="No pending offers" />
           ) : (
             offeredJobs.map(job => (
-              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} />
+              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} onFitterClick={f => setStatsFitter({ id: f.id, name: f.name })} />
             ))
           )}
         </div>
@@ -264,7 +296,7 @@ function FittingsPageInner() {
             <EmptyState icon={Wrench} text="No active fitting jobs" />
           ) : (
             activeJobs.map(job => (
-              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} />
+              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} onFitterClick={f => setStatsFitter({ id: f.id, name: f.name })} />
             ))
           )}
         </div>
@@ -276,7 +308,7 @@ function FittingsPageInner() {
             <EmptyState icon={Clipboard} text="No jobs on the open board" />
           ) : (
             boardJobs.map(job => (
-              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} />
+              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} onFitterClick={f => setStatsFitter({ id: f.id, name: f.name })} />
             ))
           )}
         </div>
@@ -288,16 +320,30 @@ function FittingsPageInner() {
             <EmptyState icon={CheckCircle2} text="No completed jobs yet" />
           ) : (
             completedJobs.map(job => (
-              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} />
+              <JobCard key={job.id} job={job} subcontractors={subcontractors} onClick={() => setSelectedJobId(job.id)} onFitterClick={f => setStatsFitter({ id: f.id, name: f.name })} />
             ))
           )}
         </div>
+      )}
+
+      {tab === 'availability' && (
+        <AvailabilityTab
+          allJobs={allJobs}
+          subcontractors={subcontractors}
+          onFitterClick={f => setStatsFitter({ id: f.id, name: f.name })}
+        />
       )}
 
       <FittingDetailPanel
         jobId={selectedJobId}
         onClose={() => setSelectedJobId(null)}
         onUpdated={fetchData}
+      />
+
+      <FitterStatsPanel
+        fitterId={statsFitter?.id ?? null}
+        fitterName={statsFitter?.name ?? ''}
+        onClose={() => setStatsFitter(null)}
       />
     </div>
   )
@@ -390,7 +436,17 @@ function UnassignedCard({
   )
 }
 
-function JobCard({ job, subcontractors, onClick }: { job: FittingJobRow; subcontractors: SubcontractorRow[]; onClick?: () => void }) {
+function JobCard({
+  job,
+  subcontractors,
+  onClick,
+  onFitterClick,
+}: {
+  job: FittingJobRow
+  subcontractors: SubcontractorRow[]
+  onClick?: () => void
+  onFitterClick?: (fitter: SubcontractorRow) => void
+}) {
   const badge = STATUS_BADGES[job.status] || STATUS_BADGES.assigned
   const fitter = subcontractors.find(s => s.id === job.subcontractor_id)
 
@@ -407,7 +463,12 @@ function JobCard({ job, subcontractors, onClick }: { job: FittingJobRow; subcont
           <div className="text-sm font-medium text-[var(--warm-900)]">{job.customer_name || 'Customer'}</div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--warm-500)] mt-1">
             {fitter && (
-              <span className="flex items-center gap-1"><User size={11} />{fitter.name}</span>
+              <button
+                onClick={e => { e.stopPropagation(); onFitterClick?.(fitter) }}
+                className="flex items-center gap-1 hover:text-[var(--brand)] hover:underline transition-colors"
+              >
+                <User size={11} />{fitter.name}
+              </button>
             )}
             {job.customer_address && (
               <span className="flex items-center gap-1"><MapPin size={11} />{job.customer_address}</span>
@@ -422,6 +483,146 @@ function JobCard({ job, subcontractors, onClick }: { job: FittingJobRow; subcont
             </div>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Availability Tab ─────────────────────────────────────────────────────────
+
+function AvailabilityTab({
+  allJobs,
+  subcontractors,
+  onFitterClick,
+}: {
+  allJobs: FittingJobRow[]
+  subcontractors: SubcontractorRow[]
+  onFitterClick?: (fitter: SubcontractorRow) => void
+}) {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
+
+  // Build week starting Monday of the selected date's week
+  const weekDays = (() => {
+    const d = new Date(selectedDate)
+    const day = d.getDay() === 0 ? 6 : d.getDay() - 1 // Mon=0
+    const monday = new Date(d)
+    monday.setDate(d.getDate() - day)
+    return Array.from({ length: 7 }, (_, i) => {
+      const dd = new Date(monday)
+      dd.setDate(monday.getDate() + i)
+      return dd.toISOString().slice(0, 10)
+    })
+  })()
+
+  function shiftWeek(dir: -1 | 1) {
+    const d = new Date(selectedDate)
+    d.setDate(d.getDate() + dir * 7)
+    setSelectedDate(d.toISOString().slice(0, 10))
+  }
+
+  const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const today = new Date().toISOString().slice(0, 10)
+
+  // Count jobs per fitter per day
+  const jobCountMap = new Map<string, Map<string, number>>()
+  for (const job of allJobs) {
+    if (!job.subcontractor_id || !job.scheduled_date) continue
+    const dateKey = job.scheduled_date.slice(0, 10)
+    if (!jobCountMap.has(job.subcontractor_id)) jobCountMap.set(job.subcontractor_id, new Map())
+    const dayMap = jobCountMap.get(job.subcontractor_id)!
+    dayMap.set(dateKey, (dayMap.get(dateKey) ?? 0) + 1)
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Week navigator */}
+      <div className="flex items-center justify-between bg-white rounded-xl border border-[var(--warm-100)] px-4 py-2.5">
+        <button onClick={() => shiftWeek(-1)} className="p-1 hover:bg-[var(--warm-50)] rounded-lg">
+          <ChevronLeft size={16} className="text-[var(--warm-500)]" />
+        </button>
+        <span className="text-sm font-medium text-[var(--warm-700)]">
+          {new Date(weekDays[0]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+          {' – '}
+          {new Date(weekDays[6]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </span>
+        <button onClick={() => shiftWeek(1)} className="p-1 hover:bg-[var(--warm-50)] rounded-lg">
+          <ChevronRight size={16} className="text-[var(--warm-500)]" />
+        </button>
+      </div>
+
+      {/* Grid */}
+      <div className="bg-white rounded-xl border border-[var(--warm-100)] overflow-x-auto">
+        <table className="w-full text-xs min-w-[600px]">
+          <thead>
+            <tr className="border-b border-[var(--warm-100)]">
+              <th className="text-left px-3 py-2.5 text-[var(--warm-500)] font-medium w-28">Fitter</th>
+              {weekDays.map((date, i) => (
+                <th
+                  key={date}
+                  onClick={() => setSelectedDate(date)}
+                  className={`px-2 py-2.5 text-center font-medium cursor-pointer transition-colors ${
+                    date === today ? 'text-[var(--green-700)] bg-[var(--green-50)]' : 'text-[var(--warm-500)] hover:bg-[var(--warm-50)]'
+                  }`}
+                >
+                  <div>{DAY_LABELS[i]}</div>
+                  <div className={`text-[10px] ${date === today ? 'font-bold' : 'font-normal opacity-70'}`}>
+                    {new Date(date).getDate()}
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {subcontractors.length === 0 ? (
+              <tr><td colSpan={8} className="text-center py-8 text-[var(--warm-400)]">No fitters found</td></tr>
+            ) : (
+              subcontractors.map(sub => (
+                <tr key={sub.id} className="border-b border-[var(--warm-50)] last:border-0">
+                  <td className="px-3 py-2.5">
+                    <button
+                      onClick={() => onFitterClick?.(sub)}
+                      className="text-left hover:text-[var(--brand)] transition-colors"
+                    >
+                      <div className="font-medium text-[var(--warm-800)] truncate max-w-[100px] hover:underline">{sub.name}</div>
+                      <div className={`text-[9px] mt-0.5 ${sub.status === 'active' ? 'text-emerald-600' : 'text-[var(--warm-400)]'}`}>
+                        {sub.status}
+                      </div>
+                    </button>
+                  </td>
+                  {weekDays.map(date => {
+                    const count = jobCountMap.get(sub.id)?.get(date) ?? 0
+                    const isSelected = date === selectedDate
+                    return (
+                      <td
+                        key={date}
+                        onClick={() => setSelectedDate(date)}
+                        className={`px-2 py-2.5 text-center cursor-pointer transition-colors ${
+                          isSelected ? 'bg-[var(--green-50)]' : 'hover:bg-[var(--warm-50)]'
+                        } ${date === today ? 'bg-[var(--green-50)]/50' : ''}`}
+                      >
+                        {count > 0 ? (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--green-100)] text-[var(--green-700)] font-bold text-[10px]">
+                            {count}
+                          </span>
+                        ) : (
+                          <span className="inline-block w-2 h-2 rounded-full bg-[var(--warm-100)]" />
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Day detail — show availability grid for selected date */}
+      <div>
+        <p className="text-xs font-semibold text-[var(--warm-500)] uppercase tracking-wider mb-2">
+          {new Date(selectedDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+        </p>
+        <FitterAvailabilityGrid date={selectedDate} />
       </div>
     </div>
   )

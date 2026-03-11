@@ -44,7 +44,7 @@ export function initChecklist(template: Omit<ChecklistItem, 'checked'>[]): Check
 
 // ─── Fitting job types ──────────────────────────────────────────────────────
 
-export type FittingJobStatus = 'offered' | 'assigned' | 'accepted' | 'declined' | 'open_board' | 'claimed' | 'in_progress' | 'completed' | 'signed_off' | 'approved' | 'rejected' | 'cancelled'
+export type FittingJobStatus = 'offered' | 'assigned' | 'accepted' | 'en_route' | 'declined' | 'open_board' | 'claimed' | 'in_progress' | 'completed' | 'signed_off' | 'approved' | 'rejected' | 'cancelled'
 export type SubcontractorStatus = 'invited' | 'active' | 'suspended'
 export type SignerRelation = 'owner' | 'tenant' | 'family_member' | 'other'
 export type SignOffMethod = 'in_person' | 'remote_link'
@@ -153,6 +153,7 @@ export interface FittingJob {
   sign_off_token: string | null
   sign_off_sent_to: string | null
   sign_off_sent_at: string | null
+  en_route_at: string | null
   // Completion
   completed_at: string | null
   approved_at: string | null

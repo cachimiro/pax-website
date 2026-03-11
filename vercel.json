@@ -23,6 +23,10 @@
     {
       "path": "/api/cron/ai-evening-digest",
       "schedule": "30 17 * * 1-5"
+    },
+    {
+      "path": "/api/cron/fitter-offer-expiry",
+      "schedule": "*/15 * * * *"
     }
   ],
   "headers": [

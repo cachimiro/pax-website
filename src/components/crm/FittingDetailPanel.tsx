@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import {
   X, Loader2, User, MapPin, Calendar, Phone, CheckCircle2, Circle,
-  Camera, Video, MessageSquare, ThumbsUp, ThumbsDown, Send, AlertCircle
+  Camera, Video, MessageSquare, ThumbsUp, ThumbsDown, Send, AlertCircle, AlertTriangle
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { FittingMessage } from '@/lib/fitter/types'
@@ -34,6 +34,7 @@ interface JobDetail {
   sign_off_method: string | null
   customer_signed_at: string | null
   rejection_reason: string | null
+  fitting_fee: number | null
   subcontractors: { name: string; email: string; phone: string | null } | null
 }
 
@@ -229,8 +230,28 @@ export default function FittingDetailPanel({ jobId, onClose, onUpdated }: Fittin
             </div>
 
             {/* Actions */}
-            {job && job.status === 'signed_off' && tab === 'details' && (
+            {job && job.status === 'signed_off' && (
               <div className="border-t border-[var(--warm-100)] p-4 space-y-3">
+                {/* Readiness checks */}
+                {(() => {
+                  const afterItems = job.checklist_after?.items ?? []
+                  const afterDone = afterItems.filter(i => i.checked).length
+                  const afterPct = afterItems.length > 0 ? Math.round((afterDone / afterItems.length) * 100) : 100
+                  const afterPhotos = job.photos_after?.length ?? 0
+                  const warnings: string[] = []
+                  if (afterPct < 80) warnings.push(`After checklist only ${afterPct}% complete`)
+                  if (afterPhotos < 5) warnings.push(`Only ${afterPhotos}/5 after photos uploaded`)
+                  if (!job.fitting_fee) warnings.push('No fitting fee set — fitter won\'t see earnings')
+                  return warnings.length > 0 ? (
+                    <div className="space-y-1">
+                      {warnings.map((w, i) => (
+                        <div key={i} className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
+                          <AlertTriangle size={11} className="shrink-0" /> {w}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null
+                })()}
                 {showReject ? (
                   <div className="space-y-2">
                     <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)}
@@ -366,33 +387,88 @@ function ChecklistView({ title, items }: { title: string; items: { key: string; 
   )
 }
 
+function ChecklistBar({ label, items }: { label: string; items: { checked: boolean }[] }) {
+  const done = items.filter(i => i.checked).length
+  const pct = items.length > 0 ? Math.round((done / items.length) * 100) : 0
+  const color = pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-400'
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-[10px]">
+        <span className="text-[var(--warm-500)] font-medium">{label}</span>
+        <span className={`font-bold ${pct >= 80 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
+          {done}/{items.length} ({pct}%)
+        </span>
+      </div>
+      <div className="h-1.5 bg-[var(--warm-100)] rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
 function PhotosTab({ job }: { job: JobDetail }) {
+  const beforeItems = job.checklist_before?.items ?? []
+  const afterItems = job.checklist_after?.items ?? []
+  const afterPhotos = job.photos_after?.length ?? 0
+  const afterPct = afterItems.length > 0 ? Math.round((afterItems.filter(i => i.checked).length / afterItems.length) * 100) : 100
+  const approvalReady = afterPct >= 80 && afterPhotos >= 5
+
   return (
     <div className="p-4 space-y-4">
+      {/* Checklist completion summary */}
+      {(beforeItems.length > 0 || afterItems.length > 0) && (
+        <div className="bg-[var(--warm-50)] rounded-xl p-3 space-y-2.5">
+          <p className="text-[10px] font-semibold text-[var(--warm-500)] uppercase tracking-wider">Checklist Completion</p>
+          {beforeItems.length > 0 && <ChecklistBar label="Before" items={beforeItems} />}
+          {afterItems.length > 0 && <ChecklistBar label="After" items={afterItems} />}
+          <div className={`flex items-center gap-1.5 text-[10px] font-medium mt-1 ${approvalReady ? 'text-emerald-600' : 'text-amber-600'}`}>
+            {approvalReady
+              ? <><CheckCircle2 size={11} /> Ready to approve</>
+              : <><AlertTriangle size={11} /> {afterPct < 80 ? `After checklist ${afterPct}%` : ''}{afterPhotos < 5 ? ` · ${afterPhotos}/5 after photos` : ''}</>
+            }
+          </div>
+        </div>
+      )}
+
+      {/* Before photos */}
       {job.photos_before?.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-[var(--warm-600)] uppercase mb-2 flex items-center gap-1">
             <Camera size={12} /> Before ({job.photos_before.length})
+            {job.photos_before.length < 5 && (
+              <span className="ml-1 text-amber-500 font-normal normal-case">· {5 - job.photos_before.length} more needed</span>
+            )}
           </h4>
           <div className="grid grid-cols-3 gap-2">
             {job.photos_before.map((url, i) => (
-              <img key={i} src={url} alt="" className="w-full aspect-square object-cover rounded-lg" />
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                <img src={url} alt="" className="w-full aspect-square object-cover rounded-lg hover:opacity-90 transition-opacity" />
+              </a>
             ))}
           </div>
         </div>
       )}
+
+      {/* After photos */}
       {job.photos_after?.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-[var(--warm-600)] uppercase mb-2 flex items-center gap-1">
             <Camera size={12} /> After ({job.photos_after.length})
+            {job.photos_after.length < 5 && (
+              <span className="ml-1 text-amber-500 font-normal normal-case">· {5 - job.photos_after.length} more needed</span>
+            )}
           </h4>
           <div className="grid grid-cols-3 gap-2">
             {job.photos_after.map((url, i) => (
-              <img key={i} src={url} alt="" className="w-full aspect-square object-cover rounded-lg" />
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                <img src={url} alt="" className="w-full aspect-square object-cover rounded-lg hover:opacity-90 transition-opacity" />
+              </a>
             ))}
           </div>
         </div>
       )}
+
+      {/* Videos */}
       {job.videos?.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-[var(--warm-600)] uppercase mb-2 flex items-center gap-1">
@@ -405,6 +481,7 @@ function PhotosTab({ job }: { job: JobDetail }) {
           </div>
         </div>
       )}
+
       {!job.photos_before?.length && !job.photos_after?.length && !job.videos?.length && (
         <div className="text-center py-8 text-sm text-[var(--warm-400)]">No media uploaded yet</div>
       )}

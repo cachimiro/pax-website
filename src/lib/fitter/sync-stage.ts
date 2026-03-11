@@ -10,6 +10,7 @@ const STATUS_TO_STAGE: Record<string, OpportunityStage> = {
   assigned: 'fitter_assigned',
   claimed: 'fitter_assigned',
   accepted: 'fitter_assigned',
+  en_route: 'fitter_assigned',      // on the way — no stage change needed
   in_progress: 'fitting_in_progress',
   completed: 'fitting_complete',
   signed_off: 'sign_off_pending',
