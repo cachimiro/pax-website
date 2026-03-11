@@ -189,7 +189,7 @@ export default function LeadDetailPage() {
   const LEAD_STATUSES = ['new', 'contacted', 'qualified', 'proposal_sent', 'won', 'lost', 'on_hold'] as const
 
   return (
-    <div className="min-h-screen bg-[var(--warm-50)]">
+    <div>
       {/* Top bar */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -317,11 +317,11 @@ export default function LeadDetailPage() {
       </div>
 
       {/* ── Two-column body ──────────────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row gap-5">
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
 
         {/* Left column — unified side panel */}
-        <div className="lg:w-[360px] lg:shrink-0">
-          <div className="lg:sticky lg:top-6 space-y-0">
+        <div className="lg:w-[360px] lg:shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto scrollbar-fade">
+          <div className="space-y-0">
 
             {/* ── Unified Side Panel ─────────────────────────────────── */}
             <div className="bg-white border border-[var(--warm-100)] rounded-2xl overflow-hidden">
