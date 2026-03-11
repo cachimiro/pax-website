@@ -251,9 +251,9 @@ export default function PipelineBoard() {
   }
 
   return (
-    <>
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Stats header */}
-      <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 mb-5 card-hover-border">
+      <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 mb-5 card-hover-border flex-shrink-0">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-8">
             <div>
@@ -321,7 +321,7 @@ export default function PipelineBoard() {
 
       {/* Designer filter bar — admin only */}
       {isAdmin && allProfiles.length > 1 && (
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <div className="flex items-center gap-2 mb-4 flex-wrap flex-shrink-0">
           <span className="text-xs text-[var(--warm-400)] font-medium">Filter:</span>
           <button
             onClick={() => setDesignerFilter(null)}
@@ -365,7 +365,7 @@ export default function PipelineBoard() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-fade" style={{ minHeight: 'calc(100vh - 300px)' }}>
+        <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-fade flex-1 min-h-0 items-start">
           {PIPELINE_GROUPS.map((group) => {
             // Collect all opportunities in this group's stages
             const groupOpps = group.stages.flatMap((stage) => grouped[stage] ?? [])
@@ -422,6 +422,6 @@ export default function PipelineBoard() {
           isLoading={moveStage.isPending}
         />
       )}
-    </>
+    </div>
   )
 }

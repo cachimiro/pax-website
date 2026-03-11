@@ -34,7 +34,7 @@ export default function PipelineColumn({ stage, groupLabel, groupStages, groupCo
   const valuePct = totalPipelineValue > 0 ? (totalValue / totalPipelineValue) * 100 : 0
 
   return (
-    <div className="flex-shrink-0 w-[280px]" ref={setNodeRef}>
+    <div className="flex-shrink-0 w-[280px] flex flex-col h-full" ref={setNodeRef}>
       {/* Column header — glows when drag is over */}
       <div
         className={`
@@ -91,10 +91,10 @@ export default function PipelineColumn({ stage, groupLabel, groupStages, groupCo
         )}
       </div>
 
-      {/* Drop zone body */}
+      {/* Drop zone body — scrolls independently so horizontal scroll stays at top */}
       <div
         className={`
-          rounded-b-2xl border border-t-0 p-2 space-y-2 min-h-[200px]
+          flex-1 min-h-0 rounded-b-2xl border border-t-0 p-2 space-y-2 overflow-y-auto
           transition-all duration-300
           ${isOver
             ? 'bg-[var(--green-50)] border-[var(--green-500)]/30 shadow-[inset_0_2px_8px_rgba(16,148,100,0.06)]'
