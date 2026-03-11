@@ -11,6 +11,18 @@
     {
       "path": "/api/cron/abandonments",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/ai-recompute",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/ai-stale-check",
+      "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/cron/ai-evening-digest",
+      "schedule": "30 17 * * 1-5"
     }
   ],
   "headers": [

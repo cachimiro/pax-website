@@ -582,6 +582,25 @@ function CoverageSection() {
 
 function AISection() {
   const { prefs, update, isUpdating } = useAIPreferences()
+  const [insights, setInsights] = useState<Record<string, unknown> | null>(null)
+  const [insightsLoading, setInsightsLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createClient()
+    Promise.resolve(
+      supabase
+        .from('ai_insights')
+        .select('key, value, computed_at')
+        .in('key', ['suggestion_acceptance', 'pipeline_snapshot', 'stage_conversion'])
+    ).then(({ data }) => {
+      if (data) {
+        const map: Record<string, unknown> = {}
+        data.forEach((row) => { map[row.key] = row.value })
+        setInsights(map)
+      }
+      setInsightsLoading(false)
+    }).catch(() => setInsightsLoading(false))
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -623,6 +642,24 @@ function AISection() {
             checked={prefs.snooze_weekends}
             onChange={(v) => update({ snooze_weekends: v })}
           />
+          <ToggleRow
+            label="AI Auto-tasks"
+            description="Automatically create supplementary tasks when leads change stage"
+            checked={prefs.auto_task_enabled ?? true}
+            onChange={(v) => update({ auto_task_enabled: v })}
+          />
+          <ToggleRow
+            label="Evening Digest"
+            description="Show an end-of-day summary with tomorrow's prep after 16:00"
+            checked={prefs.evening_digest_enabled ?? true}
+            onChange={(v) => update({ evening_digest_enabled: v })}
+          />
+          <ToggleRow
+            label="Stale Lead Nudges"
+            description="Surface notifications when leads have had no activity beyond their expected stage duration"
+            checked={prefs.stale_nudge_enabled ?? true}
+            onChange={(v) => update({ stale_nudge_enabled: v })}
+          />
 
           <div className="border-t border-[var(--warm-50)] pt-5" />
 
@@ -648,6 +685,94 @@ function AISection() {
             ]}
             onChange={(v) => update({ compose_tone: v as AIPreferences['compose_tone'] })}
           />
+        </div>
+      </div>
+
+      {/* AI Insights stats — populated nightly by /api/crm/ai/recompute-insights */}
+      <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Zap size={15} className="text-[var(--green-600)]" />
+          <h2 className="text-sm font-semibold text-[var(--warm-800)]">AI Performance Insights</h2>
+        </div>
+        <p className="text-xs text-[var(--warm-400)] mb-5">Aggregated metrics from the AI memory layer. Updated nightly.</p>
+
+        {insightsLoading ? (
+          <div className="flex items-center gap-2">
+            <Loader2 size={12} className="animate-spin text-[var(--warm-300)]" />
+            <span className="text-xs text-[var(--warm-400)]">Loading insights...</span>
+          </div>
+        ) : !insights || Object.keys(insights).length === 0 ? (
+          <p className="text-xs text-[var(--warm-400)]">No insights yet — data populates after the first nightly recompute.</p>
+        ) : (
+          <div className="space-y-4">
+            {/* Suggestion acceptance */}
+            {insights.suggestion_acceptance != null && (
+              <SuggestionAcceptanceCard data={insights.suggestion_acceptance as SuggestionAcceptanceData} />
+            )}
+            {/* Pipeline snapshot */}
+            {insights.pipeline_snapshot != null && (
+              <PipelineSnapshotCard data={insights.pipeline_snapshot as PipelineSnapshotData} />
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── AI Insights sub-components ──────────────────────────────────────────────
+
+interface SuggestionAcceptanceData { accepted: number; dismissed: number; pending: number; acceptance_rate_pct: number }
+function SuggestionAcceptanceCard({ data: sa }: { data: SuggestionAcceptanceData }) {
+  return (
+    <div className="bg-[var(--warm-50)] rounded-xl p-4">
+      <p className="text-[11px] font-semibold text-[var(--warm-600)] uppercase tracking-wider mb-3">Suggestion Feedback</p>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="text-center">
+          <p className="text-lg font-bold text-[var(--green-600)] font-heading">{sa.acceptance_rate_pct ?? 0}%</p>
+          <p className="text-[10px] text-[var(--warm-400)]">Acceptance rate</p>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-bold text-[var(--warm-700)] font-heading">{sa.accepted ?? 0}</p>
+          <p className="text-[10px] text-[var(--warm-400)]">Accepted</p>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-bold text-[var(--warm-400)] font-heading">{sa.dismissed ?? 0}</p>
+          <p className="text-[10px] text-[var(--warm-400)]">Dismissed</p>
+        </div>
+      </div>
+      <div className="mt-3 h-1.5 bg-[var(--warm-100)] rounded-full overflow-hidden">
+        <div className="h-full bg-[var(--green-500)] rounded-full transition-all" style={{ width: `${Math.min(sa.acceptance_rate_pct ?? 0, 100)}%` }} />
+      </div>
+    </div>
+  )
+}
+
+interface PipelineSnapshotData { active_deals: number; total_value: number; avg_days_in_pipeline: number; stale_count: number }
+function PipelineSnapshotCard({ data: ps }: { data: PipelineSnapshotData }) {
+  return (
+    <div className="bg-[var(--warm-50)] rounded-xl p-4">
+      <p className="text-[11px] font-semibold text-[var(--warm-600)] uppercase tracking-wider mb-3">Pipeline Snapshot</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-sm font-bold text-[var(--warm-800)] font-heading">{ps.active_deals ?? 0}</p>
+          <p className="text-[10px] text-[var(--warm-400)]">Active deals</p>
+        </div>
+        <div>
+          <p className="text-sm font-bold text-[var(--warm-800)] font-heading">
+            {ps.total_value ? `£${Number(ps.total_value).toLocaleString('en-GB')}` : '—'}
+          </p>
+          <p className="text-[10px] text-[var(--warm-400)]">Pipeline value</p>
+        </div>
+        <div>
+          <p className="text-sm font-bold text-[var(--warm-800)] font-heading">{ps.avg_days_in_pipeline ?? 0}d</p>
+          <p className="text-[10px] text-[var(--warm-400)]">Avg days in pipeline</p>
+        </div>
+        <div>
+          <p className={`text-sm font-bold font-heading ${(ps.stale_count ?? 0) > 0 ? 'text-amber-600' : 'text-[var(--warm-800)]'}`}>
+            {ps.stale_count ?? 0}
+          </p>
+          <p className="text-[10px] text-[var(--warm-400)]">Stale leads</p>
         </div>
       </div>
     </div>

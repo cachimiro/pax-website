@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOpenAI, MODEL } from '@/lib/crm/openai'
 import { createClient } from '@/lib/supabase/server'
-import { BUSINESS_CONTEXT, PIPELINE_STAGES, buildEnrichedContext, formatContextForPrompt, safeParseAIJson } from '@/lib/crm/ai-context'
+import { BUSINESS_CONTEXT, PIPELINE_STAGES, buildEnrichedContext, formatContextForPrompt, formatBenchmarks, safeParseAIJson } from '@/lib/crm/ai-context'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -41,7 +41,7 @@ Respond with ONLY valid JSON:
       model: MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Score this lead:\n\n${formatContextForPrompt(ctx)}` },
+        { role: 'user', content: `Score this lead:\n\n${formatContextForPrompt(ctx)}${formatBenchmarks(ctx.benchmarks, opportunity?.stage)}` },
       ],
       temperature: 0.3,
       max_tokens: 500,

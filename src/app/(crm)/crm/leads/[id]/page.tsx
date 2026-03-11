@@ -7,6 +7,8 @@ import {
   useUpdateLead,
   useBookingsByLead,
   useMessageLogs,
+  useMessageDrafts,
+  useDismissDraft,
   useInvoicesByLead,
   useTasksByLead,
   useUpdateTask,
@@ -111,6 +113,7 @@ export default function LeadDetailPage() {
   const { data: opportunities = [] } = useOpportunities()
   const { data: bookings = [] } = useBookingsByLead(isValidId ? id : '')
   const { data: messages = [] } = useMessageLogs(isValidId ? id : '')
+  const { data: messageDrafts = [] } = useMessageDrafts(isValidId ? id : '')
   const { data: invoices = [] } = useInvoicesByLead(isValidId ? id : '')
   const { data: tasks = [] } = useTasksByLead(isValidId ? id : '')
   const { data: emailMessages = [] } = useEmailMessagesByLead(isValidId ? id : '')
@@ -136,7 +139,7 @@ export default function LeadDetailPage() {
     suggestionsOn ? lead : undefined,
     suggestionsOn ? primaryOpp : null
   )
-  const { data: aiSuggestion, isLoading: suggestLoading } = useAISuggestion(
+  const { data: aiSuggestion, isLoading: suggestLoading, logFeedback } = useAISuggestion(
     suggestionsOn ? lead : undefined,
     suggestionsOn ? primaryOpp : null,
     tasks, bookings, messages
@@ -146,12 +149,12 @@ export default function LeadDetailPage() {
     stageLog, messages, tasks, bookings, suggestionsOn
   )
 
-  const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
+  const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number; draftCount?: number }[] = [
     { key: 'activity', label: 'Activity', icon: <Activity size={14} />, count: stageLog.length + messages.length },
     { key: 'contact', label: 'Contact', icon: <User size={14} /> },
     { key: 'opportunities', label: 'Opportunities', icon: <FileText size={14} />, count: leadOpportunities.length },
     { key: 'bookings', label: 'Bookings', icon: <Calendar size={14} />, count: bookings.length },
-    { key: 'messages', label: 'Messages', icon: <MessageSquare size={14} />, count: messages.length },
+    { key: 'messages', label: 'Messages', icon: <MessageSquare size={14} />, count: messages.length, draftCount: messageDrafts.length },
     { key: 'invoices', label: 'Invoices', icon: <FileText size={14} />, count: invoices.length },
     { key: 'tasks', label: 'Tasks', icon: <CheckSquare size={14} />, count: tasks.length },
     { key: 'notes', label: 'Notes', icon: <FileText size={14} /> },
@@ -333,6 +336,7 @@ export default function LeadDetailPage() {
                 scoreLoading={scoreLoading}
                 activitySummary={activitySummary}
                 summaryLoading={summaryLoading}
+                logFeedback={logFeedback}
               />
             )}
 
@@ -430,7 +434,7 @@ export default function LeadDetailPage() {
                     ref={(el) => { tabRefs.current[t.key] = el }}
                     onClick={() => setActiveTab(t.key)}
                     className={`
-                      flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors
+                      relative flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors
                       ${activeTab === t.key ? 'text-[var(--green-700)]' : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'}
                     `}
                   >
@@ -443,6 +447,10 @@ export default function LeadDetailPage() {
                         {t.count}
                       </span>
                     )}
+                    {/* Draft dot — shown when AI has pre-generated drafts */}
+                    {t.draftCount != null && t.draftCount > 0 && (
+                      <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full bg-[var(--green-500)]" title={`${t.draftCount} AI draft${t.draftCount > 1 ? 's' : ''} ready`} />
+                    )}
                   </button>
                 ))}
 
@@ -453,7 +461,7 @@ export default function LeadDetailPage() {
                     ref={(el) => { tabRefs.current[t.key] = el }}
                     onClick={() => setActiveTab(t.key)}
                     className={`
-                      hidden sm:flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors
+                      relative hidden sm:flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors
                       ${activeTab === t.key ? 'text-[var(--green-700)]' : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'}
                     `}
                   >
@@ -465,6 +473,9 @@ export default function LeadDetailPage() {
                       }`}>
                         {t.count}
                       </span>
+                    )}
+                    {t.draftCount != null && t.draftCount > 0 && (
+                      <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full bg-[var(--green-500)]" title={`${t.draftCount} AI draft${t.draftCount > 1 ? 's' : ''} ready`} />
                     )}
                   </button>
                 ))}
@@ -553,7 +564,7 @@ export default function LeadDetailPage() {
                 )}
                 {activeTab === 'opportunities' && <OpportunitiesTab opportunities={leadOpportunities} leadId={id} />}
                 {activeTab === 'bookings' && <BookingsTab bookings={bookings} leadName={lead?.name ?? ''} />}
-                {activeTab === 'messages' && <MessagesTab messages={messages} leadId={id} preferredChannel={lead?.preferred_channel ?? null} />}
+                {activeTab === 'messages' && <MessagesTab messages={messages} drafts={messageDrafts} leadId={id} preferredChannel={lead?.preferred_channel ?? null} />}
                 {activeTab === 'invoices' && <InvoicesTab invoices={invoices} />}
                 {activeTab === 'tasks' && <TasksTab tasks={tasks} leadId={id} primaryOppId={primaryOpp?.id ?? null} />}
                 {activeTab === 'notes' && <LeadNotesTab leadId={id} existingNotes={lead?.notes ?? null} />}
@@ -970,10 +981,12 @@ function BookingsTab({ bookings, leadName }: { bookings: Booking[]; leadName: st
 
 // ─── Messages Tab ────────────────────────────────────────────────────────────
 
-function MessagesTab({ messages, leadId, preferredChannel }: { messages: MessageLog[]; leadId: string; preferredChannel?: string | null }) {
+function MessagesTab({ messages, drafts = [], leadId, preferredChannel }: { messages: MessageLog[]; drafts?: import('@/lib/crm/hooks').MessageDraft[]; leadId: string; preferredChannel?: string | null }) {
   const { data: emailMessages = [] } = useEmailMessagesByLead(leadId)
   const { data: emailEvents = [] } = useEmailEventsByLead(leadId)
+  const dismissDraft = useDismissDraft()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedDraftId, setExpandedDraftId] = useState<string | null>(null)
 
   const opens = emailEvents.filter((e) => e.event_type === 'open').length
   const clicks = emailEvents.filter((e) => e.event_type === 'click').length
@@ -1031,9 +1044,53 @@ function MessagesTab({ messages, leadId, preferredChannel }: { messages: Message
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-2 p-4">
-        {unified.length === 0 && (
+
+        {/* AI Draft banner */}
+        {drafts.length > 0 && (
+          <div className="mb-2 space-y-2">
+            {drafts.map((draft) => {
+              const body = draft.metadata?.body ?? ''
+              const subject = draft.metadata?.subject
+              const isExpanded = expandedDraftId === draft.id
+              return (
+                <div key={draft.id} className="rounded-xl border border-[var(--green-200)] bg-[var(--green-50)] px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Brain size={11} className="text-[var(--green-600)] shrink-0" />
+                      <span className="text-[10px] font-semibold text-[var(--green-700)] uppercase tracking-wider">AI Draft</span>
+                      <span className="text-[10px] text-[var(--warm-500)] truncate">{subject ?? draft.metadata?.intent ?? draft.channel}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => setExpandedDraftId(isExpanded ? null : draft.id)}
+                        className="text-[10px] text-[var(--green-700)] hover:underline"
+                      >
+                        {isExpanded ? 'Hide' : 'Preview'}
+                      </button>
+                      <button
+                        onClick={() => dismissDraft.mutate({ draftId: draft.id, leadId })}
+                        className="text-[10px] text-[var(--warm-400)] hover:text-[var(--warm-600)] ml-1"
+                        title="Dismiss draft"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <p className="mt-2 text-[11px] text-[var(--warm-700)] whitespace-pre-wrap border-t border-[var(--green-100)] pt-2">
+                      {body}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {unified.length === 0 && drafts.length === 0 && (
           <p className="text-sm text-[var(--warm-400)] text-center py-8">No messages yet</p>
         )}
+        {unified.length === 0 && drafts.length > 0 && null}
       {/* Engagement stats */}
       {(opens > 0 || clicks > 0) && (
         <div className="flex items-center gap-4 px-3 py-2 rounded-lg bg-[var(--warm-25)] border border-[var(--warm-100)] mb-1">

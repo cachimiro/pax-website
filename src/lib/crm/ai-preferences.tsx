@@ -14,6 +14,9 @@ const DEFAULTS: Required<AIPreferences> = {
   notification_level: 'normal',
   compose_tone: 'friendly',
   snooze_weekends: true,
+  auto_task_enabled: true,
+  evening_digest_enabled: true,
+  stale_nudge_enabled: true,
 }
 
 interface AIPreferencesContextValue {

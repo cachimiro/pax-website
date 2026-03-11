@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Brain, ChevronDown, ChevronUp, Sparkles, AlertTriangle, Target, Loader2 } from 'lucide-react'
+import { Brain, ChevronDown, ChevronUp, Sparkles, AlertTriangle, Target, Loader2, ThumbsUp, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ActivitySummary from './ActivitySummary'
 import type { AIScore, AISuggestion, AIActivitySummary } from '@/lib/crm/ai-hooks'
@@ -15,14 +15,25 @@ interface AIInsightsPanelProps {
   scoreLoading: boolean
   activitySummary: AIActivitySummary | undefined
   summaryLoading: boolean
+  logFeedback?: (outcome: 'accepted' | 'dismissed' | 'snoozed') => void
 }
 
 export default function AIInsightsPanel({
   aiSuggestion, suggestLoading,
   aiScore, scoreLoading,
   activitySummary, summaryLoading,
+  logFeedback,
 }: AIInsightsPanelProps) {
+  const [feedbackSent, setFeedbackSent] = useState<'accepted' | 'dismissed' | null>(null)
+
+  function handleFeedback(outcome: 'accepted' | 'dismissed') {
+    setFeedbackSent(outcome)
+    logFeedback?.(outcome)
+  }
   const [expanded, setExpanded] = useState(false)
+
+  // Reset feedback state when a new suggestion arrives
+  useEffect(() => { setFeedbackSent(null) }, [aiSuggestion])
 
   // Persist expand state
   useEffect(() => {
@@ -110,6 +121,33 @@ export default function AIInsightsPanel({
                       <p className="flex items-center gap-1 text-[10px] opacity-60 mt-1">
                         <AlertTriangle size={9} /> {aiSuggestion.risk}
                       </p>
+                    )}
+                    {/* Feedback buttons */}
+                    {logFeedback && (
+                      <div className="flex items-center gap-2 mt-2">
+                        {feedbackSent ? (
+                          <span className="text-[10px] opacity-60">
+                            {feedbackSent === 'accepted' ? '✅ Marked as done' : '✕ Dismissed'}
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleFeedback('accepted')}
+                              className="flex items-center gap-1 text-[10px] opacity-60 hover:opacity-100 transition-opacity"
+                              title="Mark as done"
+                            >
+                              <ThumbsUp size={9} /> Done
+                            </button>
+                            <button
+                              onClick={() => handleFeedback('dismissed')}
+                              className="flex items-center gap-1 text-[10px] opacity-60 hover:opacity-100 transition-opacity"
+                              title="Dismiss suggestion"
+                            >
+                              <X size={9} /> Dismiss
+                            </button>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
                   <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full shrink-0 ${

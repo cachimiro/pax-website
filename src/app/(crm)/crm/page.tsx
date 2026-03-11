@@ -31,6 +31,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import EmptyState from '@/components/crm/EmptyState'
 import DailyBriefing from '@/components/crm/DailyBriefing'
+import EveningDigestPanel from '@/components/crm/EveningDigestPanel'
 import { useOpportunities, useLeads, useTasks } from '@/lib/crm/hooks'
 import { Users, DollarSign, Target, CheckSquare, TrendingDown } from 'lucide-react'
 
@@ -185,8 +186,9 @@ export default function DashboardPage() {
       {/* CRM Metrics — primary hero section */}
       <CrmMetrics />
 
-      {/* AI Daily Briefing */}
+      {/* AI Daily Briefing (morning) / Evening Digest (after 16:00) */}
       <DailyBriefing />
+      <EveningDigestPanel />
 
       {/* Website Analytics section */}
       <div className="flex items-center gap-3 mb-5 mt-2">

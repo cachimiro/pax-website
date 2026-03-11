@@ -46,6 +46,9 @@ export interface AIPreferences {
   notification_level?: 'quiet' | 'normal' | 'active'  // default 'normal'
   compose_tone?: 'formal' | 'friendly' | 'brief'      // default 'friendly'
   snooze_weekends?: boolean        // default true
+  auto_task_enabled?: boolean      // default true — AI creates supplementary tasks on stage transitions
+  evening_digest_enabled?: boolean // default true — show evening digest panel after 16:00
+  stale_nudge_enabled?: boolean    // default true — surface stale-lead notifications
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────

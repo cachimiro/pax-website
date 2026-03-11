@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getOpenAI, MODEL } from '@/lib/crm/openai'
 import { createClient } from '@/lib/supabase/server'
-import { BUSINESS_CONTEXT, PIPELINE_STAGES, STAGE_TARGETS, buildEnrichedContext, formatContextForPrompt, safeParseAIJson } from '@/lib/crm/ai-context'
+import { BUSINESS_CONTEXT, PIPELINE_STAGES, STAGE_TARGETS, buildEnrichedContext, formatContextForPrompt, formatBenchmarks, safeParseAIJson } from '@/lib/crm/ai-context'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -41,11 +41,12 @@ Respond with ONLY valid JSON:
   "risk": "<what happens if this isn't done soon>"
 }`
 
+    const benchmarkText = formatBenchmarks(ctx.benchmarks, opportunity?.stage)
     const completion = await openai.chat.completions.create({
       model: MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `What should the sales rep do next?\n\n${formatContextForPrompt(ctx)}` },
+        { role: 'user', content: `What should the sales rep do next?\n\n${formatContextForPrompt(ctx)}${benchmarkText}` },
       ],
       temperature: 0.4,
       max_tokens: 400,
@@ -55,7 +56,26 @@ Respond with ONLY valid JSON:
     const result = safeParseAIJson(raw)
     if (!result) return NextResponse.json({ error: 'AI returned invalid response' }, { status: 502 })
 
-    return NextResponse.json(result)
+    // Log suggestion for feedback loop — non-blocking
+    let logId: string | null = null
+    try {
+      const { data: logRow } = await supabase
+        .from('ai_suggestion_log')
+        .insert({
+          lead_id: lead.id,
+          opportunity_id: opportunity?.id ?? null,
+          stage: opportunity?.stage ?? null,
+          suggestion: result,
+          outcome: 'pending',
+        })
+        .select('id')
+        .single()
+      logId = logRow?.id ?? null
+    } catch {
+      // non-critical — don't fail the request
+    }
+
+    return NextResponse.json({ suggestion: result, log_id: logId })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'AI suggestion failed'
     console.error('AI suggest error:', message)

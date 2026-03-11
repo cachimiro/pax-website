@@ -670,6 +670,59 @@ export function useMessageLogs(leadId: string) {
   })
 }
 
+// ─── Message Drafts ───────────────────────────────────────────────────────────
+
+export interface MessageDraft {
+  id: string
+  lead_id: string | null
+  channel: MessageChannel
+  sent_at: string
+  metadata: {
+    subject?: string
+    body?: string
+    opportunity_id?: string | null
+    intent?: string
+    tone?: string
+    ai_generated?: boolean
+  } | null
+}
+
+/** Returns AI-generated drafts for a lead, newest first. */
+export function useMessageDrafts(leadId: string) {
+  return useQuery({
+    queryKey: ['message_drafts', leadId],
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from('message_logs')
+        .select('*')
+        .eq('lead_id', leadId)
+        .eq('status', 'draft')
+        .order('sent_at', { ascending: false })
+      if (error) return [] as MessageDraft[]
+      return data as MessageDraft[]
+    },
+    enabled: !!leadId,
+  })
+}
+
+/** Dismiss (delete) a draft after the user sends or discards it. */
+export function useDismissDraft() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ draftId, leadId }: { draftId: string; leadId: string }) => {
+      const { error } = await supabase()
+        .from('message_logs')
+        .update({ status: 'dismissed' })
+        .eq('id', draftId)
+      if (error) throw new Error(error.message)
+      return { draftId, leadId }
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['message_drafts', variables.leadId] })
+    },
+  })
+}
+
 // ─── Send Message ────────────────────────────────────────────────────────────
 
 export function useSendMessage() {

@@ -1,6 +1,7 @@
 'use client'
 
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useRef } from 'react'
 import type { Lead, OpportunityWithLead, Task, Booking, MessageLog, MessageChannel, StageLog } from './types'
 
 export interface AIScore {
@@ -44,7 +45,10 @@ export function useAISuggestion(
   bookings: Booking[],
   messages: MessageLog[],
 ) {
-  return useQuery<AISuggestion>({
+  // Track the log ID returned by the suggest endpoint so feedback can reference it
+  const logIdRef = useRef<string | null>(null)
+
+  const query = useQuery<AISuggestion>({
     queryKey: ['ai_suggestion', lead?.id, opportunity?.id, opportunity?.stage],
     queryFn: async () => {
       const res = await fetch('/api/crm/ai/suggest', {
@@ -53,12 +57,28 @@ export function useAISuggestion(
         body: JSON.stringify({ lead, opportunity, tasks, bookings, messages }),
       })
       if (!res.ok) throw new Error('AI suggestion failed')
-      return res.json()
+      const data = await res.json()
+      // suggest route returns { suggestion, log_id }
+      if (data.log_id) logIdRef.current = data.log_id
+      return data.suggestion ?? data
     },
     enabled: !!lead,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   })
+
+  /** Call after the user acts on or dismisses the suggestion */
+  async function logFeedback(outcome: 'accepted' | 'dismissed' | 'snoozed') {
+    const logId = logIdRef.current
+    if (!logId) return
+    await fetch('/api/crm/ai/suggestion-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ log_id: logId, outcome }),
+    }).catch(() => {/* non-critical — ignore errors */})
+  }
+
+  return { ...query, logFeedback }
 }
 
 // ─── AI Compose ──────────────────────────────────────────────────────────────
@@ -220,9 +240,76 @@ export function useAIPipelineHealth(enabled: boolean) {
       return res.json()
     },
     enabled,
-    staleTime: 60 * 60 * 1000, // 1 hour cache
+    staleTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: false, // don't retry — each attempt is a slow OpenAI call
+    retry: false,
+  })
+}
+
+// ─── AI Evening Digest ───────────────────────────────────────────────────────
+
+export interface EveningDigest {
+  headline: string
+  today_summary: string
+  tomorrow_prep: { lead_name: string; lead_id: string; action: string; context: string }[]
+  wins_today: string[]
+  watch_list: { lead_name: string; lead_id: string; concern: string }[]
+  close_of_day_tip: string
+  generated_at: string
+}
+
+export function useAIEveningDigest(userName: string | undefined, enabled: boolean) {
+  return useQuery<EveningDigest>({
+    queryKey: ['ai_evening_digest'],
+    queryFn: async () => {
+      const res = await fetch('/api/crm/ai/evening-digest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userName }),
+      })
+      if (!res.ok) throw new Error('Evening digest failed')
+      return res.json()
+    },
+    enabled,
+    staleTime: 60 * 60 * 1000, // valid for 1 hour
+    refetchOnWindowFocus: false,
+    retry: false,
+  })
+}
+
+// ─── AI Pre-call Brief ───────────────────────────────────────────────────────
+
+export interface PreCallBrief {
+  lead_name: string
+  lead_id: string
+  call_type: string
+  scheduled_at: string
+  key_points: string[]
+  suggested_opener: string
+  watch_out_for: string | null
+  target_outcome: string
+}
+
+export function useAIPreCallBrief(
+  leadId: string | null | undefined,
+  opportunityId: string | null | undefined,
+  bookingType: string | null | undefined,
+  enabled: boolean,
+) {
+  return useQuery<PreCallBrief>({
+    queryKey: ['ai_pre_call_brief', leadId, opportunityId],
+    queryFn: async () => {
+      const res = await fetch('/api/crm/ai/pre-call-brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: leadId, opportunity_id: opportunityId, booking_type: bookingType }),
+      })
+      if (!res.ok) throw new Error('Pre-call brief failed')
+      return res.json()
+    },
+    enabled: !!leadId && enabled,
+    staleTime: 30 * 60 * 1000,
+    retry: false,
   })
 }
 

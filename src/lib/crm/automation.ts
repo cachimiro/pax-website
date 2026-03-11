@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OpportunityStage, MessageChannel } from './types'
 import { getTemplatesForStage, interpolate } from './messaging/templates'
 import { generateAllCTAUrls } from './cta-tokens'
+import { triggerAIAutoTask } from './ai-auto-task'
 
 /**
  * Operational tasks auto-created on stage transitions.
@@ -68,6 +69,23 @@ export async function runStageAutomations(
     } catch (err) {
       console.error(`Task creation error for stage ${stage}:`, err)
     }
+  }
+
+  // Fire AI supplementary task in background — non-blocking
+  // Respect the owner's auto_task_enabled preference
+  if (opp.owner_user_id) {
+    Promise.resolve(
+      supabase
+        .from('profiles')
+        .select('ai_preferences')
+        .eq('id', opp.owner_user_id)
+        .maybeSingle()
+    ).then(({ data: profile }) => {
+      const autoTaskOn = (profile?.ai_preferences as { auto_task_enabled?: boolean } | null)?.auto_task_enabled ?? true
+      if (autoTaskOn) {
+        triggerAIAutoTask(supabase, opp.lead_id, opportunityId, stage, opp.owner_user_id).catch(() => {})
+      }
+    }).catch(() => {})
   }
 
   // Get owner name

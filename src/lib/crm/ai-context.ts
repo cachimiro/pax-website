@@ -81,6 +81,41 @@ export const STAGE_TARGETS = `Target timelines per stage:
 
 // ─── Safe JSON Parsing ───────────────────────────────────────────────────────
 
+/**
+ * Format ai_insights benchmarks into a concise string for injection into prompts.
+ * Only includes data points with sufficient sample size (>=5).
+ */
+export function formatBenchmarks(benchmarks: EnrichedContext['benchmarks'], stage?: string | null): string {
+  const lines: string[] = []
+
+  if (benchmarks.avg_days_in_stage !== null) {
+    lines.push(`Team average time in ${stage ?? 'this stage'}: ${benchmarks.avg_days_in_stage} days`)
+  }
+  if (benchmarks.days_over_average !== null) {
+    if (benchmarks.days_over_average > 0) {
+      lines.push(`This lead is ${benchmarks.days_over_average} days OVER the team average — action needed`)
+    } else if (benchmarks.days_over_average < -1) {
+      lines.push(`This lead is ${Math.abs(benchmarks.days_over_average)} days ahead of average — on track`)
+    }
+  }
+  if (benchmarks.conversion_rate_pct !== null) {
+    lines.push(`Stage conversion rate: ${benchmarks.conversion_rate_pct}% of leads advance from this stage`)
+  }
+  if (benchmarks.top_lost_reasons.length > 0) {
+    const top = benchmarks.top_lost_reasons[0]
+    lines.push(`Top lost reason overall: "${top.reason}" (${top.pct}% of lost deals)`)
+  }
+  const acceptanceEntries = Object.entries(benchmarks.suggestion_acceptance)
+  if (acceptanceEntries.length > 0) {
+    const best = acceptanceEntries.sort(([, a], [, b]) => b - a)[0]
+    lines.push(`Staff accept "${best[0]}" suggestions ${best[1]}% of the time`)
+  }
+
+  return lines.length > 0
+    ? `\nTeam benchmarks (from historical data):\n${lines.map(l => `- ${l}`).join('\n')}`
+    : ''
+}
+
 export function safeParseAIJson(raw: string): Record<string, unknown> | null {
   // Try direct parse first
   try {
@@ -136,6 +171,13 @@ export interface EnrichedContext {
   tasks: { type: string; status: string; due_at: string | null; description: string | null }[]
   messages: { channel: string; template: string | null; status: string; sent_at: string }[]
   stageLog: { from_stage: string | null; to_stage: string; changed_at: string; notes: string | null }[]
+  benchmarks: {
+    avg_days_in_stage: number | null       // team average for current stage
+    conversion_rate_pct: number | null     // % of leads that advance from current stage
+    top_lost_reasons: { reason: string; pct: number }[]
+    suggestion_acceptance: Record<string, number> // type → acceptance %
+    days_over_average: number | null       // how many days over avg (negative = ahead)
+  }
 }
 
 /**
@@ -180,8 +222,9 @@ export async function buildEnrichedContext(
 
   const oppId = opp?.id ?? opportunityId
 
-  // Parallel fetches for related entities
-  const [visitsRes, designsRes, quotesRes, fittingsRes, bookingsRes, tasksRes, messagesRes, stageLogRes] = await Promise.all([
+  // Parallel fetches for related entities + ai_insights benchmarks
+  const currentStage = opp?.stage ?? null
+  const [visitsRes, designsRes, quotesRes, fittingsRes, bookingsRes, tasksRes, messagesRes, stageLogRes, insightsRes] = await Promise.all([
     oppId ? supabase.from('visits').select('scheduled_at, status, notes').eq('opportunity_id', oppId).order('created_at', { ascending: false }).limit(5) : { data: [] },
     oppId ? supabase.from('designs').select('version, file_url, planner_link, created_at').eq('opportunity_id', oppId).order('created_at', { ascending: false }).limit(5) : { data: [] },
     oppId ? supabase.from('quotes').select('amount, deposit_amount, status, created_at').eq('opportunity_id', oppId).order('created_at', { ascending: false }).limit(5) : { data: [] },
@@ -190,7 +233,52 @@ export async function buildEnrichedContext(
     oppId ? supabase.from('tasks').select('type, status, due_at, description').eq('opportunity_id', oppId).order('due_at', { ascending: false }).limit(10) : { data: [] },
     supabase.from('message_logs').select('channel, template, status, sent_at').eq('lead_id', leadId).order('sent_at', { ascending: false }).limit(15),
     oppId ? supabase.from('stage_log').select('from_stage, to_stage, changed_at, notes').eq('opportunity_id', oppId).order('changed_at', { ascending: false }).limit(15) : { data: [] },
+    // ai_insights benchmarks — fetch relevant rows for current stage
+    supabase.from('ai_insights').select('insight_type, stage, metric_key, metric_value, sample_size').in('insight_type', ['avg_time_in_stage', 'stage_conversion', 'lost_reason_pattern', 'suggestion_accuracy']),
   ])
+
+  // ── Build benchmarks from ai_insights ──────────────────────────────────
+  const allInsights = (insightsRes.data ?? []) as Array<{
+    insight_type: string; stage: string | null; metric_key: string
+    metric_value: Record<string, unknown>; sample_size: number
+  }>
+
+  // Average days in current stage
+  const avgDaysRow = currentStage
+    ? allInsights.find(i => i.insight_type === 'avg_time_in_stage' && i.stage === currentStage)
+    : null
+  const avgDaysInStage = avgDaysRow
+    ? (avgDaysRow.metric_value.avg_days as number ?? null)
+    : null
+
+  // Days over average (positive = behind, negative = ahead)
+  const daysInStage = opp
+    ? Math.round((now.getTime() - new Date(opp.updated_at).getTime()) / 86_400_000)
+    : null
+  const daysOverAverage = avgDaysInStage !== null && daysInStage !== null
+    ? Math.round((daysInStage - avgDaysInStage) * 10) / 10
+    : null
+
+  // Conversion rate for current stage
+  const convRow = currentStage
+    ? allInsights.find(i => i.insight_type === 'stage_conversion' && i.stage === currentStage)
+    : null
+  const conversionRatePct = convRow
+    ? (convRow.metric_value.conversion_rate_pct as number ?? null)
+    : null
+
+  // Top lost reasons
+  const lostRow = allInsights.find(i => i.insight_type === 'lost_reason_pattern')
+  const topLostReasons = lostRow
+    ? ((lostRow.metric_value.reasons as { reason: string; pct: number }[]) ?? []).slice(0, 3)
+    : []
+
+  // Suggestion acceptance rates
+  const suggestionAcceptance: Record<string, number> = {}
+  for (const row of allInsights.filter(i => i.insight_type === 'suggestion_accuracy')) {
+    const type = row.metric_key.replace('_acceptance_rate', '')
+    suggestionAcceptance[type] = row.metric_value.acceptance_rate_pct as number
+  }
 
   return {
     lead: {
@@ -227,6 +315,13 @@ export async function buildEnrichedContext(
     tasks: (tasksRes.data ?? []) as EnrichedContext['tasks'],
     messages: (messagesRes.data ?? []) as EnrichedContext['messages'],
     stageLog: (stageLogRes.data ?? []) as EnrichedContext['stageLog'],
+    benchmarks: {
+      avg_days_in_stage: avgDaysInStage,
+      conversion_rate_pct: conversionRatePct,
+      top_lost_reasons: topLostReasons,
+      suggestion_acceptance: suggestionAcceptance,
+      days_over_average: daysOverAverage,
+    },
   }
 }
 

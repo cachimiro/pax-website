@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Bell, X, User, CreditCard, ArrowRight, Clock, Mail, CheckSquare, Settings2 } from 'lucide-react'
+import { Bell, X, User, CreditCard, ArrowRight, Clock, Mail, CheckSquare, Settings2, AlertTriangle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
 interface Notification {
   id: string
-  type: 'new_lead' | 'payment' | 'stage_change' | 'email_reply' | 'task_due'
+  type: 'new_lead' | 'payment' | 'stage_change' | 'email_reply' | 'task_due' | 'stale_lead'
   title: string
   body: string
   link: string
@@ -24,6 +24,7 @@ const DEFAULT_PREFS: Record<Notification['type'], boolean> = {
   stage_change: true,
   email_reply: true,
   task_due: true,
+  stale_lead: true,
 }
 
 const PREF_LABELS: Record<Notification['type'], string> = {
@@ -32,6 +33,25 @@ const PREF_LABELS: Record<Notification['type'], string> = {
   stage_change: 'Stage changes',
   email_reply: 'Email replies',
   task_due: 'Overdue tasks',
+  stale_lead: 'Stale lead nudges',
+}
+
+// Deduplicate stale-lead notifications across sessions
+const STALE_SEEN_KEY = 'crm_stale_seen'
+function getSeenStale(): Set<string> {
+  try {
+    const raw = localStorage.getItem(STALE_SEEN_KEY)
+    return new Set(raw ? JSON.parse(raw) : [])
+  } catch { return new Set() }
+}
+function markStaleSeen(ids: string[]) {
+  try {
+    const seen = getSeenStale()
+    ids.forEach((id) => seen.add(id))
+    // Keep only last 100 to avoid unbounded growth
+    const arr = [...seen].slice(-100)
+    localStorage.setItem(STALE_SEEN_KEY, JSON.stringify(arr))
+  } catch {}
 }
 
 export default function NotificationCenter() {
@@ -150,6 +170,35 @@ export default function NotificationCenter() {
     }
   }, [addNotification])
 
+  // Poll stale-check on mount (once per session) to surface neglected leads
+  useEffect(() => {
+    const POLL_KEY = 'crm_stale_polled_at'
+    const lastPolled = localStorage.getItem(POLL_KEY)
+    const fourHoursAgo = Date.now() - 4 * 60 * 60 * 1000
+    if (lastPolled && Number(lastPolled) > fourHoursAgo) return
+
+    fetch('/api/crm/ai/stale-check')
+      .then((r) => r.json())
+      .then(({ stale }) => {
+        if (!Array.isArray(stale) || stale.length === 0) return
+        localStorage.setItem(POLL_KEY, String(Date.now()))
+        const seen = getSeenStale()
+        const fresh = stale.filter((s: { opportunity_id: string }) => !seen.has(s.opportunity_id))
+        if (fresh.length === 0) return
+        markStaleSeen(fresh.map((s: { opportunity_id: string }) => s.opportunity_id))
+        // Surface up to 3 nudges to avoid overwhelming the user
+        fresh.slice(0, 3).forEach((s: { lead_name: string; lead_id: string; stage: string; days_in_stage: number }) => {
+          addNotification({
+            type: 'stale_lead',
+            title: 'Lead needs attention',
+            body: `${s.lead_name} — ${s.days_in_stage}d in ${s.stage.replace(/_/g, ' ')}`,
+            link: `/crm/leads/${s.lead_id}`,
+          })
+        })
+      })
+      .catch(() => {/* non-critical */})
+  }, [addNotification])
+
   // Close panel on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -171,11 +220,12 @@ export default function NotificationCenter() {
   }
 
   const typeConfig: Record<Notification['type'], { icon: React.ReactNode; color: string; ring: string }> = {
-    new_lead: { icon: <User size={14} />, color: 'bg-[var(--green-50)] text-[var(--green-700)]', ring: 'ring-[var(--green-200)]' },
-    payment: { icon: <CreditCard size={14} />, color: 'bg-emerald-50 text-emerald-700', ring: 'ring-emerald-200' },
-    stage_change: { icon: <ArrowRight size={14} />, color: 'bg-blue-50 text-blue-700', ring: 'ring-blue-200' },
-    email_reply: { icon: <Mail size={14} />, color: 'bg-orange-50 text-orange-700', ring: 'ring-orange-200' },
-    task_due: { icon: <CheckSquare size={14} />, color: 'bg-red-50 text-red-700', ring: 'ring-red-200' },
+    new_lead:    { icon: <User size={14} />,          color: 'bg-[var(--green-50)] text-[var(--green-700)]', ring: 'ring-[var(--green-200)]' },
+    payment:     { icon: <CreditCard size={14} />,    color: 'bg-emerald-50 text-emerald-700',               ring: 'ring-emerald-200' },
+    stage_change:{ icon: <ArrowRight size={14} />,    color: 'bg-blue-50 text-blue-700',                     ring: 'ring-blue-200' },
+    email_reply: { icon: <Mail size={14} />,          color: 'bg-orange-50 text-orange-700',                 ring: 'ring-orange-200' },
+    task_due:    { icon: <CheckSquare size={14} />,   color: 'bg-red-50 text-red-700',                       ring: 'ring-red-200' },
+    stale_lead:  { icon: <AlertTriangle size={14} />, color: 'bg-amber-50 text-amber-700',                   ring: 'ring-amber-200' },
   }
 
   return (
