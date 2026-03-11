@@ -1,279 +1,305 @@
-# CRM Improvement Spec
+# Spec: Leads Page & Lead Detail Improvements
 
 ## Problem Statement
 
-The PaxBespoke CRM is a full-featured sales pipeline tool built on Next.js 15 + Supabase. After a complete audit of every page, component, data hook, and style system, this spec documents all identified bugs, UX deficiencies, and missing features — and defines a prioritised implementation plan to resolve them.
+The leads list and individual lead pages have several UX gaps that slow down daily sales work:
+
+- **List page**: No visual health indicators, limited filtering, no inline actions, missing key columns (stage, value, last contact).
+- **Detail page**: 9 tabs create navigation overhead; no structured call logging; opportunity stage progression is opaque; contact fields are too sparse; duplicate leads can silently coexist.
+- **Cross-cutting**: No duplicate detection, no lead merge, no quick-reply from the list.
+
+Scope: UX improvements + new UI-only features. No new database columns unless strictly required. Desktop-first.
 
 ---
 
-## Codebase Map
+## Current State Summary
 
-### Pages (route → file)
-| Route | File | Purpose |
-|---|---|---|
-| `/crm` | `src/app/(crm)/crm/page.tsx` | Dashboard: CRM metrics + website analytics tabs |
-| `/crm/leads` | `src/app/(crm)/crm/leads/page.tsx` | Lead list with search, filter, sort, trash |
-| `/crm/leads/[id]` | `src/app/(crm)/crm/leads/[id]/page.tsx` | Lead detail: contact, opportunities, bookings, messages, invoices, tasks, notes, fitting |
-| `/crm/pipeline` | `src/app/(crm)/crm/pipeline/page.tsx` | Kanban board with drag-and-drop stage management |
-| `/crm/calendar` | `src/app/(crm)/crm/calendar/page.tsx` | Week/day/month calendar with bookings, visits, fittings, tasks |
-| `/crm/tasks` | `src/app/(crm)/crm/tasks/page.tsx` | Task list grouped by overdue/today/upcoming/no-due/done |
-| `/crm/fittings` | `src/app/(crm)/crm/fittings/page.tsx` | Fitting job management: unassigned, offered, active, board, completed |
-| `/crm/reports` | `src/app/(crm)/crm/reports/page.tsx` | Revenue, lead sources, conversion funnel, performance reports |
-| `/crm/settings` | `src/app/(crm)/crm/settings/page.tsx` | Team, templates, Google, messaging, service regions, AI |
-| `/crm/onboarding` | `src/app/(crm)/crm/onboarding/page.tsx` | New user setup: name, Google Calendar connect |
-| `/crm/login` | `src/app/(crm)/crm/login/` | Auth page |
-| `/crm/mfa-setup` | `src/app/(crm)/crm/mfa-setup/` | MFA enrollment |
-| `/crm/mfa-verify` | `src/app/(crm)/crm/mfa-verify/` | MFA challenge |
+### Leads List (`/crm/leads`)
+- Table with columns: checkbox, name, email, phone, postcode, status badge, AI next-action suggestion, created-at, owner avatar, delete button.
+- Filters: search (name/email/phone/postcode), status dropdown (new/contacted/lost).
+- Sort: name, created_at, status.
+- Bulk actions: assign owner, set status, trash, export CSV.
+- Trash view with restore/permanent-delete.
 
-### Key Components
-- **Shell**: `CrmShell` → `Sidebar` + `Topbar` + `MobileSidebar` + `MobileBottomNav`
-- **Pipeline**: `PipelineBoard` → `PipelineColumn` → `OpportunityCard`
-- **Lead Detail**: 9-tab layout with `ActivityTimeline`, `SmartActions`, `AIInsightsPanel`, `ProjectSummaryCard`, `DiscoveryAnswersCard`
-- **Calendar**: Week/day/month views with DnD rescheduling, `CalendarEventPanel`, `CalendarAgenda`, `CalendarStatsBar`
-- **AI**: `DailyBriefing`, `PipelineHealthCheck`, `AIInsightsPanel`, `SmartActions` — all gated by `useAIPreferences`
-- **Modals**: `NewLeadModal`, `CsvImportModal`, `StageTransitionModal`, `LostReasonModal`, `ModalWrapper`
-- **Notifications**: `NotificationCenter` with Supabase Realtime subscriptions
+### Lead Detail (`/crm/leads/[id]`)
+- Left sidebar (sticky): contact card (avatar, name, status select, AI score), project summary, discovery answers, AI insights panel, smart actions, snooze control.
+- Right panel: 9 tabs — Activity, Contact, Opportunities, Bookings, Messages, Invoices, Tasks, Notes, Fitting.
+- Compose: inline compose bar in Messages tab + full SendConfirmation modal triggered from smart actions.
+- AI: score (hot/warm/cold), suggestion, activity summary — all behind `suggestionsOn` preference.
 
-### Data Layer
-- **Hooks**: `src/lib/crm/hooks.ts` — ~50 React Query hooks for all entities
-- **Types**: `src/lib/crm/types.ts` — full TypeScript definitions
-- **Stages**: `src/lib/crm/stages.ts` — 24 pipeline stages, 11 column groups
-- **Automation**: `src/lib/crm/automation.ts` — stage-triggered tasks + messages
-- **Risk**: `src/lib/crm/risk.ts` — opportunity staleness scoring
-- **AI hooks**: `src/lib/crm/ai-hooks.ts` — score, suggest, compose, briefing, health check
+### Data Model (relevant fields)
+- `Lead`: name, email, phone, postcode, project_type, budget_band, source, notes, status (new/contacted/lost), owner_user_id, preferred_channel, snoozed_until, deleted_at, UTM/attribution fields.
+- `Opportunity`: stage (23 stages), value_estimate, lost_reason, updated_at.
+- `Task`: type, status (open/done), due_at, owner_user_id.
+- `MessageLog`: channel, sent_at, status, template.
+- `Booking`: type, scheduled_at, outcome.
 
 ---
 
-## Bugs Found
+## Requirements
 
-### B1 — Invalid stage value in OpportunitiesTab
-**File**: `src/app/(crm)/crm/leads/[id]/page.tsx` ~line 640
-**Issue**: `createOpp.mutate({ lead_id: leadId, stage: 'new_lead' as OpportunityStage })` — `'new_lead'` is not a valid `OpportunityStage`. The correct value is `'new_enquiry'`. This causes a Supabase constraint violation when a user creates a new opportunity from the lead detail page.
-**Fix**: Change `'new_lead'` to `'new_enquiry'`.
+### 1. Leads List — Richer Table Columns
 
-### B2 — Missing CSS custom properties: `--warm-25` and `--brand`
-**Files**: `src/app/(crm)/crm/leads/[id]/page.tsx`, `src/app/(crm)/crm/leads/page.tsx`, multiple components
-**Issue**: Several components reference `var(--warm-25)` and `var(--brand)` / `var(--brand-light)` which are not defined in `globals.css`. These elements render with no background or colour (falls back to transparent/inherit).
-- `--warm-25` used in MessagesTab engagement stats bar and message bubbles
-- `--brand` used in InlineComposeBar send button, task create button, opportunity card links, FittingTab links
-- `--brand-light` used in JobCard hover border
-**Fix**: Add `--warm-25: #FAFAF9`, `--brand: var(--green-600)`, `--brand-light: var(--green-100)` to `:root` in `globals.css`.
+**What**: Add columns for opportunity stage, estimated value, last contact date, and days since last activity.
 
-### B3 — Optimistic update targets wrong cache key for non-admin users
-**File**: `src/components/crm/PipelineBoard.tsx` ~line 100
-**Issue**: `optimisticMove` calls `qc.setQueryData(['opportunities', undefined], ...)` but `useOpportunities` is called with `isAdmin ? undefined : { owner_user_id: profile?.id }`. For non-admin users the cache key is `['opportunities', { owner_user_id: '...' }]`, so the optimistic update silently fails and the card snaps back before the server confirms.
-**Fix**: Use `qc.setQueriesData({ queryKey: ['opportunities'] }, updater)` to update all matching opportunity caches regardless of filter key.
+**Columns to add** (toggleable via a column picker):
+- **Stage** — badge showing the primary opportunity's current stage label and colour (from `STAGES` config). Shows "—" if no opportunity.
+- **Value** — `£{value_estimate}` from primary opportunity. Shows "—" if unset.
+- **Last contact** — most recent `MessageLog.sent_at` for that lead, formatted as relative time (e.g. "3d ago"). Shows "—" if never contacted.
+- **Days stale** — integer days since `max(last message sent, opportunity updated_at)`. Colour-coded: green ≤7d, amber 8–21d, red >21d.
 
-### B4 — Task auto-move bypasses stage automations
-**File**: `src/lib/crm/hooks.ts` `useUpdateTask` onSuccess ~line 480
-**Issue**: When a task of type `call1_attempt`, `call2_attempt`, or `onboarding_session` is marked done, the hook directly calls `supabase.from('opportunities').update({ stage: targetStage })` without calling `runStageAutomations`. No emails are sent, no new tasks are created, and no stage log entry is written for these auto-moves.
-**Fix**: After the direct DB update, call `runStageAutomations(supabase(), data.opportunity_id, targetStage)` and insert a `stage_log` row, matching the pattern in `useMoveOpportunityStage`.
+**Column picker**: A small columns icon button in the table header bar that opens a popover with checkboxes to show/hide optional columns. State persisted to `localStorage`.
 
-### B5 — FittingTab links to the fittings list instead of the specific job
-**File**: `src/app/(crm)/crm/leads/[id]/page.tsx` FittingTab ~line 1310
-**Issue**: `<Link href="/crm/fittings">` navigates to the fittings list page, losing context of which job the user was viewing.
-**Fix**: Pass `?job=${job.id}` as a query param and have the Fittings page open `FittingDetailPanel` for that job on mount when the param is present.
-
-### B6 — `applyStageChange` ignores the `withAutomations` flag
-**File**: `src/app/(crm)/crm/leads/[id]/page.tsx` `applyStageChange` ~line 680
-**Issue**: Both branches of `if (withAutomations)` call the same `updateOpp.mutate(...)`. The "Change only" button does the exact same thing as "Confirm + automations" — the distinction is cosmetic only.
-**Fix**: The "Change only" path should call a direct Supabase update that skips `runStageAutomations`, or call a separate API route with an `automations=false` flag.
-
-### B7 — `useSignature` does not check `res.ok` before accessing `.signature`
-**File**: `src/lib/crm/hooks.ts` `useSignature` ~line 960
-**Issue**: `queryFn` does `const data = await res.json(); return data.signature` without checking `res.ok`. If the API returns an error JSON, `data.signature` is `undefined` and the query resolves silently instead of throwing, so the error state is never shown.
-**Fix**: Add `if (!res.ok) throw new Error(data.error ?? 'Failed to load signature')` before accessing `data.signature`.
-
-### B8 — Calendar tasks query uses invalid status value `'in_progress'`
-**File**: `src/app/(crm)/crm/calendar/page.tsx` ~line 75
-**Issue**: `.in('status', ['open', 'in_progress'])` — `'in_progress'` is not a valid `TaskStatus` (only `'open'` and `'done'` exist per `types.ts`). This may cause unexpected DB behaviour if the column has a check constraint.
-**Fix**: Change to `.eq('status', 'open')`.
-
-### B9 — `InvoiceManager.recordPayment` writes `paid_at` to invoices table (column does not exist)
-**File**: `src/components/crm/InvoiceManager.tsx` ~line 55
-**Issue**: `supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() })` — `paid_at` is not defined in the `Invoice` type or the `Database` interface. This update will silently fail or throw a Postgres column-not-found error.
-**Fix**: Remove `paid_at` from the invoice update. Payment timestamp is already recorded in the `payments` table.
-
-### B10 — `DailyBriefing` localStorage dismiss keys accumulate indefinitely
-**File**: `src/components/crm/DailyBriefing.tsx` ~line 28
-**Issue**: Old dismiss keys from previous days are never cleaned up, accumulating in localStorage.
-**Fix**: On mount, if the stored value does not equal today's date string, remove the key before setting dismissed state.
+**Acceptance criteria**:
+- All new columns sort correctly when clicked.
+- Stage badge uses the same colour system as `STAGES` config.
+- "Days stale" cell is visually distinct (coloured text).
+- Column picker state survives page refresh.
+- Name and Status columns are always visible and cannot be hidden.
 
 ---
 
-## UX & Design Issues
+### 2. Leads List — Lead Health Indicator
 
-### U1 — Dashboard hierarchy: analytics tabs dominate, CRM metrics are buried
-The page opens on website analytics tabs. The CRM metrics (pipeline value, revenue, leads, win rate, tasks) are rendered below the AI briefing but above the tabs — easy to miss. For a sales team, pipeline health is the primary concern.
-**Improvement**: Restructure so CRM metrics are the hero section at the top, AI Daily Briefing is directly below, then a "Website Analytics" heading with the tabs section below a visual divider.
+**What**: A visual "health" dot in the leftmost column giving an at-a-glance signal for each lead.
 
-### U2 — Pipeline sub-stages are not scannable
-Grouped columns (e.g. "Meet 1" contains `call1_scheduled`, `qualified`, `meet1_completed`) show a sub-stage badge on each card but the badge is tiny (9px text) and uses the same colour for all sub-stages within a group. With 10+ cards across 3 sub-stages, distribution is impossible to see at a glance.
-**Improvement**: Add a sub-stage breakdown row inside each column header — small pills showing count per sub-stage (e.g. `Scheduled ×3 · Qualified ×2 · Completed ×1`).
+**Logic** (computed client-side, no AI call):
+- **Hot** (green pulse dot): has an open opportunity, last contact ≤7 days, no overdue tasks.
+- **Warm** (amber dot): has an open opportunity but last contact 8–21 days, or has 1 overdue task.
+- **Cold** (grey dot): no open opportunity, or last contact >21 days, or 2+ overdue tasks.
+- **Snoozed** (blue clock icon): `snoozed_until` is in the future — suppress health colour.
 
-### U3 — Mobile bottom nav missing Fittings, Reports, Settings
-`MobileBottomNav` hardcodes 5 items. Fittings, Reports, and Settings are inaccessible on mobile without the sidebar hamburger.
-**Improvement**: Add a 6th "More" item that opens a bottom sheet with the remaining nav items (role-gated).
+**Placement**: Small coloured dot before the checkbox, with a tooltip explaining the status.
 
-### U4 — Lead detail page: 9 tabs cause horizontal scroll on small screens
-On screens < 400px wide, tabs overflow with no visual indicator that more tabs exist.
-**Improvement**: Keep primary tabs (Activity, Contact, Opportunities, Messages) always visible; collapse secondary tabs (Bookings, Invoices, Tasks, Notes, Fitting) into a "More" dropdown on small screens.
-
-### U5 — Tasks page: drag-and-drop reorder is visual-only with no persistence
-`handleDragEnd` does nothing — the comment says "Visual reorder only — no backend persistence". After a page refresh, order reverts. Drag handles create a false affordance.
-**Improvement**: Remove drag handles to eliminate the false affordance. (Alternatively, add a `sort_order` column and persist reorder — higher effort.)
-
-### U6 — Reports revenue chart has no hover tooltips or axis labels
-Revenue chart uses animated `div` elements with percentage heights. No axis labels, no hover tooltips, no exact value on hover.
-**Improvement**: Add hover tooltips showing exact £ value and add Y-axis labels to the revenue bar chart.
-
-### U7 — Fittings stats bar conditionally renders cards, causing layout shift
-`{offeredJobs.length > 0 && <StatCard ...>}` means the stats bar changes width/layout as jobs move between statuses.
-**Improvement**: Always render all 5 stat cards; show `0` when empty. Use a consistent grid layout.
-
-### U8 — Settings page: no explanation of what requires Google connection
-When Google Calendar is not connected, users don't know what features are unavailable.
-**Improvement**: Add a feature-impact callout near the Google connect section listing what stops working without it (calendar sync, Meet links, booking availability).
-
-### U9 — Topbar breadcrumb missing for Fittings and Reports pages
-`BREADCRUMB_MAP` in `Topbar.tsx` does not include `/crm/fittings` or `/crm/reports`.
-**Fix**: Add `'/crm/fittings': 'Fittings'` and `'/crm/reports': 'Reports'` to `BREADCRUMB_MAP`.
-
-### U10 — Lead list sort indicators use raw arrow characters instead of icons
-Sort direction is shown as `↑` / `↓` appended to column header text, inconsistent with the Lucide icon system used everywhere else.
-**Improvement**: Replace with `<ChevronUp>` / `<ChevronDown>` Lucide icons inline with the header label.
-
-### U11 — Opportunity card quick-action buttons (Call, Email, WhatsApp) are non-functional
-In `OpportunityCard`, the Phone, Mail, and MessageSquare buttons in the hover actions row have no `onClick` handlers — they are purely decorative.
-**Improvement**: Wire Phone to `tel:` link, Email to open compose modal, WhatsApp to `https://wa.me/` link.
-
-### U12 — Calendar week view has no empty state when there are no events
-When a week has no bookings, visits, fittings, or tasks, the grid renders empty with no message. Users may think data failed to load.
-**Improvement**: Show a subtle empty-state message in the centre of the grid.
-
-### U13 — `NewLeadModal` does not assign an owner to the created lead
-`createLead.mutateAsync({ ...leadData, status: 'new' })` does not set `owner_user_id`. The lead and its auto-created opportunity are both unowned.
-**Improvement**: Default `owner_user_id` to the current user's profile ID. Add an optional "Assign to" dropdown for admins.
-
-### U14 — Pipeline board has no search or name filter
-Admins can filter by designer but there is no way to search by lead name across the board.
-**Improvement**: Add a search input above the board that filters cards by lead name in real-time (client-side).
-
-### U15 — `CommandPalette` fetches all data even when closed
-`useLeads()`, `useOpportunities()`, and `useTasks()` are called unconditionally inside `CommandPalette`, which is always mounted in the topbar.
-**Improvement**: Add `enabled: open` to each query so data is only fetched when the palette is open.
+**Acceptance criteria**:
+- Dot colour matches the three tiers above.
+- Snoozed leads show a clock icon instead of a dot.
+- Tooltip text is human-readable (e.g. "Cold — last contacted 24 days ago, 2 overdue tasks").
+- Health indicator is not shown in the trash view.
 
 ---
 
-## New Features
+### 3. Leads List — Advanced Filtering
 
-### F1 — Bulk actions on Leads list
-Add checkbox selection to the leads table with bulk actions: assign owner, change status, export to CSV, move to trash.
+**What**: Expand the filter bar to support filtering by owner, project type, source, and date range.
 
-### F2 — Pipeline value trend on Dashboard
-Add month-over-month delta indicators to each CRM metric card (computable from existing `useOpportunities` data — no new API needed).
+**New filters**:
+- **Owner** — dropdown of active profiles (admin only).
+- **Project type** — dropdown populated from distinct `project_type` values in the loaded leads data.
+- **Source** — dropdown populated from distinct `source` values.
+- **Date range** — "Created between" with two date inputs (from / to).
 
-### F3 — Task creation from Pipeline card context menu
-Add "Add task" to the opportunity card hover actions row, opening an inline mini-form pre-filled with the opportunity context.
+**UI**: Filters collapse behind a "Filters" button that shows a badge count of active filters. Clicking opens a filter panel below the search bar. A "Clear all" link resets everything.
 
-### F4 — Snooze from Pipeline board
-Add snooze quick options (1d/3d/7d) to the opportunity card hover actions row, matching the snooze control on the lead detail page.
-
-### F5 — Notification preferences panel
-Add a preferences panel accessible from the notification bell to configure which notification types to receive.
-
----
-
-## Acceptance Criteria
-
-### Bug fixes
-- [ ] B1: Creating a new opportunity from lead detail succeeds without DB error
-- [ ] B2: All elements using `--warm-25`, `--brand`, `--brand-light` render with correct colours
-- [ ] B3: Dragging a card on the pipeline board for a non-admin user shows the correct optimistic position without reverting
-- [ ] B4: Completing a `call1_attempt` task triggers stage automations (email sent, stage log written)
-- [ ] B5: Clicking a fitting job from the lead detail Fitting tab opens the correct job in the Fittings page
-- [ ] B6: "Change only" and "Confirm + automations" buttons produce different outcomes
-- [ ] B7: Signature API errors surface as error state in the settings UI
-- [ ] B8: Calendar tasks query uses only valid status values
-- [ ] B9: Recording a payment does not attempt to write `paid_at` to the invoices table
-- [ ] B10: localStorage dismiss key is cleaned up on new day
-
-### UX improvements
-- [ ] U1: Dashboard opens with CRM metrics as the primary hero section
-- [ ] U2: Pipeline columns show sub-stage count breakdown in the column header
-- [ ] U3: Mobile bottom nav has a "More" item that reveals Fittings, Reports, Settings
-- [ ] U4: Lead detail tabs do not require horizontal scroll on screens < 400px
-- [ ] U5: Task drag handles are removed (false affordance eliminated)
-- [ ] U6: Revenue chart has hover tooltips with exact values and Y-axis labels
-- [ ] U7: Fittings stats bar always renders all 5 cards
-- [ ] U8: Settings Google section explains what features require connection
-- [ ] U9: Topbar breadcrumb shows for Fittings and Reports pages
-- [ ] U10: Sort indicators use Lucide icons
-- [ ] U11: Opportunity card quick-action buttons are functional
-- [ ] U12: Calendar week view shows empty state when no events exist
-- [ ] U13: New leads are assigned to the creating user by default
-- [ ] U14: Pipeline board has a lead name search input
-- [ ] U15: CommandPalette only fetches data when open
-
-### New features
-- [ ] F1: Leads list supports multi-select with bulk actions
-- [ ] F2: Dashboard metric cards show month-over-month trend
-- [ ] F3: Pipeline card hover actions include "Add task"
-- [ ] F4: Pipeline card hover actions include "Snooze"
-- [ ] F5: Notification bell has a preferences panel
+**Acceptance criteria**:
+- Each filter compounds with others (AND logic).
+- Active filter count badge updates correctly.
+- Clearing individual filters works independently.
+- Non-admin users do not see the owner filter.
+- Null `project_type` / `source` values are excluded from dropdown options.
 
 ---
 
-## Implementation Plan
+### 4. Leads List — Inline Quick Actions
 
-Tasks are ordered by dependency and impact. Each step is independently shippable.
+**What**: Hovering a row reveals action buttons so common tasks don't require opening the lead.
 
-### Phase 1 — Critical bug fixes
-1. **B2** — Add `--warm-25`, `--brand`, `--brand-light` to `globals.css` `:root`
-2. **B1** — Change `'new_lead'` to `'new_enquiry'` in `OpportunitiesTab`
-3. **B8** — Change calendar tasks query to `.eq('status', 'open')`
-4. **B9** — Remove `paid_at` from `InvoiceManager` invoice update
-5. **B7** — Add `res.ok` check in `useSignature` queryFn
-6. **B3** — Update `optimisticMove` to use `qc.setQueriesData` for all opportunity cache keys
-7. **B4** — Add `runStageAutomations` + `stage_log` insert to `useUpdateTask` auto-move paths
-8. **B6** — Differentiate "Change only" vs "Confirm + automations" in `applyStageChange`
-9. **B5** — Pass `?job=` query param from FittingTab links; handle in Fittings page on mount
-10. **B10** — Clean up stale dismiss key in `DailyBriefing`
+**Actions per row** (appear on row hover, right-aligned):
+- **Call** — `tel:` link (only if phone exists).
+- **Email** — opens the SendConfirmation modal pre-filled with the lead's email.
+- **WhatsApp** — opens SendConfirmation modal pre-filled for WhatsApp (only if phone exists).
+- **Change status** — a small inline select that updates status without navigating away.
 
-### Phase 2 — Quick UX wins (low effort, high impact)
-11. **U9** — Add Fittings and Reports to `BREADCRUMB_MAP` in `Topbar`
-12. **U10** — Replace sort arrow characters with Lucide icons in leads table
-13. **U7** — Always render all 5 stat cards in Fittings page
-14. **U12** — Add empty state to Calendar week view
-15. **U13** — Default `owner_user_id` to current user in `NewLeadModal`; add admin assign dropdown
-16. **U15** — Add `enabled: open` to CommandPalette data hooks
+**Acceptance criteria**:
+- Actions only appear on hover.
+- Call/WhatsApp buttons hidden when lead has no phone; Email button hidden when no email.
+- Status change updates optimistically and shows a toast.
+- Clicking anywhere else on the row still navigates to the lead detail.
 
-### Phase 3 — Dashboard restructure
-17. **U1** — Reorder `DashboardPage`: CRM metrics hero → AI Briefing → divider → "Website Analytics" heading → tabs
-18. **F2** — Add month-over-month delta to each CRM metric card (computed from existing opportunity data)
+---
 
-### Phase 4 — Pipeline improvements
-19. **U2** — Add sub-stage count breakdown row to `PipelineColumn` header
-20. **U14** — Add lead name search input above the pipeline board
-21. **F3** — Add "Add task" to opportunity card hover actions (inline mini-form)
-22. **F4** — Add "Snooze" to opportunity card hover actions (1d/3d/7d quick options)
+### 5. Leads List — Duplicate Detection
 
-### Phase 5 — Mobile & navigation
-23. **U3** — Add "More" item to `MobileBottomNav` that opens a bottom sheet with Fittings, Reports, Settings (role-gated)
-24. **U4** — Collapse lead detail secondary tabs into a "More" dropdown on screens < 400px
+**What**: Surface a warning when leads share the same email or phone number.
 
-### Phase 6 — Functional fixes
-25. **U11** — Wire opportunity card quick-action buttons: Phone → `tel:`, Email → compose modal, WhatsApp → `wa.me/`
-26. **U5** — Remove drag handles from Tasks page to eliminate false affordance
+**UI**:
+- A dismissible amber banner at the top of the list: "X potential duplicate leads detected. Review →"
+- Clicking "Review" opens a modal listing duplicate groups (grouped by matching email or phone), with a "Merge" button per group that pre-selects those two leads.
+- Dismissing stores the dismissed state in `sessionStorage` (reappears on next page load).
 
-### Phase 7 — Reports & charts
-27. **U6** — Add hover tooltips to revenue bar chart (exact £ value on hover)
-28. **U6** — Add Y-axis labels to revenue chart
+**Acceptance criteria**:
+- Detection runs client-side on the loaded leads array (no extra API call).
+- Groups leads by exact email match OR exact phone match.
+- Leads with no email and no phone are excluded.
+- Banner does not appear when there are no duplicates.
+- Banner does not appear in the trash view.
 
-### Phase 8 — Settings & notifications
-29. **U8** — Add feature-impact callout to Google settings section
-30. **F5** — Add notification preferences panel to `NotificationCenter`
+---
 
-### Phase 9 — Bulk lead actions
-31. **F1** — Add checkbox column to leads table
-32. **F1** — Add bulk action toolbar (assign, status change, export CSV, trash) that appears when 1+ leads are selected
+### 6. Leads List — Lead Merge
+
+**What**: Allow merging two leads that represent the same person.
+
+**Flow**:
+1. User selects exactly 2 leads via checkboxes → "Merge" button appears in bulk toolbar.
+2. Merge modal shows both leads side-by-side.
+3. User picks which is "primary" (kept) and which is "secondary" (absorbed).
+4. Summary shows: primary contact details kept; secondary's opportunities, tasks, bookings, messages, invoices reassigned to primary.
+5. Confirm calls `POST /api/crm/leads/merge` with `{ primaryId, secondaryId }`.
+6. Secondary lead is soft-deleted. User redirected to primary lead.
+
+**Acceptance criteria**:
+- Merge button only appears when exactly 2 leads are selected.
+- User can swap primary/secondary before confirming.
+- On success: toast "Leads merged", redirect to primary lead.
+- On failure: toast with error, no data changed.
+- Merging a soft-deleted lead is blocked with an error message.
+- New API route handles reassignment of all related records atomically.
+
+---
+
+### 7. Lead Detail — Tab Consolidation
+
+**What**: Reduce 9 tabs to 6 primary + 2 secondary to lower navigation overhead.
+
+**New tab structure**:
+- **Overview** (replaces Activity) — activity timeline + AI summary + open tasks widget (top 3 open tasks with inline checkboxes) + next upcoming booking card.
+- **Contact** — unchanged.
+- **Pipeline** (renamed from Opportunities) — same content, clearer name.
+- **Comms** (replaces Messages) — merges Messages + Bookings. Bookings shown as a collapsible section above the message thread.
+- **Money** (replaces Invoices) — merges Invoices + Payments into one view.
+- **Tasks** — unchanged.
+- **Notes** — moved to More dropdown.
+- **Fitting** — moved to More dropdown.
+
+**Acceptance criteria**:
+- All existing functionality preserved, just reorganised.
+- Default tab on page load is Overview.
+- Tab counts update correctly (Comms shows message + booking count combined).
+- Sliding underline animation still works.
+- Notes and Fitting remain accessible via the More dropdown.
+
+---
+
+### 8. Lead Detail — Structured Call Logging
+
+**What**: A structured form to record call outcomes, replacing ad-hoc note-taking.
+
+**Trigger**: "Log call" button in the contact card quick-actions row (alongside Call / Email / WhatsApp).
+
+**Call log form** (inline panel below quick-actions, not a modal):
+- **Outcome**: radio — Reached / No answer / Left voicemail / Wrong number.
+- **Duration**: optional number input (minutes).
+- **Summary**: textarea (2–3 lines).
+- **Next action**: dropdown — Follow up call / Send quote / Schedule visit / Send contract / No action needed.
+- **Next action due**: date picker (defaults to tomorrow).
+- **Auto-create task**: checkbox (checked by default).
+
+**On submit**:
+- Appends a structured entry to `lead.notes` formatted as `Call [date]: [outcome] — [summary]`.
+- If auto-create task is checked, creates a Task via `useCreateTask`.
+- Activity timeline reflects the new note entry.
+- Success toast shown.
+
+**Acceptance criteria**:
+- Form is inline, not a modal.
+- Submitting with no outcome selected shows a validation error.
+- Task is only created if the checkbox is checked.
+- "Log call" button is hidden if the lead has no phone number.
+- Call log entry appears in the Overview timeline immediately after submission.
+
+---
+
+### 9. Lead Detail — Opportunity Stage Progress Bar
+
+**What**: Visual pipeline progress indicator on the Pipeline tab.
+
+**Design**:
+- A row of stage group labels (New → Meet 1 → Design → Visit → Deposit → Fitting → Close) with the current group highlighted.
+- A filled progress bar below, percentage based on `STAGE_ORDER` index position.
+- Current stage name shown as a label below the bar.
+- Stages with automations show a lightning bolt icon on hover with a tooltip from `STAGES[stage].description`.
+
+**Acceptance criteria**:
+- Progress bar fills proportionally based on position in `STAGE_ORDER`.
+- Lost/closed stages show the bar in red.
+- On-hold shows the bar in grey.
+- If no opportunity exists, progress bar is not rendered.
+- Multiple opportunities each get their own progress bar.
+
+---
+
+### 10. Lead Detail — Expanded Contact Fields
+
+**What**: Add Address, Preferred call time, and Relationship notes to the Contact tab.
+
+**New fields**:
+- **Address** — free-text field. Stored as note chip `Address: ...`.
+- **Preferred call time** — dropdown: Morning (9–12) / Afternoon (12–5) / Evening (5–8) / Any. Stored as note chip `Call time: ...`.
+- **Relationship notes** — textarea for internal context. Stored as note chip `Relationship: ...`.
+
+**Acceptance criteria**:
+- All three fields use the existing `InlineField` edit pattern.
+- Values round-trip correctly through `parseLeadNotes`.
+- Existing note chips are not disturbed when saving a new field.
+- Saving an empty value removes the chip entirely (not saves as `Field: `).
+- Fields show "Click to add" placeholder when empty.
+
+---
+
+### 11. Lead Detail — Quick-Reply Templates in Comms Tab
+
+**What**: A template picker above the compose bar so users can start from a pre-written message.
+
+**UI**:
+- A "Templates" button above the compose bar opens a small popover listing `MessageTemplate` records.
+- Clicking a template pre-fills the compose bar's subject and body.
+- Templates are filtered by the currently selected channel.
+
+**Acceptance criteria**:
+- Template list fetched from existing `message_templates` table via existing hooks.
+- Only templates matching the selected channel are shown.
+- Selecting a template does not auto-send — user must click Send.
+- If no templates exist for the channel, popover shows "No templates for this channel."
+
+---
+
+## Edge Cases
+
+| Scenario | Handling |
+|---|---|
+| Lead has no opportunities | Stage column shows "—"; Pipeline tab shows empty state with "New opportunity" CTA; progress bar not rendered. |
+| Lead has multiple opportunities | Stage column and progress bar use the most recently updated non-closed opportunity. All listed in Pipeline tab. |
+| Duplicate detection: lead has no email AND no phone | Excluded from duplicate groups entirely. |
+| Merge: one lead has active opportunities, the other doesn't | All opportunities from secondary reassigned to primary. No data lost. |
+| Merge: secondary lead is already soft-deleted | Merge blocked — show error "Cannot merge a deleted lead." |
+| Merge: 3+ leads selected | Merge button does not appear; only standard bulk actions shown. |
+| Call log: lead has no phone | "Log call" button not shown — impossible state. |
+| Note chip: `Address` chip already exists | Saving overwrites the existing chip value, does not append. |
+| Preferred call time: user clears the field | Chip removed from notes entirely. |
+| Column picker: user hides all optional columns | Name and Status always remain visible. |
+| Stale indicator: lead just created, never contacted | Days stale counts from `created_at`. |
+| Template picker: `message_templates` table is empty | Popover shows "No templates available. Create templates in Settings." |
+| Health indicator: snoozed lead | Clock icon shown; health tier not computed. |
+| Filter: project_type or source has null values | Null values excluded from dropdown options. |
+| Progress bar: opportunity is `on_hold` | Bar rendered in grey; group label "On Hold" highlighted. |
+| Progress bar: opportunity is `lost` or `closed_not_interested` | Bar rendered in red at 100% fill. |
+| Comms tab: lead has bookings but no messages | Bookings section shown, message thread shows empty state. |
+| Overview tab: no open tasks | Open tasks widget shows "No open tasks" with a "Add task" CTA. |
+| Overview tab: no upcoming bookings | Next booking card shows "No upcoming bookings" with a "Book a call" CTA. |
+
+---
+
+## Implementation Order
+
+1. **Leads list — richer columns** (Stage, Value, Last contact, Days stale) — highest daily impact, no new DB needed.
+2. **Lead health indicator** — client-side logic, fast to ship.
+3. **Leads list — advanced filtering** — unblocks finding specific leads quickly.
+4. **Leads list — inline quick actions** — reduces navigation overhead.
+5. **Lead detail — tab consolidation** (Overview, Comms, Money, Pipeline rename) — structural change that unblocks items below.
+6. **Lead detail — opportunity stage progress bar** — visual clarity on pipeline position.
+7. **Lead detail — structured call logging** — captures call outcomes currently lost.
+8. **Lead detail — expanded contact fields** (Address, Call time, Relationship notes) — uses existing note chip pattern.
+9. **Lead detail — quick-reply templates** — leverages existing template data.
+10. **Leads list — duplicate detection** — client-side, no API needed.
+11. **Leads list — lead merge** — requires new API route; most complex item, ship last.
