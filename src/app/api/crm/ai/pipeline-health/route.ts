@@ -3,12 +3,34 @@ import { getOpenAI, MODEL } from '@/lib/crm/openai'
 import { createClient } from '@/lib/supabase/server'
 import { BUSINESS_CONTEXT, PIPELINE_STAGES, STAGE_TARGETS, safeParseAIJson } from '@/lib/crm/ai-context'
 
-export const maxDuration = 60 // seconds — OpenAI calls need more than the 10s default
+export const maxDuration = 60
+
+const CACHE_KEY = 'pipeline_health_report'
+const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await request.json().catch(() => ({}))
+  const forceRefresh = body?.force === true
+
+  // Serve from cache if fresh — avoids repeated slow OpenAI calls
+  if (!forceRefresh) {
+    const { data: cached } = await supabase
+      .from('ai_insights')
+      .select('value, computed_at')
+      .eq('key', CACHE_KEY)
+      .maybeSingle()
+
+    if (cached?.value && cached.computed_at) {
+      const age = Date.now() - new Date(cached.computed_at).getTime()
+      if (age < CACHE_TTL_MS) {
+        return NextResponse.json({ ...(cached.value as object), _cached: true })
+      }
+    }
+  }
 
   const now = new Date()
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
@@ -198,7 +220,7 @@ Generate the weekly pipeline health report.`
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-      max_tokens: 600,
+      max_tokens: 700,
     })
 
     const raw = completion.choices[0]?.message?.content ?? '{}'
@@ -207,6 +229,12 @@ Generate the weekly pipeline health report.`
     result.period_start = weekAgo.toISOString()
     result.period_end = now.toISOString()
     result.generated_at = now.toISOString()
+
+    // Cache result so subsequent requests within 1 hour skip OpenAI
+    await supabase
+      .from('ai_insights')
+      .upsert({ key: CACHE_KEY, value: result, computed_at: now.toISOString() }, { onConflict: 'key' })
+      .then(() => {}) // non-blocking — ignore errors
 
     return NextResponse.json(result)
   } catch (err: unknown) {

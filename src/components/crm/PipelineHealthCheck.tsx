@@ -26,10 +26,17 @@ export default function PipelineHealthCheck() {
   const { healthCheckOn } = useAIPreferences()
   // Never auto-fire — only run when the user explicitly requests it
   const [runRequested, setRunRequested] = useState(false)
-  const { data: report, isLoading, error, refetch } = useAIPipelineHealth(
+  const [isForceRefreshing, setIsForceRefreshing] = useState(false)
+  const { data: report, isLoading, error, forceRefresh } = useAIPipelineHealth(
     healthCheckOn && runRequested
   )
   const [expanded, setExpanded] = useState(false)
+  const isCached = (report as (PipelineHealthReport & { _cached?: boolean }) | undefined)?._cached === true
+
+  async function handleRefresh() {
+    setIsForceRefreshing(true)
+    try { await forceRefresh() } finally { setIsForceRefreshing(false) }
+  }
 
   if (!healthCheckOn) return null
 
@@ -80,10 +87,11 @@ export default function PipelineHealthCheck() {
             <span className="text-xs text-[var(--warm-400)]">Health check timed out</span>
           </div>
           <button
-            onClick={() => refetch()}
-            className="flex items-center gap-1 text-[10px] text-[var(--green-600)] hover:text-[var(--green-700)] font-medium"
+            onClick={handleRefresh}
+            disabled={isForceRefreshing}
+            className="flex items-center gap-1 text-[10px] text-[var(--green-600)] hover:text-[var(--green-700)] font-medium disabled:opacity-50"
           >
-            <RefreshCw size={10} /> Retry
+            <RefreshCw size={10} className={isForceRefreshing ? 'animate-spin' : ''} /> Retry
           </button>
         </div>
       </div>
@@ -129,11 +137,18 @@ export default function PipelineHealthCheck() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {isCached && (
+              <span className="text-[9px] text-[var(--warm-400)] bg-[var(--warm-50)] border border-[var(--warm-100)] px-1.5 py-0.5 rounded-full">
+                cached
+              </span>
+            )}
             <button
-              onClick={() => refetch()}
-              className="p-1.5 text-[var(--warm-300)] hover:text-[var(--warm-500)] hover:bg-[var(--warm-50)] rounded-lg transition-all"
+              onClick={handleRefresh}
+              disabled={isForceRefreshing}
+              className="p-1.5 text-[var(--warm-300)] hover:text-[var(--warm-500)] hover:bg-[var(--warm-50)] rounded-lg transition-all disabled:opacity-50"
+              title={isCached ? 'Refresh (bypasses cache)' : 'Refresh'}
             >
-              <RefreshCw size={12} />
+              <RefreshCw size={12} className={isForceRefreshing ? 'animate-spin' : ''} />
             </button>
             <button
               onClick={() => setExpanded(!expanded)}

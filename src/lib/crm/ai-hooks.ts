@@ -228,7 +228,9 @@ export interface PipelineHealthReport {
 }
 
 export function useAIPipelineHealth(enabled: boolean) {
-  return useQuery<PipelineHealthReport>({
+  const queryClient = useQueryClient()
+
+  const query = useQuery<PipelineHealthReport>({
     queryKey: ['ai_pipeline_health'],
     queryFn: async () => {
       const res = await fetch('/api/crm/ai/pipeline-health', {
@@ -244,6 +246,26 @@ export function useAIPipelineHealth(enabled: boolean) {
     refetchOnWindowFocus: false,
     retry: false,
   })
+
+  /** Force a fresh OpenAI call, bypassing the server-side cache */
+  async function forceRefresh() {
+    await queryClient.cancelQueries({ queryKey: ['ai_pipeline_health'] })
+    return queryClient.fetchQuery({
+      queryKey: ['ai_pipeline_health'],
+      queryFn: async () => {
+        const res = await fetch('/api/crm/ai/pipeline-health', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ force: true }),
+        })
+        if (!res.ok) throw new Error(`Pipeline health check failed (${res.status})`)
+        return res.json()
+      },
+      staleTime: 0,
+    })
+  }
+
+  return { ...query, forceRefresh }
 }
 
 // ─── AI Evening Digest ───────────────────────────────────────────────────────

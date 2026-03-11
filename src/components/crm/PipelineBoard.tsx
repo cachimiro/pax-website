@@ -251,7 +251,7 @@ export default function PipelineBoard() {
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col h-full min-h-0">
       {/* Stats header */}
       <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 mb-5 card-hover-border flex-shrink-0">
         <div className="flex items-center justify-between gap-4">
@@ -365,7 +365,7 @@ export default function PipelineBoard() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-fade flex-1 min-h-0 items-start">
+        <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1 scrollbar-fade flex-1 min-h-0 items-stretch">
           {PIPELINE_GROUPS.map((group) => {
             // Collect all opportunities in this group's stages
             const groupOpps = group.stages.flatMap((stage) => grouped[stage] ?? [])
