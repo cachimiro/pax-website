@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { UserPlus, Send, Loader2, AlertTriangle, Check } from 'lucide-react'
+import { UserPlus, Send, Loader2, AlertTriangle, Check, Pause, Play, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 interface SubcontractorRow {
@@ -29,6 +29,8 @@ export default function FittersSection() {
   const [inviting, setInviting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   async function fetchSubs() {
     try {
@@ -43,6 +45,31 @@ export default function FittersSection() {
   }
 
   useEffect(() => { fetchSubs() }, [])
+
+  async function handleStatusChange(id: string, newStatus: 'active' | 'suspended') {
+    setActionLoading(id)
+    try {
+      const res = await fetch(`/api/crm/subcontractors/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (res.ok) fetchSubs()
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setActionLoading(id)
+    setConfirmDelete(null)
+    try {
+      const res = await fetch(`/api/crm/subcontractors/${id}`, { method: 'DELETE' })
+      if (res.ok) fetchSubs()
+    } finally {
+      setActionLoading(null)
+    }
+  }
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault()
@@ -140,26 +167,82 @@ export default function FittersSection() {
         ) : (
           <div className="space-y-2">
             {subs.map(sub => (
-              <div key={sub.id} className="bg-white rounded-xl border border-[var(--warm-100)] p-4 flex items-center justify-between">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-[var(--warm-900)]">{sub.name}</span>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full capitalize ${STATUS_STYLES[sub.status] || ''}`}>
-                      {sub.status}
-                    </span>
+              <div key={sub.id} className="bg-white rounded-xl border border-[var(--warm-100)] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-[var(--warm-900)]">{sub.name}</span>
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full capitalize ${STATUS_STYLES[sub.status] || ''}`}>
+                        {sub.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[var(--warm-500)] mt-0.5">{sub.email}</div>
+                    {sub.phone && <div className="text-xs text-[var(--warm-500)]">{sub.phone}</div>}
+                    {sub.status === 'invited' && sub.invite_sent_at && (
+                      <div className="text-[10px] text-[var(--warm-400)] mt-1">
+                        Invited {formatDistanceToNow(new Date(sub.invite_sent_at), { addSuffix: true })}
+                      </div>
+                    )}
+                    {sub.activated_at && (
+                      <div className="text-[10px] text-green-600 mt-1">
+                        Active since {new Date(sub.activated_at).toLocaleDateString('en-GB')}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-xs text-[var(--warm-500)] mt-0.5">{sub.email}</div>
-                  {sub.phone && <div className="text-xs text-[var(--warm-500)]">{sub.phone}</div>}
-                  {sub.status === 'invited' && sub.invite_sent_at && (
-                    <div className="text-[10px] text-[var(--warm-400)] mt-1">
-                      Invited {formatDistanceToNow(new Date(sub.invite_sent_at), { addSuffix: true })}
-                    </div>
-                  )}
-                  {sub.activated_at && (
-                    <div className="text-[10px] text-green-600 mt-1">
-                      Active since {new Date(sub.activated_at).toLocaleDateString('en-GB')}
-                    </div>
-                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {actionLoading === sub.id ? (
+                      <Loader2 size={14} className="animate-spin text-[var(--warm-400)]" />
+                    ) : (
+                      <>
+                        {sub.status === 'active' && (
+                          <button
+                            onClick={() => handleStatusChange(sub.id, 'suspended')}
+                            title="Suspend fitter"
+                            className="p-1.5 rounded-lg text-[var(--warm-400)] hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                          >
+                            <Pause size={14} />
+                          </button>
+                        )}
+                        {sub.status === 'suspended' && (
+                          <button
+                            onClick={() => handleStatusChange(sub.id, 'active')}
+                            title="Reactivate fitter"
+                            className="p-1.5 rounded-lg text-[var(--warm-400)] hover:bg-green-50 hover:text-green-600 transition-colors"
+                          >
+                            <Play size={14} />
+                          </button>
+                        )}
+
+                        {confirmDelete === sub.id ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-red-600">Remove?</span>
+                            <button
+                              onClick={() => handleDelete(sub.id)}
+                              className="text-[10px] px-2 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                              Yes
+                            </button>
+                            <button
+                              onClick={() => setConfirmDelete(null)}
+                              className="text-[10px] px-2 py-1 border border-[var(--warm-200)] rounded-lg hover:bg-[var(--warm-50)]"
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDelete(sub.id)}
+                            title="Remove fitter"
+                            className="p-1.5 rounded-lg text-[var(--warm-400)] hover:bg-red-50 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

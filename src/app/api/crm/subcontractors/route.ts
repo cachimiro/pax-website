@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient()
 
-  // Check for existing
+  // Check for existing subcontractor row
   const { data: existing } = await admin
     .from('subcontractors')
     .select('id, status')
@@ -40,6 +40,29 @@ export async function POST(request: NextRequest) {
 
   if (existing) {
     return NextResponse.json({ error: 'A subcontractor with this email already exists' }, { status: 409 })
+  }
+
+  // Clean up any orphaned auth user with this email (e.g. previously deleted fitter).
+  // Without this, createUser would fail and the invite token would never be set.
+  const { data: authList } = await admin.auth.admin.listUsers()
+  const orphanedAuthUser = authList?.users?.find(
+    u => u.email?.toLowerCase() === email.trim().toLowerCase()
+  )
+  if (orphanedAuthUser) {
+    // Only delete if they have no CRM profile — don't touch CRM staff accounts
+    const { data: crmProfile } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('id', orphanedAuthUser.id)
+      .maybeSingle()
+    if (!crmProfile) {
+      await admin.auth.admin.deleteUser(orphanedAuthUser.id)
+    } else {
+      return NextResponse.json(
+        { error: 'This email belongs to a CRM staff account and cannot be used for a fitter.' },
+        { status: 409 }
+      )
+    }
   }
 
   // Create subcontractor
