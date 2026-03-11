@@ -60,9 +60,9 @@ import SmartActions from '@/components/crm/SmartActions'
 import SendConfirmation from '@/components/crm/SendConfirmation'
 import { useAIPreferences } from '@/lib/crm/ai-preferences'
 import type { MessageChannel } from '@/lib/crm/types'
-import ProjectSummaryCard from '@/components/crm/ProjectSummaryCard'
+
 import DiscoveryAnswersCard from '@/components/crm/DiscoveryAnswersCard'
-import AIInsightsPanel from '@/components/crm/AIInsightsPanel'
+
 import { parseLeadNotes } from '@/lib/crm/utils'
 import { useMeet1Notes, useCreateTask, useProfiles, useUpdateOpportunity, useCreateOpportunity, useMoveOpportunityStage } from '@/lib/crm/hooks'
 import { useCurrentProfile } from '@/lib/crm/current-profile'
@@ -82,8 +82,7 @@ export default function LeadDetailPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [showCallLog, setShowCallLog] = useState(false)
-  const [tabUnderline, setTabUnderline] = useState({ left: 0, width: 0 })
-  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+
   const [moreTabOpen, setMoreTabOpen] = useState(false)
   const moreTabRef = useRef<HTMLDivElement>(null)
 
@@ -99,13 +98,6 @@ export default function LeadDetailPage() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [moreTabOpen])
   const [composeState, setComposeState] = useState<{ open: boolean; channel: MessageChannel; body: string; subject?: string; intent?: string } | null>(null)
-
-  useEffect(() => {
-    const el = tabRefs.current[activeTab]
-    if (el) {
-      setTabUnderline({ left: el.offsetLeft, width: el.offsetWidth })
-    }
-  }, [activeTab])
 
   // Guard: if id is not a valid UUID, redirect rather than fire 400s against Supabase
   const isValidId = UUID_RE.test(id ?? '')
@@ -143,7 +135,7 @@ export default function LeadDetailPage() {
     suggestionsOn ? lead : undefined,
     suggestionsOn ? primaryOpp : null
   )
-  const { data: aiSuggestion, isLoading: suggestLoading, logFeedback } = useAISuggestion(
+  const { data: aiSuggestion, isLoading: suggestLoading } = useAISuggestion(
     suggestionsOn ? lead : undefined,
     suggestionsOn ? primaryOpp : null,
     tasks, bookings, messages
@@ -197,12 +189,12 @@ export default function LeadDetailPage() {
   const LEAD_STATUSES = ['new', 'contacted', 'qualified', 'proposal_sent', 'won', 'lost', 'on_hold'] as const
 
   return (
-    <div>
-      {/* Back + Delete */}
+    <div className="min-h-screen bg-[var(--warm-50)]">
+      {/* Top bar */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => router.push('/crm/leads')}
-          className="flex items-center gap-1.5 text-sm text-[var(--warm-400)] hover:text-[var(--warm-600)] transition-colors"
+          className="flex items-center gap-1.5 text-sm text-[var(--warm-400)] hover:text-[var(--warm-700)] transition-colors"
         >
           <ArrowLeft size={14} /> Back to leads
         </button>
@@ -213,228 +205,271 @@ export default function LeadDetailPage() {
             <button onClick={() => setConfirmingDelete(false)} className="text-xs text-[var(--warm-400)]">Cancel</button>
           </div>
         ) : (
-          <button
-            onClick={() => setConfirmingDelete(true)}
-            className="flex items-center gap-1.5 text-xs text-[var(--warm-400)] hover:text-red-500 transition-colors"
-          >
+          <button onClick={() => setConfirmingDelete(true)} className="flex items-center gap-1.5 text-xs text-[var(--warm-400)] hover:text-red-500 transition-colors">
             <Trash2 size={13} /> Delete
           </button>
         )}
       </div>
 
-      {/* Two-column layout on desktop */}
+      {/* ── Hero Header (full width) ─────────────────────────────────────── */}
+      <div className="bg-white border border-[var(--warm-100)] rounded-2xl p-5 mb-5">
+        <div className="flex items-start gap-4">
+          {/* Avatar */}
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--green-100)] to-[var(--green-50)] flex items-center justify-center text-xl font-bold text-[var(--green-700)] shrink-0 font-heading">
+            {lead.name.charAt(0).toUpperCase()}
+          </div>
+
+          {/* Name + meta */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="font-heading text-2xl font-semibold text-[var(--warm-900)]">{lead.name}</h1>
+              <select
+                value={lead.status}
+                onChange={e => updateLead.mutate({ id: lead.id, status: e.target.value as typeof lead.status })}
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize cursor-pointer border-0 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] ${statusColors[lead.status] ?? statusColors.new}`}
+              >
+                {LEAD_STATUSES.map(s => (
+                  <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                ))}
+              </select>
+              {scoreLoading ? (
+                <span className="inline-flex items-center gap-1 text-[10px] text-[var(--warm-400)]">
+                  <Loader2 size={9} className="animate-spin" /> Scoring
+                </span>
+              ) : aiScore ? (
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                  aiScore.tier === 'hot' ? 'text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200' :
+                  aiScore.tier === 'warm' ? 'text-amber-700 bg-amber-50 ring-1 ring-amber-200' :
+                  'text-[var(--warm-500)] bg-[var(--warm-50)] ring-1 ring-[var(--warm-200)]'
+                }`}>
+                  <Brain size={9} /> {aiScore.score}
+                </span>
+              ) : null}
+            </div>
+
+            {/* Contact chips row */}
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-2">
+              {lead.email && (
+                <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-xs text-[var(--warm-500)] hover:text-[var(--green-700)] transition-colors">
+                  <Mail size={11} className="text-[var(--warm-300)] shrink-0" /> {lead.email}
+                </a>
+              )}
+              {lead.phone && (
+                <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 text-xs text-[var(--warm-500)] hover:text-[var(--green-700)] transition-colors">
+                  <Phone size={11} className="text-[var(--warm-300)] shrink-0" /> {lead.phone}
+                </a>
+              )}
+              {lead.postcode && (
+                <span className="flex items-center gap-1.5 text-xs text-[var(--warm-400)]">
+                  <MapPin size={11} className="text-[var(--warm-300)] shrink-0" /> {lead.postcode}
+                </span>
+              )}
+              <span className="flex items-center gap-1.5 text-xs text-[var(--warm-400)]">
+                <Calendar size={11} className="text-[var(--warm-300)] shrink-0" />
+                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+              </span>
+            </div>
+          </div>
+
+          {/* Action buttons — right-aligned */}
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+            {lead.phone && (
+              <a href={`tel:${lead.phone}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--green-700)] bg-[var(--green-50)] hover:bg-[var(--green-100)] border border-[var(--green-200)] rounded-lg transition-colors">
+                <Phone size={12} /> Call
+              </a>
+            )}
+            {lead.email && (
+              <button
+                onClick={() => setComposeState({ open: true, channel: 'email', body: '', intent: 'follow_up' })}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--warm-600)] bg-white hover:bg-[var(--warm-50)] border border-[var(--warm-200)] rounded-lg transition-colors">
+                <Mail size={12} /> Email
+              </button>
+            )}
+            {lead.phone && (
+              <button
+                onClick={() => setComposeState({ open: true, channel: 'whatsapp', body: '', intent: 'follow_up' })}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors">
+                <MessageSquare size={12} /> WhatsApp
+              </button>
+            )}
+            {lead.phone && (
+              <button
+                onClick={() => setShowCallLog(v => !v)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--warm-500)] hover:text-[var(--warm-700)] border border-dashed border-[var(--warm-200)] hover:border-[var(--warm-300)] rounded-lg transition-colors">
+                <Phone size={12} /> Log call
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Call log form — expands below header */}
+        {showCallLog && lead.phone && (
+          <div className="mt-4 pt-4 border-t border-[var(--warm-100)]">
+            <CallLogForm
+              leadId={id}
+              existingNotes={lead.notes}
+              primaryOppId={primaryOpp?.id ?? null}
+              onClose={() => setShowCallLog(false)}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* ── Two-column body ──────────────────────────────────────────────── */}
       <div className="flex flex-col lg:flex-row gap-5">
 
-        {/* Left column — sticky contact card + AI */}
-        <div className="lg:w-[320px] lg:shrink-0">
-          <div className="lg:sticky lg:top-20 space-y-4">
-            {/* Contact card */}
-            <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-5 card-hover-border">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--green-100)] to-[var(--green-50)] flex items-center justify-center text-2xl font-bold text-[var(--green-700)] shrink-0 font-heading avatar-hover">
-                  {lead.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h1 className="font-heading text-xl font-semibold text-[var(--warm-900)] truncate">{lead.name}</h1>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <select
-                      value={lead.status}
-                      onChange={e => updateLead.mutate({ id: lead.id, status: e.target.value as typeof lead.status })}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize cursor-pointer border-0 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] ${statusColors[lead.status] ?? statusColors.new}`}
-                    >
-                      {LEAD_STATUSES.map(s => (
-                        <option key={s} value={s}>{s.replace('_', ' ')}</option>
-                      ))}
-                    </select>
-                    {scoreLoading ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-[var(--warm-400)]">
-                        <Loader2 size={9} className="animate-spin" /> Scoring
+        {/* Left column — unified side panel */}
+        <div className="lg:w-[360px] lg:shrink-0">
+          <div className="lg:sticky lg:top-6 space-y-0">
+
+            {/* ── Unified Side Panel ─────────────────────────────────── */}
+            <div className="bg-white border border-[var(--warm-100)] rounded-2xl overflow-hidden">
+
+              {/* Section: Project */}
+              <div className="p-4">
+                <p className="text-[10px] font-semibold text-[var(--warm-400)] uppercase tracking-wider mb-3">Project</p>
+
+                {/* Stage badge + mini progress bar */}
+                {primaryOpp && (
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${STAGES[primaryOpp.stage]?.color ?? 'bg-gray-50'} ${STAGES[primaryOpp.stage]?.textColor ?? 'text-gray-600'}`}>
+                        {STAGES[primaryOpp.stage]?.label ?? primaryOpp.stage}
                       </span>
-                    ) : aiScore ? (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                        aiScore.tier === 'hot' ? 'text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200' :
-                        aiScore.tier === 'warm' ? 'text-amber-700 bg-amber-50 ring-1 ring-amber-200' :
-                        'text-[var(--warm-500)] bg-[var(--warm-50)] ring-1 ring-[var(--warm-200)]'
-                      }`}>
-                        <Brain size={9} />
-                        {aiScore.score}
-                      </span>
-                    ) : null}
+                      {primaryOpp.value_estimate != null && (
+                        <span className="text-xs font-semibold text-[var(--green-700)]">£{primaryOpp.value_estimate.toLocaleString('en-GB')}</span>
+                      )}
+                    </div>
+                    {/* Compact progress bar */}
+                    {(() => {
+                      const CLOSED = ['lost', 'closed_not_interested']
+                      const PAUSED = ['on_hold']
+                      const active = STAGE_ORDER.filter(s => !CLOSED.includes(s) && !PAUSED.includes(s))
+                      const idx = active.indexOf(primaryOpp.stage)
+                      const pct = CLOSED.includes(primaryOpp.stage) ? 100 : PAUSED.includes(primaryOpp.stage) ? 50 : idx >= 0 ? Math.round(((idx + 1) / active.length) * 100) : 0
+                      const barColor = CLOSED.includes(primaryOpp.stage) ? 'bg-red-400' : PAUSED.includes(primaryOpp.stage) ? 'bg-slate-300' : 'bg-[var(--green-500)]'
+                      return (
+                        <div className="h-1 bg-[var(--warm-100)] rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+                        </div>
+                      )
+                    })()}
                   </div>
-                </div>
-              </div>
+                )}
 
-              {/* Contact details */}
-              <div className="space-y-2.5 text-xs">
-                {lead.email && (
-                  <a href={`mailto:${lead.email}`} className="flex items-center gap-2 text-[var(--warm-600)] hover:text-[var(--green-700)] transition-colors">
-                    <Mail size={13} className="text-[var(--warm-300)] shrink-0" /> <span className="truncate">{lead.email}</span>
-                  </a>
-                )}
-                {lead.phone && (
-                  <a href={`tel:${lead.phone}`} className="flex items-center gap-2 text-[var(--warm-600)] hover:text-[var(--green-700)] transition-colors">
-                    <Phone size={13} className="text-[var(--warm-300)] shrink-0" /> {lead.phone}
-                  </a>
-                )}
-                {lead.postcode && (
-                  <span className="flex items-center gap-2 text-[var(--warm-500)]">
-                    <MapPin size={13} className="text-[var(--warm-300)] shrink-0" /> {lead.postcode}
-                  </span>
-                )}
-                <span className="flex items-center gap-2 text-[var(--warm-400)]">
-                  <Calendar size={13} className="text-[var(--warm-300)] shrink-0" />
-                  {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
-                </span>
-              </div>
-
-              {/* Quick actions */}
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[var(--warm-50)]">
-                {lead.phone && (
-                  <a
-                    href={`tel:${lead.phone}`}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[var(--green-700)] bg-[var(--green-50)] hover:bg-[var(--green-100)] rounded-xl transition-colors"
-                  >
-                    <Phone size={13} /> Call
-                  </a>
-                )}
-                {lead.email && (
-                  <button
-                    onClick={() => setComposeState({ open: true, channel: 'email', body: '', intent: 'follow_up' })}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[var(--warm-600)] bg-[var(--warm-50)] hover:bg-[var(--warm-100)] rounded-xl transition-colors"
-                  >
-                    <Mail size={13} /> Email
-                  </button>
-                )}
-                {lead.phone && (
-                  <button
-                    onClick={() => setComposeState({ open: true, channel: 'whatsapp', body: '', intent: 'follow_up' })}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors"
-                  >
-                    <MessageSquare size={13} /> WhatsApp
-                  </button>
-                )}
-              </div>
-
-              {/* Log call button — only when phone exists */}
-              {lead.phone && (
-                <div className="mt-2">
-                  {!showCallLog ? (
-                    <button
-                      onClick={() => setShowCallLog(true)}
-                      className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-[var(--warm-500)] hover:text-[var(--warm-700)] border border-dashed border-[var(--warm-200)] hover:border-[var(--warm-300)] rounded-xl transition-colors"
-                    >
-                      <Phone size={11} /> Log call
-                    </button>
+                {/* Project chips — from parsedNotes.fields array */}
+                <div className="flex flex-wrap gap-1.5">
+                  {parsedNotes.fields.length === 0 ? (
+                    <span className="text-xs text-[var(--warm-300)] italic">No project details yet</span>
                   ) : (
-                    <CallLogForm
-                      leadId={id}
-                      existingNotes={lead.notes}
-                      primaryOppId={primaryOpp?.id ?? null}
-                      onClose={() => setShowCallLog(false)}
-                    />
+                    parsedNotes.fields.map(f => (
+                      <span key={f.label} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--warm-50)] border border-[var(--warm-100)] rounded-full text-[10px] text-[var(--warm-600)]">
+                        {f.label}: {f.value}
+                      </span>
+                    ))
                   )}
                 </div>
-              )}
-            </div>
-
-            {/* Project summary */}
-            <ProjectSummaryCard
-              lead={lead}
-              parsedNotes={parsedNotes}
-              opportunity={primaryOpp}
-            />
-
-            {/* Discovery answers (Meet 1 + booking form) */}
-            <DiscoveryAnswersCard
-              meet1Notes={meet1Notes}
-              isLoading={meet1Loading}
-              opportunityId={primaryOpp?.id ?? null}
-            />
-
-            {/* AI Insights — collapsible panel */}
-            {suggestionsOn && (
-              <AIInsightsPanel
-                aiSuggestion={aiSuggestion}
-                suggestLoading={suggestLoading}
-                aiScore={aiScore}
-                scoreLoading={scoreLoading}
-                activitySummary={activitySummary}
-                summaryLoading={summaryLoading}
-                logFeedback={logFeedback}
-              />
-            )}
-
-            {/* Smart Actions + Snooze — only when AI suggestions enabled */}
-            {suggestionsOn && (
-              <>
-                <SmartActions
-                  lead={lead}
-                  opportunities={leadOpportunities}
-                  bookings={bookings}
-                  tasks={tasks}
-                  messages={messages}
-                  onCompose={(channel, templateHint) => {
-                    const firstName = lead.name?.split(' ')[0] ?? ''
-                    const bodyMap: Record<string, string> = {
-                      'follow-up': `Hi ${firstName},\n\nJust following up on our recent conversation. I wanted to check in and see if you had any questions.\n\nBest regards`,
-                      'send-quote': `Hi ${firstName},\n\nPlease find attached the quote we discussed. Let me know if you have any questions or would like to proceed.\n\nBest regards`,
-                      'payment-reminder': `Hi ${firstName},\n\nThis is a friendly reminder regarding the outstanding invoice. Please let us know if you need any assistance.\n\nBest regards`,
-                      'booking-confirm': `Hi ${firstName},\n\nJust confirming your upcoming appointment. Please let us know if you need to reschedule.\n\nBest regards`,
-                    }
-                    setComposeState({
-                      open: true,
-                      channel: channel as MessageChannel,
-                      body: bodyMap[templateHint] || `Hi ${firstName},\n\n\n\nBest regards`,
-                      subject: channel === 'email' ? `Re: ${templateHint.replace(/-/g, ' ')}` : undefined,
-                      intent: templateHint,
-                    })
-                  }}
-                  onScheduleCall={() => {
-                    router.push('/crm/calendar')
-                  }}
-                />
-
-                {/* Snooze control */}
-            <div className="px-4 py-3 rounded-xl border border-[var(--warm-100)] bg-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <BellOff size={12} className="text-[var(--warm-400)]" />
-                  <span className="text-[11px] font-semibold text-[var(--warm-600)]">Snooze Nudges</span>
-                </div>
-                {lead.snoozed_until && isFuture(new Date(lead.snoozed_until)) ? (
-                  <button
-                    onClick={() => updateLead.mutate({ id: lead.id, snoozed_until: null as unknown as string })}
-                    className="text-[10px] font-medium text-amber-600 hover:text-amber-700 transition-colors"
-                  >
-                    Snoozed until {format(new Date(lead.snoozed_until), 'dd MMM')} — Unsnooze
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    {[
-                      { label: '1d', days: 1 },
-                      { label: '3d', days: 3 },
-                      { label: '7d', days: 7 },
-                      { label: '14d', days: 14 },
-                    ].map((opt) => (
-                      <button
-                        key={opt.days}
-                        onClick={() =>
-                          updateLead.mutate({
-                            id: lead.id,
-                            snoozed_until: addDays(new Date(), opt.days).toISOString(),
-                          })
-                        }
-                        className="px-2 py-0.5 text-[10px] font-medium text-[var(--warm-500)] hover:text-[var(--green-700)] hover:bg-[var(--green-50)] rounded-md transition-colors"
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
+
+              {/* Section: AI Insights */}
+              {suggestionsOn && (
+                <>
+                  <hr className="border-[var(--warm-100)]" />
+                  <div className="p-4">
+                    <p className="text-[10px] font-semibold text-[var(--warm-400)] uppercase tracking-wider mb-3">AI Insights</p>
+                    {suggestLoading || summaryLoading ? (
+                      <div className="space-y-2">
+                        <div className="h-3 bg-[var(--warm-100)] rounded animate-pulse w-3/4" />
+                        <div className="h-3 bg-[var(--warm-100)] rounded animate-pulse w-1/2" />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {aiSuggestion && (
+                          <p className="text-xs text-[var(--warm-700)] leading-relaxed">{aiSuggestion.action}</p>
+                        )}
+                        {activitySummary && (
+                          <p className="text-xs text-[var(--warm-500)] leading-relaxed">{activitySummary.narrative}</p>
+                        )}
+                        {!aiSuggestion && !activitySummary && (
+                          <p className="text-xs text-[var(--warm-300)] italic">No insights yet</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Snooze nudges */}
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--warm-50)]">
+                      <div className="flex items-center gap-1.5">
+                        <BellOff size={11} className="text-[var(--warm-300)]" />
+                        <span className="text-[10px] text-[var(--warm-400)]">Snooze</span>
+                      </div>
+                      {lead.snoozed_until && isFuture(new Date(lead.snoozed_until)) ? (
+                        <button
+                          onClick={() => updateLead.mutate({ id: lead.id, snoozed_until: null as unknown as string })}
+                          className="text-[10px] font-medium text-amber-600 hover:text-amber-700 transition-colors"
+                        >
+                          Until {format(new Date(lead.snoozed_until), 'dd MMM')} · Unsnooze
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-0.5">
+                          {[{ label: '1d', days: 1 }, { label: '3d', days: 3 }, { label: '7d', days: 7 }, { label: '14d', days: 14 }].map(opt => (
+                            <button key={opt.days}
+                              onClick={() => updateLead.mutate({ id: lead.id, snoozed_until: addDays(new Date(), opt.days).toISOString() })}
+                              className="px-2 py-0.5 text-[10px] font-medium text-[var(--warm-500)] hover:text-[var(--green-700)] hover:bg-[var(--green-50)] rounded-md transition-colors"
+                            >{opt.label}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Section: Smart Actions */}
+              {suggestionsOn && (
+                <>
+                  <hr className="border-[var(--warm-100)]" />
+                  <div className="p-4">
+                    <p className="text-[10px] font-semibold text-[var(--warm-400)] uppercase tracking-wider mb-3">Suggested Actions</p>
+                    <SmartActions
+                      lead={lead}
+                      opportunities={leadOpportunities}
+                      bookings={bookings}
+                      tasks={tasks}
+                      messages={messages}
+                      onCompose={(channel, templateHint) => {
+                        const firstName = lead.name?.split(' ')[0] ?? ''
+                        const bodyMap: Record<string, string> = {
+                          'follow-up': `Hi ${firstName},\n\nJust following up on our recent conversation.\n\nBest regards`,
+                          'send-quote': `Hi ${firstName},\n\nPlease find attached the quote we discussed.\n\nBest regards`,
+                          'payment-reminder': `Hi ${firstName},\n\nFriendly reminder regarding the outstanding invoice.\n\nBest regards`,
+                          'booking-confirm': `Hi ${firstName},\n\nJust confirming your upcoming appointment.\n\nBest regards`,
+                        }
+                        setComposeState({
+                          open: true,
+                          channel: channel as MessageChannel,
+                          body: bodyMap[templateHint] || `Hi ${firstName},\n\n\n\nBest regards`,
+                          subject: channel === 'email' ? `Re: ${templateHint.replace(/-/g, ' ')}` : undefined,
+                          intent: templateHint,
+                        })
+                      }}
+                      onScheduleCall={() => router.push('/crm/calendar')}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Section: Discovery answers */}
+              <hr className="border-[var(--warm-100)]" />
+              <div className="p-4">
+                <DiscoveryAnswersCard
+                  meet1Notes={meet1Notes}
+                  isLoading={meet1Loading}
+                  opportunityId={primaryOpp?.id ?? null}
+                />
+              </div>
+
             </div>
-              </>
-            )}
           </div>
         </div>
 
@@ -443,6 +478,7 @@ export default function LeadDetailPage() {
           {/* Tabs with sliding underline.
               On screens < sm: only primary tabs are shown inline; secondary tabs
               are accessible via a "More" dropdown to prevent horizontal overflow. */}
+          {/* ── Pill Tab Bar ─────────────────────────────────────────── */}
           {(() => {
             const PRIMARY_TABS: Tab[] = ['overview', 'contact', 'pipeline', 'comms', 'money', 'tasks']
             const primaryTabs = tabs.filter((t) => PRIMARY_TABS.includes(t.key))
@@ -450,100 +486,65 @@ export default function LeadDetailPage() {
             const activeIsSecondary = secondaryTabs.some((t) => t.key === activeTab)
 
             return (
-              <div className="relative flex items-center gap-1 mb-5 pb-px -mx-1 px-1 border-b border-[var(--warm-100)]">
-                {/* Primary tabs — always visible */}
+              <div className="flex items-center gap-1.5 mb-4 flex-wrap">
                 {primaryTabs.map((t) => (
                   <button
                     key={t.key}
-                    ref={(el) => { tabRefs.current[t.key] = el }}
                     onClick={() => setActiveTab(t.key)}
-                    className={`
-                      relative flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors
-                      ${activeTab === t.key ? 'text-[var(--green-700)]' : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'}
-                    `}
-                  >
-                    {t.icon}
-                    {t.label}
-                    {t.count != null && t.count > 0 && (
-                      <span className={`ml-0.5 text-[10px] rounded-full px-1.5 py-0.5 ${
-                        activeTab === t.key ? 'bg-[var(--green-100)] text-[var(--green-700)]' : 'bg-[var(--warm-100)] text-[var(--warm-500)]'
-                      }`}>
-                        {t.count}
-                      </span>
-                    )}
-                    {/* Draft dot — shown when AI has pre-generated drafts */}
-                    {t.draftCount != null && t.draftCount > 0 && (
-                      <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full bg-[var(--green-500)]" title={`${t.draftCount} AI draft${t.draftCount > 1 ? 's' : ''} ready`} />
-                    )}
-                  </button>
-                ))}
-
-                {/* Secondary tabs — always visible on sm+, hidden behind "More" on xs */}
-                {secondaryTabs.map((t) => (
-                  <button
-                    key={t.key}
-                    ref={(el) => { tabRefs.current[t.key] = el }}
-                    onClick={() => setActiveTab(t.key)}
-                    className={`
-                      relative hidden sm:flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors
-                      ${activeTab === t.key ? 'text-[var(--green-700)]' : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'}
-                    `}
-                  >
-                    {t.icon}
-                    {t.label}
-                    {t.count != null && t.count > 0 && (
-                      <span className={`ml-0.5 text-[10px] rounded-full px-1.5 py-0.5 ${
-                        activeTab === t.key ? 'bg-[var(--green-100)] text-[var(--green-700)]' : 'bg-[var(--warm-100)] text-[var(--warm-500)]'
-                      }`}>
-                        {t.count}
-                      </span>
-                    )}
-                    {t.draftCount != null && t.draftCount > 0 && (
-                      <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full bg-[var(--green-500)]" title={`${t.draftCount} AI draft${t.draftCount > 1 ? 's' : ''} ready`} />
-                    )}
-                  </button>
-                ))}
-
-                {/* "More" dropdown — only visible on xs screens */}
-                <div className="relative sm:hidden ml-auto" ref={moreTabRef}>
-                  <button
-                    onClick={() => setMoreTabOpen((v) => !v)}
-                    className={`flex items-center gap-1 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors rounded-lg ${
-                      activeIsSecondary
-                        ? 'text-[var(--green-700)] bg-[var(--green-50)]'
-                        : 'text-[var(--warm-500)] hover:text-[var(--warm-700)]'
+                    className={`relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-all ${
+                      activeTab === t.key
+                        ? 'bg-[var(--green-50)] text-[var(--green-700)] border border-[var(--green-200)] shadow-sm'
+                        : 'text-[var(--warm-500)] hover:text-[var(--warm-700)] hover:bg-white border border-transparent'
                     }`}
                   >
-                    {activeIsSecondary
-                      ? tabs.find((t) => t.key === activeTab)?.label
-                      : 'More'}
-                    <ChevronDown size={11} className={`transition-transform ${moreTabOpen ? 'rotate-180' : ''}`} />
+                    {t.icon}
+                    {t.label}
+                    {t.count != null && t.count > 0 && (
+                      <span className={`text-[10px] rounded-full px-1.5 py-0 font-semibold ${
+                        activeTab === t.key ? 'bg-[var(--green-100)] text-[var(--green-700)]' : 'bg-[var(--warm-100)] text-[var(--warm-400)]'
+                      }`}>
+                        {t.count}
+                      </span>
+                    )}
+                    {t.draftCount != null && t.draftCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--green-500)] border-2 border-white" title={`${t.draftCount} AI draft${t.draftCount > 1 ? 's' : ''} ready`} />
+                    )}
+                  </button>
+                ))}
+
+                {/* ··· More dropdown for secondary tabs */}
+                <div className="relative" ref={moreTabRef}>
+                  <button
+                    onClick={() => setMoreTabOpen((v) => !v)}
+                    className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-all border ${
+                      activeIsSecondary
+                        ? 'bg-[var(--green-50)] text-[var(--green-700)] border-[var(--green-200)]'
+                        : 'text-[var(--warm-500)] hover:text-[var(--warm-700)] hover:bg-white border-transparent'
+                    }`}
+                  >
+                    {activeIsSecondary ? tabs.find((t) => t.key === activeTab)?.label : '···'}
+                    <ChevronDown size={10} className={`transition-transform ${moreTabOpen ? 'rotate-180' : ''}`} />
                   </button>
                   <AnimatePresence>
                     {moreTabOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.12 }}
-                        className="absolute right-0 top-full mt-1 z-50 bg-white border border-[var(--warm-100)] rounded-xl shadow-lg py-1 min-w-[140px]"
+                        initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                        transition={{ duration: 0.1 }}
+                        className="absolute left-0 top-full mt-1.5 z-50 bg-white border border-[var(--warm-100)] rounded-xl shadow-lg py-1 min-w-[140px]"
                       >
                         {secondaryTabs.map((t) => (
                           <button
                             key={t.key}
                             onClick={() => { setActiveTab(t.key); setMoreTabOpen(false) }}
                             className={`w-full flex items-center gap-2 px-3.5 py-2 text-xs font-medium transition-colors ${
-                              activeTab === t.key
-                                ? 'text-[var(--green-700)] bg-[var(--green-50)]'
-                                : 'text-[var(--warm-600)] hover:bg-[var(--warm-50)]'
+                              activeTab === t.key ? 'text-[var(--green-700)] bg-[var(--green-50)]' : 'text-[var(--warm-600)] hover:bg-[var(--warm-50)]'
                             }`}
                           >
-                            {t.icon}
-                            {t.label}
+                            {t.icon} {t.label}
                             {t.count != null && t.count > 0 && (
-                              <span className="ml-auto text-[10px] rounded-full px-1.5 py-0.5 bg-[var(--warm-100)] text-[var(--warm-500)]">
-                                {t.count}
-                              </span>
+                              <span className="ml-auto text-[10px] rounded-full px-1.5 py-0.5 bg-[var(--warm-100)] text-[var(--warm-500)]">{t.count}</span>
                             )}
                           </button>
                         ))}
@@ -551,27 +552,19 @@ export default function LeadDetailPage() {
                     )}
                   </AnimatePresence>
                 </div>
-
-                {/* Sliding underline indicator */}
-                <motion.div
-                  className="absolute bottom-0 h-[2px] bg-[var(--green-600)] rounded-full"
-                  animate={{ left: tabUnderline.left, width: tabUnderline.width }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                />
               </div>
             )
           })()}
 
-          {/* Tab content */}
-          <div className="bg-white rounded-2xl border border-[var(--warm-100)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] card-hover-border">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
-              >
+          {/* Tab content — no outer card, sections define their own blocks */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+            >
                 {activeTab === 'overview' && (
                   <OverviewTab
                     stageLog={stageLog}
@@ -584,25 +577,50 @@ export default function LeadDetailPage() {
                     onAddTask={() => setActiveTab('tasks')}
                   />
                 )}
-                {activeTab === 'contact' && <ContactTab lead={lead} />}
-                {activeTab === 'pipeline' && <OpportunitiesTab opportunities={leadOpportunities} leadId={id} />}
-                {activeTab === 'comms' && (
-                  <CommsTab
-                    messages={messages}
-                    drafts={messageDrafts}
-                    leadId={id}
-                    preferredChannel={lead?.preferred_channel ?? null}
-                    bookings={bookings}
-                    leadName={lead?.name ?? ''}
-                  />
+                {activeTab === 'contact' && (
+                  <div className="bg-white border border-[var(--warm-100)] rounded-xl overflow-hidden">
+                    <ContactTab lead={lead} />
+                  </div>
                 )}
-                {activeTab === 'money' && <MoneyTab invoices={invoices} payments={payments} />}
-                {activeTab === 'tasks' && <TasksTab tasks={tasks} leadId={id} primaryOppId={primaryOpp?.id ?? null} />}
-                {activeTab === 'notes' && <LeadNotesTab leadId={id} existingNotes={lead?.notes ?? null} />}
-                {activeTab === 'fitting' && <FittingTab opportunityIds={leadOpportunities.map(o => o.id)} />}
-              </motion.div>
-            </AnimatePresence>
-          </div>
+                {activeTab === 'pipeline' && (
+                  <div className="bg-white border border-[var(--warm-100)] rounded-xl overflow-hidden">
+                    <OpportunitiesTab opportunities={leadOpportunities} leadId={id} />
+                  </div>
+                )}
+                {activeTab === 'comms' && (
+                  <div className="bg-white border border-[var(--warm-100)] rounded-xl overflow-hidden">
+                    <CommsTab
+                      messages={messages}
+                      drafts={messageDrafts}
+                      leadId={id}
+                      preferredChannel={lead?.preferred_channel ?? null}
+                      bookings={bookings}
+                      leadName={lead?.name ?? ''}
+                    />
+                  </div>
+                )}
+                {activeTab === 'money' && (
+                  <div className="bg-white border border-[var(--warm-100)] rounded-xl overflow-hidden">
+                    <MoneyTab invoices={invoices} payments={payments} />
+                  </div>
+                )}
+                {activeTab === 'tasks' && (
+                  <div className="bg-white border border-[var(--warm-100)] rounded-xl overflow-hidden">
+                    <TasksTab tasks={tasks} leadId={id} primaryOppId={primaryOpp?.id ?? null} />
+                  </div>
+                )}
+                {activeTab === 'notes' && (
+                  <div className="bg-white border border-[var(--warm-100)] rounded-xl overflow-hidden">
+                    <LeadNotesTab leadId={id} existingNotes={lead?.notes ?? null} />
+                  </div>
+                )}
+                {activeTab === 'fitting' && (
+                  <div className="bg-white border border-[var(--warm-100)] rounded-xl overflow-hidden">
+                    <FittingTab opportunityIds={leadOpportunities.map(o => o.id)} />
+                  </div>
+                )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 

@@ -17,7 +17,6 @@ interface Props {
   onAddTask: () => void
 }
 
-
 export default function OverviewTab({
   stageLog, messages, tasks, bookings, payments, leadCreatedAt, emailMessages, onAddTask,
 }: Props) {
@@ -29,32 +28,29 @@ export default function OverviewTab({
     .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())[0]
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Open tasks widget */}
-      <div>
+    <div className="space-y-4">
+      {/* Open tasks */}
+      <div className="bg-white border border-[var(--warm-100)] rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-semibold text-[var(--warm-500)] uppercase tracking-wider">Open Tasks</h3>
-          <button
-            onClick={onAddTask}
-            className="flex items-center gap-1 text-xs text-[var(--green-600)] hover:text-[var(--green-700)] font-medium transition-colors"
-          >
+          <p className="text-[10px] font-semibold text-[var(--warm-400)] uppercase tracking-wider">Open Tasks</p>
+          <button onClick={onAddTask} className="flex items-center gap-1 text-xs text-[var(--green-600)] hover:text-[var(--green-700)] font-medium transition-colors">
             <Plus size={11} /> Add
           </button>
         </div>
         {openTasks.length === 0 ? (
-          <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-[var(--warm-50)] border border-[var(--warm-100)]">
-            <span className="text-xs text-[var(--warm-400)]">No open tasks</span>
+          <div className="flex items-center justify-between py-2">
+            <span className="text-xs text-[var(--warm-300)]">No open tasks</span>
             <button onClick={onAddTask} className="text-xs text-[var(--green-600)] hover:underline font-medium">Add task</button>
           </div>
         ) : (
           <div className="space-y-2">
             {openTasks.map(t => (
-              <div key={t.id} className="flex items-center gap-3 py-2 px-3 rounded-xl bg-[var(--warm-50)] border border-[var(--warm-100)]">
+              <div key={t.id} className="flex items-center gap-3 py-1.5">
                 <button
                   onClick={() => updateTask.mutate({ id: t.id, status: 'done' })}
-                  className="w-4 h-4 rounded border-2 border-[var(--warm-300)] hover:border-[var(--green-500)] flex items-center justify-center shrink-0 transition-colors"
+                  className="w-4 h-4 rounded border-2 border-[var(--warm-200)] hover:border-[var(--green-500)] flex items-center justify-center shrink-0 transition-colors group"
                 >
-                  <CheckSquare size={10} className="opacity-0 hover:opacity-100" />
+                  <CheckSquare size={10} className="opacity-0 group-hover:opacity-100 text-[var(--green-600)]" />
                 </button>
                 <span className="text-xs text-[var(--warm-700)] capitalize flex-1">{t.type.replace(/_/g, ' ')}</span>
                 {t.due_at && (
@@ -69,14 +65,16 @@ export default function OverviewTab({
       </div>
 
       {/* Next booking */}
-      <div>
-        <h3 className="text-xs font-semibold text-[var(--warm-500)] uppercase tracking-wider mb-3">Next Booking</h3>
+      <div className="bg-white border border-[var(--warm-100)] rounded-xl p-4">
+        <p className="text-[10px] font-semibold text-[var(--warm-400)] uppercase tracking-wider mb-3">Next Booking</p>
         {nextBooking ? (
-          <div className="flex items-center gap-3 py-3 px-4 rounded-xl bg-blue-50 border border-blue-100">
-            <Calendar size={14} className="text-blue-500 shrink-0" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+              <Calendar size={14} className="text-blue-500" />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-blue-800 capitalize">{nextBooking.type.replace(/_/g, ' ')}</p>
-              <p className="text-[11px] text-blue-600">{format(new Date(nextBooking.scheduled_at), 'EEE dd MMM, HH:mm')} · {nextBooking.duration_min}min</p>
+              <p className="text-xs font-medium text-[var(--warm-800)] capitalize">{nextBooking.type.replace(/_/g, ' ')}</p>
+              <p className="text-[11px] text-[var(--warm-500)]">{format(new Date(nextBooking.scheduled_at), 'EEE dd MMM, HH:mm')} · {nextBooking.duration_min}min</p>
             </div>
             {nextBooking.meet_link && (
               <a href={nextBooking.meet_link} target="_blank" rel="noopener noreferrer"
@@ -86,15 +84,13 @@ export default function OverviewTab({
             )}
           </div>
         ) : (
-          <div className="py-3 px-4 rounded-xl bg-[var(--warm-50)] border border-[var(--warm-100)]">
-            <span className="text-xs text-[var(--warm-400)]">No upcoming bookings</span>
-          </div>
+          <p className="text-xs text-[var(--warm-300)]">No upcoming bookings</p>
         )}
       </div>
 
       {/* Activity timeline */}
-      <div>
-        <h3 className="text-xs font-semibold text-[var(--warm-500)] uppercase tracking-wider mb-3">Activity</h3>
+      <div className="bg-white border border-[var(--warm-100)] rounded-xl p-4">
+        <p className="text-[10px] font-semibold text-[var(--warm-400)] uppercase tracking-wider mb-3">Activity</p>
         <ActivityTimeline
           stageLog={stageLog}
           messages={messages}

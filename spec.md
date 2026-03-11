@@ -1,133 +1,121 @@
-# Fitter Portal & Admin Integration — Improvement Spec
+# Spec: Lead Detail Page — Full Layout Redesign
 
 ## Problem Statement
 
-The fitter portal and CRM fittings page work in isolation. Fitters miss offers, arrive on site with incomplete job packs, and the sign-off flow is unreliable. Admin has no real-time visibility into job progress, cannot review photos before approving, and cannot see which fitters are available on a given date. Offer routing is manual — if a fitter declines or ignores an offer, nothing happens automatically.
+The current lead detail page has several UX problems:
+
+1. **Narrow 320px sidebar** — name truncates, contact details cramped, too many stacked cards require heavy scrolling.
+2. **Right panel blank** — tab content not rendering due to a runtime error in recent changes.
+3. **No visual hierarchy** — sidebar and right panel feel like two disconnected equal-weight columns.
+4. **Too many sidebar cards** — Contact, Project, Discovery, AI Insights, Smart Actions, Snooze are all separate cards stacked vertically.
+5. **Tab bar cluttered** — 8 tabs in a row with underline style is hard to scan.
+6. **Style is dated** — not consistent with modern SaaS tools like Linear or Notion.
+
+Target: clean, information-dense, modern SaaS layout. Most important data immediately visible without scrolling. Secondary data one click away.
 
 ---
 
-## Current State
+## New Layout
 
-**Fitter portal:** dashboard (plain list), board (claim jobs), job detail (checklist/photos/sign-off), availability, messages (N+1 API calls).
-
-**CRM fittings page:** tabs for Unassigned / Offered / Active / Board / Completed. Can assign fitters and open FittingDetailPanel.
-
-**Key gaps:** no real-time offer notifications, no earnings dashboard, no map link, N+1 messages fetching, admin can't see fitter availability when assigning, no photo review before approval, no auto-offer routing, offer expiry not enforced by background job, subcontractor_id NOT NULL breaks open-board state.
+```
+┌─────────────────────────────────────────────────────────┐
+│  ← Back                                      [Delete]   │  top bar
+├─────────────────────────────────────────────────────────┤
+│  [M]  Mihai Aconstantinesei  [New] [Hot]   Call Email WA│  hero header (full width)
+│       email · phone · postcode · 7 days ago             │
+├──────────────────────────┬──────────────────────────────┤
+│  LEFT PANEL (360px)      │  RIGHT PANEL (flex-1)        │
+│  sticky unified card:    │  [pill tabs]                 │
+│  ─ Project + stage       │  [tab content — no wrapper]  │
+│  ─ AI insights + snooze  │                              │
+│  ─ Smart actions         │                              │
+└──────────────────────────┴──────────────────────────────┘
+```
 
 ---
 
 ## Requirements
 
-### 1. Fitter Dashboard Redesign
-- Card-based layout replacing plain list:
-  - Today's job card (address, time, quick-action button)
-  - Pending offers with inline accept/decline + expiry countdown
-  - Upcoming jobs (next 7 days)
-  - Earnings strip (current month / last month / all-time)
-- Bottom nav unread message badge via Supabase Realtime
-- Realtime subscription on fitting_jobs for live offer/status updates
+### R1 — Hero Header (full width)
+- Spans both columns above the two-column split
+- Large avatar (64px rounded-xl) + name (24px, never truncated) + status select + AI score badge in one row
+- Contact details (email, phone, postcode, created) as a horizontal flex-wrap chip row below the name
+- Call / Email / WhatsApp buttons right-aligned — always visible, not buried
+- `+ Log call` as a small text link next to the action buttons
+- `bg-white border border-[var(--warm-100)]` card, `rounded-2xl`, `p-5`
 
-### 2. Fitter Job Detail Improvements
-- Google Maps deep-link from customer_address
-- Full job pack inline: scope of work, access notes, parking, IKEA ref, special instructions, design documents
-- Fitting fee + estimated duration at top
-- Offer expiry countdown when status = offered
-- "I'm on my way" button — new en_route status between accepted and in_progress
-- Photo thumbnails + upload progress + minimum count warning (5 before, 5 after)
-- Checklist: warn (not hard-block) if required items unchecked before status progression
+### R2 — Unified Left Panel (360px, sticky)
+Single `bg-white border border-[var(--warm-100)] rounded-2xl` card replacing all current separate sidebar cards. Three sections divided by `<hr>`:
 
-### 3. Fitter Earnings Page (/fitter/earnings)
-- Monthly bar chart (last 6 months)
-- Per-job table: job code, customer, date, fee, status
-- Totals: current month, last month, all-time
-- Source: fitting_jobs where subcontractor_id = me, status IN (completed, signed_off, approved), fitting_fee IS NOT NULL
+**Project section**
+- Pipeline stage badge + compact 4px progress bar
+- Project chips (Room, Style, Package, Budget, Timeline, Location) in wrapping pill layout
+- Discovery answers collapsible (collapsed by default)
 
-### 4. Messages Fix
-- New GET /api/fitter/messages/summary — single query, all jobs with unread count + last message
-- Replace N+1 fetching in messages page
-- Realtime on fitting_messages for live unread badge
+**AI section**
+- Collapsed skeleton until loaded
+- When loaded: score tier + one-line suggestion
+- Snooze nudge buttons (1d 3d 7d 14d) at the bottom of this section
 
-### 5. Auto-Offer Routing Cron
-GET /api/cron/fitter-offer-expiry (every 15 min, added to vercel.json):
-1. Find fitting_jobs where status = offered and offer_expires_at < now()
-2. Mark offer record as expired in fitting_job_offers
-3. Find next eligible fitter: available_for_jobs = true, available on job date per fitter_availability, no blocked date, not already offered this job, max_jobs_per_day not exceeded
-4. If eligible: new offer (status = offered, offer_expires_at = now() + 24h), email fitter
-5. If none: status = open_board, open_board_at = now(), notify admin, create urgent CRM task
-6. Update decline_rate on subcontractor
+**Actions section**
+- Smart action rows: icon + label + description, compact
+- No separate card borders — just rows within the section
 
-### 6. CRM Fittings — Admin Improvements
+### R3 — Pill Tab Bar
+Replace sliding underline indicator with pill-style tabs:
+- Active: `bg-[var(--green-50)] text-[var(--green-700)] border border-[var(--green-200)] rounded-full px-3 py-1.5`
+- Inactive: `text-[var(--warm-500)] hover:text-[var(--warm-700)] hover:bg-[var(--warm-50)] rounded-full px-3 py-1.5`
+- Count badge inside each pill
+- 6 primary tabs: Overview · Contact · Pipeline · Comms · Money · Tasks
+- `···` overflow button for Notes and Fitting
 
-Availability overlay on assign:
-- Show which fitters are available (green) vs unavailable (grey) on the job's scheduled date
-- Show each fitter's job count vs max_jobs_per_day for that date
+### R4 — Tab Content Styling
+- Remove the outer `bg-white rounded-2xl border` wrapper from the tab content area
+- Each tab renders its own section blocks: `bg-[var(--warm-50)] rounded-xl p-4`
+- Section headers: `text-[10px] uppercase tracking-wider font-semibold text-[var(--warm-400)]`
+- `space-y-4` between sections within a tab
 
-Inline photo/checklist review in FittingDetailPanel:
-- New Photos tab: before/after photo grid
-- Checklist completion % for before and after
-- Approve button gated: checklist_after >= 80% complete AND >= 5 after photos
+### R5 — Overview Tab
+Three section blocks:
+1. **Open tasks** — compact checklist, max 3 items shown, `+ Add task` link, overdue tasks in red
+2. **Next booking** — single row card with date, type, duration, join link
+3. **Activity timeline** — vertical timeline, icon + label + relative timestamp
 
-Fitter performance stats:
-- Per-fitter: total jobs, decline rate, avg days assigned→completed, last active
-- Shown in Fittings sidebar or Settings
+### R6 — Fix blank right panel
+- Identify the runtime error causing tab content not to render
+- Ensure all 6 tab components render without errors
 
-Real-time status updates:
-- Supabase Realtime on fitting_jobs in fittings page
-- Live badge updates + toast on completed / signed_off
-
-Availability tab (new tab on Fittings page):
-- Week-view grid: fitters as rows, days as columns
-- Green = available, grey = blocked, number = jobs booked
-- Click cell → assign modal pre-filled
-
-### 7. DB Migration (030)
-
-ALTER TABLE fitting_jobs DROP CONSTRAINT fitting_jobs_status_check;
-ALTER TABLE fitting_jobs ADD CONSTRAINT fitting_jobs_status_check
-  CHECK (status IN ('offered','assigned','accepted','en_route','declined','open_board',
-                    'claimed','in_progress','completed','signed_off','approved','rejected','cancelled'));
-
-ALTER TABLE fitting_jobs ALTER COLUMN subcontractor_id DROP NOT NULL;
-
-CREATE OR REPLACE VIEW fitter_earnings AS
-  SELECT subcontractor_id, DATE_TRUNC('month', completed_at) AS month,
-         COUNT(*) AS jobs_completed, SUM(fitting_fee) AS total_earned
-  FROM fitting_jobs
-  WHERE status IN ('completed','signed_off','approved')
-    AND fitting_fee IS NOT NULL AND completed_at IS NOT NULL
-  GROUP BY subcontractor_id, DATE_TRUNC('month', completed_at);
+### R7 — Page background and typography
+- Page background: `bg-[var(--warm-50)]` (off-white)
+- Cards: `bg-white border border-[var(--warm-100)]`
+- Section blocks inside tabs: `bg-[var(--warm-50)] rounded-xl`
+- Name: `font-heading text-2xl font-semibold`
+- Section labels: `text-[10px] uppercase tracking-wider font-semibold text-[var(--warm-400)]`
+- Primary text: `text-[var(--warm-800)]`, secondary: `text-[var(--warm-500)]`
 
 ---
 
-## Edge Cases
+## Acceptance Criteria
 
-| Scenario | Handling |
-|---|---|
-| Two fitters claim same board job simultaneously | Server checks status = open_board before claiming; second gets 409 |
-| Offer expires while fitter is mid-response | offer_expires_at checked server-side (already done) |
-| Job date changes after offer sent | Notify fitter via message; admin must re-confirm |
-| Sign-off submitted with < 5 photos | Warn but allow; admin can reject |
-| Approve job with no fitting_fee | Warning in approval modal |
-| Fitter suspended mid-job | Can complete current job, cannot claim new ones |
-| Remote sign-off link expired | Expired page with "Request new link" button |
-| No eligible fitters for auto-offer | Post to open board + urgent CRM task |
-| Google Calendar disconnected | Skip sync, show badge on job detail |
-| Fitter starts checklist while en_route | Auto-transition to in_progress |
-| subcontractor_id null on open_board job | Fitter queries already filter by subcontractor_id = me; board jobs fetched separately |
+- [ ] Hero header full-width, name never truncates, action buttons always visible without scrolling
+- [ ] Left panel is one unified card (not 4–5 separate cards)
+- [ ] Left panel is sticky — stays in place while right panel scrolls
+- [ ] Tab bar uses pill style
+- [ ] All 6 tabs render without errors
+- [ ] Overview tab shows tasks widget + next booking + activity timeline as distinct section blocks
+- [ ] Page background is off-white, cards are white — clear visual layering
+- [ ] No horizontal scrollbar at 1280px+ viewport
+- [ ] All existing functionality preserved (compose, call log, stage changes, task creation, AI, snooze)
 
 ---
 
 ## Implementation Order
 
-1. Migration 030 — en_route status, nullable subcontractor_id, fitter_earnings view
-2. /api/fitter/messages/summary — aggregated messages endpoint
-3. Fitter dashboard redesign — today's job, offer cards, earnings strip, Realtime
-4. Fitter job detail — map link, full job pack, en_route button, expiry countdown, photo thumbnails
-5. /fitter/earnings page — chart + table
-6. /api/cron/fitter-offer-expiry — auto-routing + vercel.json entry
-7. CRM fittings — availability overlay on assign modal
-8. CRM fittings — photo/checklist review in FittingDetailPanel
-9. CRM fittings — Realtime updates (live badges + toasts)
-10. CRM fittings — Availability tab (week-view grid)
-11. Fitter performance stats panel
-12. TypeScript check + commit + push
+1. Fix the blank right panel runtime error — establish a working baseline first.
+2. Rewrite page layout — hero header (full-width), left panel (360px unified), right panel (flex-1).
+3. Build `LeadSidePanel` component — merges ProjectSummaryCard, AIInsightsPanel, SmartActions, DiscoveryAnswersCard, Snooze into one unified panel.
+4. Implement pill tab bar — replace sliding underline.
+5. Restyle tab content — remove outer wrapper, apply section block styling.
+6. Polish Overview tab — tasks widget, next booking, timeline sections.
+7. Typography and colour pass — off-white bg, consistent section headers, spacing.
+8. Verify all tabs with real data.
