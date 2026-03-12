@@ -15,11 +15,31 @@ export default function MfaSetupPage() {
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [step, setStep] = useState<'enroll' | 'verify'>('enroll')
+  const [enrollTrigger, setEnrollTrigger] = useState(0)
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     async function enroll() {
+      setError(null)
+
+      // Check for existing factors before enrolling
+      const { data: factorsData } = await supabase.auth.mfa.listFactors()
+      const allFactors = factorsData?.all ?? []
+
+      // Already has a verified factor — skip setup, go straight to verify
+      const verified = allFactors.find(f => f.status === 'verified')
+      if (verified) {
+        router.push('/crm/mfa-verify')
+        return
+      }
+
+      // Has an unverified (pending) factor — unenroll it first to avoid 422
+      const unverified = allFactors.find(f => f.status === 'unverified')
+      if (unverified) {
+        await supabase.auth.mfa.unenroll({ factorId: unverified.id })
+      }
+
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
         friendlyName: 'PaxBespoke CRM',
@@ -46,7 +66,7 @@ export default function MfaSetupPage() {
     }
 
     enroll()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [enrollTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault()
@@ -111,9 +131,17 @@ export default function MfaSetupPage() {
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-[var(--warm-100)] p-8">
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-700 mb-6">
-              <AlertCircle size={16} className="shrink-0" />
-              <span>{error}</span>
+            <div className="flex flex-col gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-700 mb-6">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={16} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+              <button
+                onClick={() => { setStep('enroll'); setEnrollTrigger(n => n + 1) }}
+                className="self-start text-xs font-medium underline underline-offset-2 hover:text-red-900 transition-colors"
+              >
+                Try again
+              </button>
             </div>
           )}
 
