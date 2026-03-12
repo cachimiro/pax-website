@@ -38,8 +38,11 @@ function LoginForm() {
         return
       }
 
-      // Block fitters from accessing the CRM portal
-      if (signInData.user?.user_metadata?.role === 'fitter') {
+      // Block users who have no CRM role (e.g. fitter-only accounts)
+      const userRoles: string[] = signInData.user?.user_metadata?.roles ??
+        (signInData.user?.user_metadata?.role ? [signInData.user.user_metadata.role] : [])
+      const hasCrmRole = userRoles.some((r: string) => ['admin', 'sales', 'operations'].includes(r))
+      if (!hasCrmRole) {
         await supabase.auth.signOut()
         setError('Invalid login credentials')
         return

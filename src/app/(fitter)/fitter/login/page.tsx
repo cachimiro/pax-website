@@ -36,8 +36,9 @@ function FitterLoginForm() {
         throw authError
       }
 
-      const role = data.user?.user_metadata?.role
-      if (role !== 'fitter') {
+      const roles: string[] = data.user?.user_metadata?.roles ??
+        (data.user?.user_metadata?.role ? [data.user.user_metadata.role] : [])
+      if (!roles.includes('fitter')) {
         await supabase.auth.signOut()
         throw new Error('This login is for fitters only. CRM users should use /crm/login.')
       }

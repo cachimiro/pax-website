@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     email: sub.email,
     password,
     email_confirm: true,
-    user_metadata: { role: 'fitter', subcontractor_id: sub.id, name: sub.name },
+    user_metadata: { roles: ['fitter'], subcontractor_id: sub.id, name: sub.name },
   })
 
   if (authError) {

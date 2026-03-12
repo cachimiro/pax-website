@@ -41,14 +41,16 @@ export async function updateSession(request: NextRequest) {
       url.pathname = '/fitter/login'
       return NextResponse.redirect(url)
     }
-    if (!isFitterPublic && user && user.user_metadata?.role !== 'fitter') {
+    const fitterRoles: string[] = user?.user_metadata?.roles ?? (user?.user_metadata?.role ? [user.user_metadata.role] : [])
+    const isFitter = fitterRoles.includes('fitter')
+    if (!isFitterPublic && user && !isFitter) {
       // Non-fitter user trying to access fitter routes
       const url = request.nextUrl.clone()
       url.pathname = '/fitter/login'
       return NextResponse.redirect(url)
     }
     // Logged-in fitter on login page → redirect to dashboard
-    if (user && user.user_metadata?.role === 'fitter' && pathname === '/fitter/login') {
+    if (user && isFitter && pathname === '/fitter/login') {
       const url = request.nextUrl.clone()
       url.pathname = '/fitter'
       return NextResponse.redirect(url)
@@ -73,8 +75,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Fitter session on a CRM route — clear cookies and redirect to login
-  if (user && user.user_metadata?.role === 'fitter') {
+  // Fitter-only session on a CRM route (no CRM role) — clear cookies and redirect to login
+  const userRoles: string[] = user?.user_metadata?.roles ?? (user?.user_metadata?.role ? [user.user_metadata.role] : [])
+  const hasCrmRole = userRoles.some(r => ['admin', 'sales', 'operations'].includes(r))
+  if (user && !hasCrmRole) {
     const url = request.nextUrl.clone()
     url.pathname = '/crm/login'
     const redirectResponse = NextResponse.redirect(url)

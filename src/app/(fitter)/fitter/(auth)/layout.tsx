@@ -22,7 +22,9 @@ export default function FitterAuthLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user || user.user_metadata?.role !== 'fitter') {
+      const roles: string[] = user?.user_metadata?.roles ??
+        (user?.user_metadata?.role ? [user.user_metadata.role] : [])
+      if (!user || !roles.includes('fitter')) {
         router.push('/fitter/login')
         return
       }

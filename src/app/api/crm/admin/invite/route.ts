@@ -84,6 +84,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'This email already has an active CRM account.' }, { status: 409 })
     }
 
+    // Existing auth user with no CRM profile (e.g. a fitter being given CRM access).
+    // Add the CRM role to their roles array while preserving any existing roles (e.g. 'fitter').
+    const existingRoles: string[] = existingAuthUser.user_metadata?.roles ?? (
+      existingAuthUser.user_metadata?.role ? [existingAuthUser.user_metadata.role] : []
+    )
+    const updatedRoles = Array.from(new Set([...existingRoles, role]))
+    await admin.auth.admin.updateUserById(existingAuthUser.id, {
+      user_metadata: { ...existingAuthUser.user_metadata, roles: updatedRoles, role: undefined },
+    })
+
     const { error: profileError } = await admin.from('profiles').insert({
       id: existingAuthUser.id,
       full_name,
@@ -106,7 +116,7 @@ export async function POST(req: NextRequest) {
   const { data: newUser, error: createError } = await admin.auth.admin.createUser({
     email: email.trim().toLowerCase(),
     email_confirm: true,
-    user_metadata: { full_name, role },
+    user_metadata: { full_name, roles: [role] },
   })
 
   if (createError) {
