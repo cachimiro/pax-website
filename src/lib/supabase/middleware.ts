@@ -73,6 +73,20 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Fitter session on a CRM route — clear cookies and redirect to login
+  if (user && user.user_metadata?.role === 'fitter') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/crm/login'
+    const redirectResponse = NextResponse.redirect(url)
+    // Clear all Supabase session cookies so the fitter is fully signed out
+    request.cookies.getAll().forEach(({ name }) => {
+      if (name.startsWith('sb-')) {
+        redirectResponse.cookies.delete(name)
+      }
+    })
+    return redirectResponse
+  }
+
   // Logged in but on login page → redirect to pipeline
   if (user && pathname === '/crm/login') {
     // Check MFA status first

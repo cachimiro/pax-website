@@ -28,13 +28,20 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (authError) {
         setError(authError.message)
+        return
+      }
+
+      // Block fitters from accessing the CRM portal
+      if (signInData.user?.user_metadata?.role === 'fitter') {
+        await supabase.auth.signOut()
+        setError('Invalid login credentials')
         return
       }
 
