@@ -168,7 +168,12 @@ function UsersSection() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Invite failed')
-      toast.success(data.reactivated ? `Account reactivated and invite resent to ${inviteEmail}` : `Invite sent to ${inviteEmail}`)
+      const msg = data.reactivated
+        ? `Account reactivated and invite resent to ${inviteEmail}`
+        : data.resent
+        ? `Invite resent to ${inviteEmail}`
+        : `Invite sent to ${inviteEmail}`
+      toast.success(msg)
       setShowInvite(false)
       setInviteEmail('')
       setInviteName('')
