@@ -230,6 +230,13 @@ export default function OnboardingPage() {
                     Use the Google account you want customers to book into. You can reconnect a different account later from your profile settings.
                   </p>
                 </div>
+
+                <button
+                  onClick={() => setStep(3)}
+                  className="w-full mt-3 text-xs text-[var(--warm-400)] hover:text-[var(--warm-600)] transition-colors py-1"
+                >
+                  Skip for now
+                </button>
               </motion.div>
             )}
 
